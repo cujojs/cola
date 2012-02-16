@@ -45,6 +45,10 @@ define(['./Watchable'], function (makeWatchable) {
 
 	};
 
+	ObjAdapter.canHandle = function (obj) {
+		return obj != null;
+	};
+
 	return ObjAdapter;
 
 });

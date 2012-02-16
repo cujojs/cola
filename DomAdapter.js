@@ -54,39 +54,33 @@ define(function () {
 			node = this._findNode(name);
 
 			// get the events
-			events = this._getOptionForBinding(name, 'event') || this._getOptionForBinding(name, 'events') || [];
+			events = this._getOptionForBinding(name, 'event') || this._getOptionForBinding(name, 'events');
 			if (typeof events == 'string') {
 				events = events.split(/\s*,\s*/);
 			}
 
-			// the mediator doesn't know the details of the dom bindings and
-			// so will call watchProp even if no events are specified
-			// TODO: throw instead?
-			if (events.length > 0) {
+			// we should never get here if there are no events
+			if (!events) throw new Error('DomAdapter: no events defined for ' + name);
 
-				// determine if we're using an attr
-				attr = this._getOptionForBinding(name, 'attr');
+			// determine if we're using an attr
+			attr = this._getOptionForBinding(name, 'attr');
 
-				// create unwatchers
-				unwatchers = [];
-				for (i = 0; i < events.length; i++) {
-					unwatchers.push(watchNode(node, events[i], function (e) {
-						callback(getNodeProp(node, attr || name, !!attr), name);
-					}));
-				}
-
-				// create and return single unwatcher to unwatch all events
-				unwatcher = function () {
-					var unwatch;
-					while ((unwatch == unwatchers.pop())) squelchedUnwatch(unwatch);
-				};
-				this._unwatches.push(unwatcher);
-
+			// create unwatchers
+			unwatchers = [];
+			for (i = 0; i < events.length; i++) {
+				unwatchers.push(watchNode(node, events[i], function (e) {
+					callback(getNodeProp(node, attr || name, !!attr), name);
+				}));
 			}
 
-			// don't return an inline function(){} or we'll have an unnecessary
-			// closure hanging around in memory in less-than-stellar js engines.
-			return unwatcher || noop;
+			// create and return single unwatcher to unwatch all events
+			unwatcher = function () {
+				var unwatch;
+				while ((unwatch == unwatchers.pop())) squelchedUnwatch(unwatch);
+			};
+			this._unwatches.push(unwatcher);
+
+			return unwatcher;
 		},
 
 		/**
@@ -134,6 +128,11 @@ define(function () {
 	DomAdapter.destroyAll = function () {
 		var unwatch;
 		while ((unwatch = allUnwatches.pop())) squelchedUnwatch(unwatch);
+	};
+
+	DomAdapter.canHandle = function (obj) {
+		// crude test if an object is a node.
+		return obj && obj.tagName && obj.getAttribute && obj.setAttribute;
 	};
 
 	/***** private declarations *****/
@@ -241,8 +240,6 @@ define(function () {
 	function squelchedUnwatch (unwatch) {
 		try { unwatch(); } catch (ex) {}
 	}
-
-	function noop () {}
 
 	function Begetter () {}
 	function beget(obj) {
