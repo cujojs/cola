@@ -87,7 +87,6 @@ define(function () {
 		 * Calls all listener functions with the details of a modified
 		 * property.
 		 * @private
-		 * @param oldVal
 		 * @param value
 		 * @param name
 		 */
