@@ -1,3 +1,5 @@
+/** MIT License (c) copyright B Cavalier & J Hann */
+
 define(['./Watchable'], function (makeWatchable) {
 "use strict";
 
