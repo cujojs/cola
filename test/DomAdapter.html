@@ -1,0 +1,106 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+<meta charset="UTF-8">
+<title>DomAdapter test</title>
+
+<script src="util/doh/runner.js"></script>
+<script src="test-config.js"></script>
+
+<script type="text/javascript">
+require(['cola/DomAdapter', 'domReady!'], function(DomAdapter) {
+
+	function getNode (id) {
+		return document.getElementById(id);
+	}
+
+	function simulateEvent (node, type) {
+		if (document.createEvent) {
+			var evt = document.createEvent('HTMLEvents');
+			evt.initEvent(type, false, true);
+			node.dispatchEvent(evt);
+		}
+		else {
+
+		}
+	}
+
+	doh.register('the basics', [
+		function resolveName (doh) {
+			var adaptedObject;
+			adaptedObject = new DomAdapter(getNode('test'));
+			doh.assertEqual(getNode('test').elements['first'], adaptedObject.resolveName('first'));
+		},
+		function setOptions (doh) {
+			var options = { cake: 'yes' }, adaptedObject;
+			adaptedObject = new DomAdapter({});
+			adaptedObject.setOptions(options);
+			doh.assertEqual(options.cake, adaptedObject._options.cake);
+		},
+		function canHandle (doh) {
+			doh.assertFalse(DomAdapter.canHandle(), 'undefined');
+			doh.assertFalse(DomAdapter.canHandle(null), 'null');
+			doh.assertFalse(DomAdapter.canHandle(function(){}), 'function');
+			doh.assertFalse(DomAdapter.canHandle([]), 'array');
+			doh.assertFalse(DomAdapter.canHandle({}), 'object');
+			doh.assertTrue(DomAdapter.canHandle(getNode('test')), 'DOMNode');
+		}
+		// TODO: test destroy and destroyAll
+	]);
+	doh.register('events', [
+		function watchProp (doh) {
+			var node, first, adapted, dfd;
+			node = getNode('test');
+			first = node.elements.first;
+			adapted = new DomAdapter(node);
+			adapted.setOptions({
+				bindings: {
+					// test pre-resolved node
+					first: { event: 'click', prop: 'value', node: first },
+					// test auto-resolved form node (guessNode)
+					last: { event: 'click', prop: 'value' }
+				}
+			});
+			dfd = new doh.Deferred();
+			adapted.watchProp('first', function (value, name) {
+				dfd.callback(value == 'Martha' && name == 'first');
+			});
+			first.value = 'Martha';
+			simulateEvent(first, 'click');
+			return dfd;
+		},
+		function propChanged (doh) {
+			var node, first, adapted, dfd;
+			node = getNode('test');
+			first = node.elements.first;
+			adapted = new DomAdapter(node);
+			adapted.setOptions({
+				bindings: {
+					first: { event: 'click', prop: 'value', node: first },
+					last: { event: 'click', prop: 'value' }
+				}
+			});
+			dfd = new doh.Deferred();
+			adapted.watchAllProps(function (value, name) {
+				dfd.callback(node.elements.last.value == 'Astaire');
+			});
+			adapted.propChanged('Astaire', 'last');
+			node.elements.last.value == 'Astaire'
+			return dfd;
+		}
+	]);
+
+	doh.run();
+
+});
+</script>
+</head>
+<body>
+
+<form id="test">
+	<input name="first" value="Fred"/>
+	<input name="last" value="Flinstone"/>
+</form>
+
+</body>
+</html>

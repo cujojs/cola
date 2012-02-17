@@ -3,7 +3,9 @@
 define(function () {
 "use strict";
 
-	var undef;
+	var colaSyntheticEvent, undef;
+
+	colaSyntheticEvent = '-cola-notify';
 
 	/**
 	 * Creates a cola adapter for interacting with dom nodes.  This adapter
@@ -16,6 +18,8 @@ define(function () {
 		this._rootNode = node;
 		// array of listeners that need to be disconnected
 		this._unwatches = [];
+		// set blank options
+		this.setOptions({});
 	}
 
 	DomAdapter.prototype = {
@@ -31,8 +35,8 @@ define(function () {
 		resolveName: function (name) {
 			var node, bindings;
 			bindings = this._options.bindings;
-			if (name in bindings) {
-				node = bindings[name];
+			if (name in bindings && bindings[name].node) {
+				node = bindings[name].node;
 			}
 			else {
 				node = guessNode(this._rootNode, name);
@@ -48,7 +52,7 @@ define(function () {
 
 		watchProp: function (name, callback) {
 			// TODO: figure out which events can be bubbled to _rootNode and which need to be on node directly
-			var node, events, attr, unwatchers, unwatcher, i;
+			var node, events, prop, attr, unwatchers, unwatcher, i;
 
 			// find node that this name references
 			node = this._findNode(name);
@@ -59,17 +63,19 @@ define(function () {
 				events = events.split(/\s*,\s*/);
 			}
 
-			// we should never get here if there are no events
-			if (!events) throw new Error('DomAdapter: no events defined for ' + name);
+			// add an event for chaining to other participants in the network
+			// of adapters
+			events.push(colaSyntheticEvent);
 
-			// determine if we're using an attr
+			// determine if we're using a prop or an attr
+			prop = this._getOptionForBinding(name, 'prop');
 			attr = this._getOptionForBinding(name, 'attr');
 
 			// create unwatchers
 			unwatchers = [];
 			for (i = 0; i < events.length; i++) {
 				unwatchers.push(watchNode(node, events[i], function (e) {
-					callback(getNodeProp(node, attr || name, !!attr), name);
+					callback(getNodeProp(node, attr || prop, !!attr), name);
 				}));
 			}
 
@@ -98,11 +104,13 @@ define(function () {
 			}
 		},
 
-		propChanged: function (newVal, oldVal, name) {
-			var node, attr;
+		propChanged: function (value, name) {
+			var node, prop, attr;
 			node = this._findNode(name);
+			prop = this._getOptionForBinding(name, 'prop');
 			attr = this._getOptionForBinding(name, 'attr');
-			setNodeProp(node, attr || name, newVal, !!attr);
+			setNodeProp(node, attr || prop, value, !!attr);
+			fireSimpleEvent(node, colaSyntheticEvent);
 		},
 
 		destroy: function () {
@@ -137,7 +145,7 @@ define(function () {
 
 	/***** private declarations *****/
 
-	var attrToProp, watchNode, allUnwatches;
+	var attrToProp, watchNode, fireSimpleEvent, allUnwatches;
 
 	attrToProp = {
 		'class': 'className',
@@ -158,6 +166,9 @@ define(function () {
 	has.cache = {
 		"dom-addeventlistener":function () {
 			return document && 'addEventListener' in document;
+		},
+		"dom-createevent": function () {
+			return document && 'createEvent' in document;
 		}
 	};
 
@@ -215,6 +226,7 @@ define(function () {
 	}
 
 	if (has('dom-addeventlistener')) {
+		// standard way
 		watchNode = function (node, name, callback) {
 			node.addEventListener(name, callback, false);
 			return function () {
@@ -223,6 +235,7 @@ define(function () {
 		};
 	}
 	else {
+		// try IE way
 		watchNode = function (node, name, callback) {
 			var handlerName, unwatch;
 			handlerName = 'on' + name;
@@ -235,6 +248,21 @@ define(function () {
 			allUnwatches.push(unwatch);
 			return unwatch;
 		};
+	}
+
+	if(has('dom-createevent')) {
+		fireSimpleEvent = function (node, type) {
+			// don't bubble since most form events don't anyways
+			var evt = document.createEvent('HTMLEvents');
+			evt.initEvent(type, false, true);
+			node.dispatchEvent(evt);
+		}
+	}
+	else {
+		fireSimpleEvent = function (node, type) {
+			var evt = document.createEventObject();
+			node.fireEvent('on' + type, evt);
+		}
 	}
 
 	function squelchedUnwatch (unwatch) {
