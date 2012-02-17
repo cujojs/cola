@@ -1,5 +1,6 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
+(function(define) {
 define(function () {
 	"use strict";
 
@@ -46,7 +47,9 @@ define(function () {
 			collection[methodName] = function(item) {
 				var at = orig.call(collection, arguments);
 
-				notify(listeners, item, at);
+				if(at >= 0) {
+					notify(listeners, item, at);
+				}
 			}
 		}
 	}
@@ -59,7 +62,8 @@ define(function () {
 
 	function removeFromArray(arr, item) {
 		var i = arr.length;
-		while(--i) {
+
+		for(; i >= 0; --i) {
 			if(arr[i] === item) {
 				arr.splice(i, 1);
 				return;
@@ -69,3 +73,8 @@ define(function () {
 
 	return makeWatchable;
 });
+})(
+	typeof define == 'function'
+		? define
+		: function(factory) { module.exports = factory(); }
+);
