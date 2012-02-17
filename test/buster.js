@@ -1,5 +1,5 @@
 exports['shared tests'] = {
-	tests: ['PersistentArray.js', 'WatchableCollection.js']
+	tests: ['PersistentArray.js', 'WatchableCollection.js', 'CollectionAdapter.js']
 };
 
 exports['node tests'] = {

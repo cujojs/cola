@@ -10,7 +10,7 @@ define(['./Watchable'], function (makeWatchable) {
 	 */
 	function ObjAdapter (obj) {
 
-		this.watchable = makeWatchable(obj);
+		this._watchable = makeWatchable(obj);
 
 	}
 
@@ -32,17 +32,17 @@ define(['./Watchable'], function (makeWatchable) {
 		},
 
 		watchProp: function (name, callback) {
-			return this.watchable.watch(this.resolveName(name), callback);
+			return this._watchable.watch(this.resolveName(name), callback);
 		},
 
 		watchAllProps: function (callback) {
-			return this.watchable.watch(this.resolveName('*'), callback);
+			return this._watchable.watch(this.resolveName('*'), callback);
 		},
 
 		propChanged: function (value, name) {
 			// note: this has an intended side-effect: watchers will
 			// be notified.
-			this.watchable.set(this.resolveName(name), value);
+			this._watchable.set(this.resolveName(name), value);
 		}
 
 	};

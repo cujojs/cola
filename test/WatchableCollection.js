@@ -5,42 +5,31 @@ var assert, refute;
 assert = buster.assert;
 refute = buster.refute;
 
-function FakeCollection() {
-}
-
-FakeCollection.prototype = {
-	add: function() {
-		return this.addResult;
-	},
-
-	remove: function() {
-		return this.removeResult;
-	},
-
-	update: function() {
-		return this.updateResult;
-	}
-};
-
-function setUp() {
-	// Create spy callbacks we can use as WatchableCollection callbacks
-	this.itemAdded   = this.spy();
-	this.itemUpdated = this.spy();
-	this.itemRemoved = this.spy();
-
-	this.collection = new FakeCollection();
-	this.watchable = makeWatchable(this.collection);
-
-	this.removeCallbacks = this.watchable.watch(this.itemAdded, this.itemUpdated, this.itemRemoved);
-}
-
-function tearDown() {
-	this.removeCallbacks();
-}
-
 buster.testCase('WatchableCollection', {
-	setUp: setUp,
-	tearDown: tearDown,
+	setUp: function() {
+		// Create spy callbacks we can use as WatchableCollection callbacks
+		this.itemAdded   = this.spy();
+		this.itemUpdated = this.spy();
+		this.itemRemoved = this.spy();
+
+		this.collection = {
+			add: function() {
+				return this.addResult;
+			},
+
+			remove: function() {
+				return this.removeResult;
+			},
+
+			update: function() {
+				return this.updateResult;
+			}
+		};
+
+		this.watchable = makeWatchable(this.collection);
+
+		this.removeCallbacks = this.watchable.watch(this.itemAdded, this.itemUpdated, this.itemRemoved);
+	},
 
 	'add': {
 

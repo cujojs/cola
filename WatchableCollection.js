@@ -37,7 +37,9 @@ define(function () {
 
 	function isWatchable(collection) {
 		// avoid false positives on gecko's native watch() function:
-		return 'watch' in collection && collection.watch != Object.prototype.watch;
+		return collection
+			&& typeof collection.watch == 'function'
+			&& collection.watch != Object.prototype.watch;
 	}
 
 	function replaceMethod(collection, methodName, listeners) {
