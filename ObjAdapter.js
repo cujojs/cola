@@ -1,5 +1,6 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
+(function (define) {
 define(['./Watchable'], function (makeWatchable) {
 "use strict";
 
@@ -57,3 +58,8 @@ define(['./Watchable'], function (makeWatchable) {
 	return ObjAdapter;
 
 });
+}(
+	typeof define == 'function'
+		? define
+		: function (factory) { module.exports = factory(); }
+));

@@ -1,5 +1,6 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
+(function (define) {
 define(function () {
 "use strict";
 
@@ -280,3 +281,8 @@ define(function () {
 	return DomAdapter;
 
 });
+}(
+	typeof define == 'function'
+		? define
+		: function (factory) { module.exports = factory(); }
+));
