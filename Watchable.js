@@ -44,7 +44,7 @@ define(function () {
 		watchable.set = function (name, value, options) {
 			obj[name] = value;
 			notify(value, name);
-			notify(value, '*'); // also notify any wildcard listeners
+			notify(value, '*', name); // also notify any wildcard listeners
 			return obj;
 		};
 
@@ -92,10 +92,11 @@ define(function () {
 		 * property.
 		 * @private
 		 * @param value
-		 * @param name
+		 * @param key
 		 */
-		function notify (value, name) {
-			walkList(listeners[name], function (item) {
+		function notify (value, key, name) {
+			if (arguments.length < 3) name = key;
+			walkList(listeners[key], function (item) {
 				item.callback(value, name);
 			});
 		}
