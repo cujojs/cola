@@ -37,6 +37,13 @@ define(function () {
 		return collection;
 	}
 
+	makeWatchable.isWatchable = isWatchable;
+
+	function isWatchable(collection) {
+		// avoid false positives on gecko's native watch() function:
+		return 'watch' in collection && collection.watch != Object.prototype.watch;
+	}
+
 	function replaceMethod(collection, methodName, listeners) {
 		var orig = collection[methodName];
 
@@ -47,13 +54,6 @@ define(function () {
 				notify(listeners, item, at);
 			}
 		}
-	}
-
-	makeWatchable.isWatchable = isWatchable;
-
-	function isWatchable(collection) {
-		// avoid false positives on gecko's native watch() function:
-		return 'watch' in collection && collection.watch != Object.prototype.watch;
 	}
 
 	function notify(callbacks, item, at) {
@@ -71,4 +71,6 @@ define(function () {
 			}
 		}
 	}
+
+	return makeWatchable;
 });
