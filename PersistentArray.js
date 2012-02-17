@@ -1,6 +1,8 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
+(function(define) {
 define(function () {
+
 	"use strict";
 
 	var undef;
@@ -8,7 +10,7 @@ define(function () {
 	function PersistentArray(dataArray, keyFunc) {
 		this._keyFunc = keyFunc || defaultKeyFunc;
 		this._data = dataArray;
-		this._index = createIndex(dataArray, keyFunc);
+		this._index = createIndex(dataArray, this._keyFunc);
 	}
 
 	PersistentArray.prototype = {
@@ -16,8 +18,10 @@ define(function () {
 		add: function(item) {
 			var key, index, at;
 
-			index = this._index;
+			at = -1;
+
 			key = this._keyFunc(item);
+			index = this._index;
 
 			if (key in index) {
 				// throw?
@@ -37,8 +41,10 @@ define(function () {
 		update: function(item) {
 			var key, index, at;
 
-			index = this._index;
+			at = -1;
+
 			key = this._keyFunc(item);
+			index = this._index;
 
 			if(key in index) {
 				at = index[key];
@@ -53,13 +59,16 @@ define(function () {
 		remove: function(itemOrId) {
 			var key, index, at;
 
-			index = this._index;
+			at = -1;
 			key = this._keyFunc(itemOrId);
+			index = this._index;
 
 			if(key in index) {
 				at = index[key];
-				this._data.splice(index[key], 1);
+				this._data.splice(at, 1);
 				delete index[key];
+
+				this._index = createIndex(this._data, this._keyFunc, at);
 			}
 
 			return at;
@@ -68,20 +77,28 @@ define(function () {
 	};
 
 	function defaultKeyFunc(item) {
-		return item.id;
+		return typeof item == 'object' ? item.id : item;
 	}
 
-	function createIndex(dataArray, keyFunc) {
+	function createIndex(dataArray, keyFunc, startIndex) {
 		var index, i, len;
 
 		index = {};
-		i = 0;
+		i = startIndex || 0;
 		len = dataArray.length;
 
 		for(;i < len; i++) {
 			index[keyFunc(dataArray[i])] = i;
 		}
+
+		return index;
 	}
 
 	return PersistentArray;
 });
+
+})(
+	typeof define == 'function'
+		? define
+		: function(factory) { module.exports = factory(); }
+);
