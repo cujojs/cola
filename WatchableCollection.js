@@ -12,12 +12,7 @@ define(function () {
 		updated = [];
 		removed = [];
 
-		collection.watch = function(listeners) {
-			var itemAdded, itemUpdated, itemRemoved;
-
-			itemAdded   = listeners.itemAdded;
-			itemUpdated = listeners.itemUpdated;
-			itemRemoved = listeners.itemRemoved;
+		collection.watch = function(itemAdded, itemUpdated, itemRemoved) {
 
 			itemAdded   && added.push(itemAdded);
 			itemUpdated && updated.push(itemUpdated);
