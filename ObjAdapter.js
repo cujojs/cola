@@ -46,7 +46,10 @@ define(['./Watchable'], function (makeWatchable) {
 	};
 
 	ObjAdapter.canHandle = function (obj) {
-		return obj != null;
+		// this seems close enough to ensure that instanceof works.
+		// a RegExp will pass as a valid prototype, but I am not sure
+		// this is a bad thing even if it is unusual.
+		return obj && typeof obj == 'object';
 	};
 
 	return ObjAdapter;
