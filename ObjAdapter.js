@@ -40,6 +40,8 @@ define(['./Watchable'], function (makeWatchable) {
 		},
 
 		propChanged: function (value, name) {
+			// note: this has an intended side-effect: watchers will
+			// be notified.
 			this.watchable.set(this.resolveName(name), value);
 		}
 
