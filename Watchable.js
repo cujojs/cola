@@ -103,7 +103,9 @@ define(function () {
 
 	}
 
-	function WatchableObject () {}
+	makeWatchable.isWatchable = isWatchable;
+
+		function WatchableObject () {}
 	function begetWatchable (obj){
 		var watchable;
 		WatchableObject.prototype = obj;
@@ -134,10 +136,13 @@ define(function () {
 	 * @param obj
 	 * @param loose {Boolean} optional
 	 */
-	makeWatchable.isWatchable = function (obj) {
+	function isWatchable (obj) {
 		var loose = arguments[1];
 		// avoid false positives on gecko's native watch() function:
-		return obj instanceof WatchableObject || (loose && 'watch' in obj && (obj.watch != Object.prototype.watch));
+		return obj instanceof WatchableObject || (loose
+			&& typeof obj.watch == 'function'
+			&& obj.watch != Object.prototype.watch
+		);
 	};
 
 	return makeWatchable;
