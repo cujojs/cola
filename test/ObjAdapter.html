@@ -44,7 +44,7 @@ require(['cola/ObjAdapter'], function(ObjAdapter) {
 		},
 		function propChanged (doh) {
 			var obj, adapted, dfd;
-			obj = { first: 'Fred', last: 'Fintstone' };
+			obj = { first: 'Fred', last: 'Flintstone' };
 			adapted = new ObjAdapter(obj);
 			dfd = new doh.Deferred();
 			adapted.watchAllProps(function (value, name) {
