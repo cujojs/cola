@@ -1,6 +1,6 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
-(function (define) {
+(function (define, global) {
 define(function () {
 "use strict";
 
@@ -166,7 +166,7 @@ define(function () {
 
 	has.cache = {
 		"dom-addeventlistener":function () {
-			return document && 'addEventListener' in document;
+			return document && 'addEventListener' in document || 'addEventListener' in global;
 		},
 		"dom-createevent": function () {
 			return document && 'createEvent' in document;
@@ -284,5 +284,6 @@ define(function () {
 }(
 	typeof define == 'function'
 		? define
-		: function (factory) { module.exports = factory(); }
+		: function (factory) { module.exports = factory(); },
+	this
 ));
