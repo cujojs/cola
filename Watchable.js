@@ -60,6 +60,8 @@ define(function () {
 			return listen(name, callback);
 		};
 
+		return watchable;
+
 		/**
 		 * Registers a listener and returns a function to unlisten.
 		 * Internal implementation of watch/unwatch.
@@ -105,9 +107,10 @@ define(function () {
 		var watchable;
 		WatchableObject.prototype = obj;
 		watchable = new WatchableObject();
-		WatchableObject.prototype = undef;
+		WatchableObject.prototype = begetWatchable.cleanPrototype;
 		return watchable;
 	}
+	begetWatchable.cleanPrototype = {};
 
 	/**
 	 * Walks a linked list
@@ -133,7 +136,7 @@ define(function () {
 	makeWatchable.isWatchable = function (obj) {
 		var loose = arguments[1];
 		// avoid false positives on gecko's native watch() function:
-		return obj instanceof WatchableObject || (loose && 'watch' in obj && obj.watch != Object.prototype.watch);
+		return obj instanceof WatchableObject || (loose && 'watch' in obj && (obj.watch != Object.prototype.watch));
 	};
 
 	return makeWatchable;

@@ -1,0 +1,6 @@
+[submodule "test/curl"]
+	path = test/curl
+	url = https://unscriptable@github.com/cujojs/curl.git
+[submodule "test/util"]
+	path = test/util
+	url = https://unscriptable@github.com/cujojs/util.git
