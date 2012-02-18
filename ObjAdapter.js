@@ -17,37 +17,28 @@ define(['./Watchable'], function (makeWatchable) {
 
 	ObjAdapter.prototype = {
 
-		/**
-		 * Translates a name to a property or sub-object. For the ObjAdapter,
-		 * this is a passthru unless overridden or another function is injected.
-		 * @param name {String} the name of the property
-		 * @returns {String}
-		 */
-		resolveName: function (name) {
-			return name;
-		},
-
-		setOptions: function (options) {
-			// TODO: use these to specify translations in resolveName? or use a separate resolver object in the mediator
-			this._options = options;
-		},
-
 		watchProp: function (name, callback) {
-			return this._watchable.watch(this.resolveName(name), callback);
+			return this._watchable.watch(name, callback);
 		},
 
 		watchAllProps: function (callback) {
-			return this._watchable.watch(this.resolveName('*'), callback);
+			return this._watchable.watch('*', callback);
 		},
 
 		propChanged: function (value, name) {
 			// note: this has an intended side-effect: watchers will
 			// be notified.
-			this._watchable.set(this.resolveName(name), value);
+			this._watchable.set(name, value);
 		}
 
 	};
 
+	/**
+	 * Tests whether the given object is a candidate to be handled by
+	 * this adapter.  Returns true if the object is of type 'object'.
+	 * @param obj
+	 * @returns {Boolean}
+	 */
 	ObjAdapter.canHandle = function (obj) {
 		// this seems close enough to ensure that instanceof works.
 		// a RegExp will pass as a valid prototype, but I am not sure
