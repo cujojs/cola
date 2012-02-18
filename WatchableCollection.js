@@ -63,7 +63,7 @@ define(function () {
 	}
 
 	function removeFromArray(arr, item) {
-		var i = arr.length;
+		var i = arr.length - 1;
 
 		for(; i >= 0; --i) {
 			if(arr[i] === item) {
