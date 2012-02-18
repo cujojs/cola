@@ -4,28 +4,21 @@
 define(function (require) {
 "use strict";
 
-	var makeWatchable, colaSyntheticEvent, undef;
-
-//	colaSyntheticEvent = '-cola-notify';
+	var makeWatchable, undef;
 
 	makeWatchable = require('./WatchableDomTree');
 
 	/**
-	 * Creates a cola adapter for interacting with dom nodes.  This adapter
-	 * has a destroyAll function which must be called to prevent memory leaks
-	 * in Internet Explorer 6-8.
+	 * Creates a cola adapter for interacting with dom nodes.  Be sure to
+	 * unwatch any watches to prevent memory leaks in Internet Explorer 6-8.
 	 * @constructor
-	 * @param node {DOMNode}
+	 * @param rootNode {DOMNode}
 	 */
-	function DomAdapter(node) {
+	function DomAdapter(rootNode) {
 		var self = this;
 
-		this._rootNode = node;
-
-		this._watchable = makeWatchable(node);
-		this._watchable.setNameResolver(function (name) {
-			return self._resolveName(name);
-		});
+		this._rootNode = rootNode;
+		this._watchable = makeWatchable(rootNode);
 
 		// set blank bindings
 		this.setBindings({});
@@ -47,8 +40,13 @@ define(function (require) {
 		 * @param callback {Function} function (propValue, propName) {}
 		 * @returns {Function} a function to call when done watching.
 		 */
-		watchProp: function (name, callback) {
-			return this._watchable.watch(name, callback);
+		watch: function (name, callback) {
+			var b, watchable;
+			b = this._getBindings(name);
+			watchable = this._watchable;
+			return watchable.watch(b.node, b.prop, b.events, function (value) {
+				callback(value, name);
+			});
 		},
 
 		/**
@@ -59,11 +57,11 @@ define(function (require) {
 		 * @param callback {Function} function (propValue, propName) {}
 		 * @returns {Function} a function to call when done watching.
 		 */
-		watchAllProps: function (callback) {
+		watchAll: function (callback) {
 			var unwatchers;
 			unwatchers = [];
-			for (var p in this._options.bindings) {
-				unwatchers.push(this.watchProp(p, callback));
+			for (var p in this._bindings) {
+				unwatchers.push(this.watch(p, callback));
 			}
 			return function () {
 				var unwatcher;
@@ -77,7 +75,8 @@ define(function (require) {
 		 * @param name {String} the name of the changed property
 		 */
 		propChanged: function (value, name) {
-			this._watchable.set(name, value);
+			var binding = this._getBindings(name);
+			this._watchable.set(binding.node, binding.prop, value);
 		},
 
 		/**
@@ -90,12 +89,23 @@ define(function (require) {
 		 *     events: 'event1,event2' // optional
 		 * }
 		 */
-		_resolveName: function (name) {
-			var bindings;
-			bindings = this.bindings;
-			if (name in bindings && bindings[name].node) {
-				return bindings[name];
+		_getBindings: function (name) {
+			var bindings, binding;
+			bindings = this._bindings;
+			if (name in bindings) {
+				binding = bindings[name];
 			}
+			else {
+				binding = {
+					prop: 'innerHTML',
+					// TODO: should we pass these or none?
+					events: ['change', 'blur']
+				};
+			}
+			if (!('node' in binding)) {
+				binding.node = guessNode(this._rootNode, name);
+			}
+			return binding;
 		}
 
 	};
@@ -112,6 +122,25 @@ define(function (require) {
 	};
 
 	return DomAdapter;
+
+	/**
+	 * Crude way to find a node under the current node. This is just a
+	 * default implementation. A better one should be injected by
+	 * the environment.
+	 * @private
+	 * @param rootNode
+	 * @param nodeName
+	 */
+	function guessNode (rootNode, nodeName) {
+		// use form.elements if this is a form
+		if (/^form$/i.test(rootNode.tagName)) {
+			return rootNode.elements[nodeName];
+		}
+		// use getElementById, if not a form (yuk!)
+		else {
+			return rootNode.ownerDocument.getElementById(nodeName);
+		}
+	}
 
 });
 }(

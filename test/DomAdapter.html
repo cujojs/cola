@@ -21,21 +21,28 @@ require(['cola/DomAdapter', 'domReady!'], function(DomAdapter) {
 			node.dispatchEvent(evt);
 		}
 		else {
-
+			var evt = document.createEventObject();
+			node.fireEvent('on' + type, evt);
 		}
 	}
 
+	function init () {
+		// this function has to run to ensure that the browser hasn't
+		// attempted to preserve form values across a browser reload
+		var node, first, last;
+		node = getNode('test');
+		first = node.elements.first;
+		last = node.elements.last;
+		first.value = 'Fred';
+		last.value = 'Flintstone';
+	}
+
 	doh.register('the basics', [
-		function resolveName (doh) {
-			var adaptedObject;
-			adaptedObject = new DomAdapter(getNode('test'));
-			doh.assertEqual(getNode('test').elements['first'], adaptedObject.resolveName('first'));
-		},
-		function setOptions (doh) {
-			var options = { cake: 'yes' }, adaptedObject;
+		function setBindings (doh) {
+			var bindings = { cake: 'yes' }, adaptedObject;
 			adaptedObject = new DomAdapter({});
-			adaptedObject.setOptions(options);
-			doh.assertEqual(options.cake, adaptedObject._options.cake);
+			adaptedObject.setBindings(bindings);
+			doh.assertEqual(bindings.cake, adaptedObject._bindings.cake);
 		},
 		function canHandle (doh) {
 			doh.assertFalse(DomAdapter.canHandle(), 'undefined');
@@ -45,24 +52,22 @@ require(['cola/DomAdapter', 'domReady!'], function(DomAdapter) {
 			doh.assertFalse(DomAdapter.canHandle({}), 'object');
 			doh.assertTrue(DomAdapter.canHandle(getNode('test')), 'DOMNode');
 		}
-		// TODO: test destroy and destroyAll
 	]);
 	doh.register('events', [
-		function watchProp (doh) {
+		function watch (doh) {
 			var node, first, adapted, dfd;
 			node = getNode('test');
+			init();
 			first = node.elements.first;
 			adapted = new DomAdapter(node);
-			adapted.setOptions({
-				bindings: {
-					// test pre-resolved node
-					first: { event: 'click', prop: 'value', node: first },
-					// test auto-resolved form node (guessNode)
-					last: { event: 'click', prop: 'value' }
-				}
+			adapted.setBindings({
+				// test pre-resolved node
+				first: { events: 'click', prop: 'value', node: first },
+				// test auto-resolved form node (guessNode)
+				last: { events: 'click', prop: 'value' }
 			});
 			dfd = new doh.Deferred();
-			adapted.watchProp('first', function (value, name) {
+			adapted.watch('first', function (value, name) {
 				dfd.callback(value == 'Martha' && name == 'first');
 			});
 			first.value = 'Martha';
@@ -72,20 +77,18 @@ require(['cola/DomAdapter', 'domReady!'], function(DomAdapter) {
 		function propChanged (doh) {
 			var node, first, adapted, dfd;
 			node = getNode('test');
+			init();
 			first = node.elements.first;
 			adapted = new DomAdapter(node);
-			adapted.setOptions({
-				bindings: {
-					first: { event: 'click', prop: 'value', node: first },
-					last: { event: 'click', prop: 'value' }
-				}
+			adapted.setBindings({
+				first: { events: 'click', prop: 'value', node: first },
+				last: { events: 'click', prop: 'value' }
 			});
 			dfd = new doh.Deferred();
-			adapted.watchAllProps(function (value, name) {
+			adapted.watchAll(function (value, name) {
 				dfd.callback(node.elements.last.value == 'Astaire');
 			});
 			adapted.propChanged('Astaire', 'last');
-			node.elements.last.value == 'Astaire'
 			return dfd;
 		}
 	]);
