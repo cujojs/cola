@@ -28,10 +28,9 @@ define(function () {
 		/**
 		 * Returns a property or attribute of an object.
 		 * @param name {String}
-		 * @param options {Object}
 		 * @returns the value of the property or attribute
 		 */
-		watchable.get = function (name, options) {
+		watchable.get = function (name) {
 			return obj[name];
 		};
 
@@ -39,14 +38,13 @@ define(function () {
 		 * Sets a property or attribute of a obj.
 		 * @param name {String}
 		 * @param value
-		 * @param options {Object}
-		 * @returns {Object}
 		 */
-		watchable.set = function (name, value, options) {
-			obj[name] = value;
-			notify(value, name);
-			notify(value, '*', name); // also notify any wildcard listeners
-			return obj;
+		watchable.set = function (name, value) {
+			if (obj[name] != value) {
+				obj[name] = value;
+				notify(value, name);
+				notify(value, '*', name); // also notify any wildcard listeners
+			}
 		};
 
 		/**
@@ -106,7 +104,7 @@ define(function () {
 
 	makeWatchable.isWatchable = isWatchable;
 
-		function WatchableObject () {}
+	function WatchableObject () {}
 	function begetWatchable (obj){
 		var watchable;
 		WatchableObject.prototype = obj;
