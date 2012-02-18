@@ -11,16 +11,11 @@
 require(['cola/ObjAdapter', 'domReady!'], function(ObjAdapter) {
 
 	doh.register('the basics', [
-		function resolveName (doh) {
-			var adaptedObject;
+		function setBindings (doh) {
+			var bindings = {}, adaptedObject;
 			adaptedObject = new ObjAdapter({});
-			doh.assertEqual('description', adaptedObject.resolveName('description'));
-		},
-		function setOptions (doh) {
-			var options = {}, adaptedObject;
-			adaptedObject = new ObjAdapter({});
-			adaptedObject.setOptions(options);
-			doh.assertEqual(options, adaptedObject._options);
+			adaptedObject.setBindings(bindings);
+			doh.assertEqual(bindings, adaptedObject._bindings);
 		},
 		function canHandle (doh) {
 			doh.assertFalse(ObjAdapter.canHandle(), 'undefined');
@@ -32,12 +27,12 @@ require(['cola/ObjAdapter', 'domReady!'], function(ObjAdapter) {
 		}
 	]);
 	doh.register('events', [
-		function watchProp (doh) {
+		function watch (doh) {
 			var obj, adapted, dfd;
 			obj = { first: 'Fred', last: 'Fintstone' };
 			adapted = new ObjAdapter(obj);
 			dfd = new doh.Deferred();
-			adapted.watchProp('first', function (value, name) {
+			adapted.watch('first', function (value, name) {
 				dfd.callback(value == 'Martha' && name == 'first');
 			});
 			adapted.propChanged('Martha', 'first');
@@ -48,7 +43,7 @@ require(['cola/ObjAdapter', 'domReady!'], function(ObjAdapter) {
 			obj = { first: 'Fred', last: 'Flintstone' };
 			adapted = new ObjAdapter(obj);
 			dfd = new doh.Deferred();
-			adapted.watchAllProps(function (value, name) {
+			adapted.watchAll(function (value, name) {
 				dfd.callback(value == 'Astaire' && name == 'last');
 			});
 			adapted.propChanged('Astaire', 'last');

@@ -33,12 +33,12 @@ define(function () {
 			}
 
 			// forward notifications from adapter1 to adapter2
-			adapter1.watchAllProps(function (value, name) {
+			adapter1.watchAll(function (value, name) {
 				forwarder(adapter2, value, name);
 			});
 
 			// forward notifications from adapter2 to adapter1
-			adapter2.watchAllProps(function (value, name) {
+			adapter2.watchAll(function (value, name) {
 				forwarder(adapter1, value, name);
 			});
 

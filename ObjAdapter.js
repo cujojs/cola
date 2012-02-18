@@ -1,34 +1,49 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
 (function (define) {
-define(['./Watchable'], function (makeWatchable) {
-"use strict";
+define(function (require) {
+	"use strict";
+
+	var makeWatchable;
+
+	makeWatchable = require('./Watchable');
 
 	/**
 	 * @constructor
 	 * @param obj {Object}
 	 * @returns {Watchable}
 	 */
-	function ObjAdapter (obj) {
+	function ObjAdapter(obj) {
 
 		this._watchable = makeWatchable(obj);
 
+		// set blank bindings
+		this.setBindings({});
 	}
 
 	ObjAdapter.prototype = {
 
-		watchProp: function (name, callback) {
+		watch:function (name, callback) {
 			return this._watchable.watch(name, callback);
 		},
 
-		watchAllProps: function (callback) {
+		watchAll:function (callback) {
 			return this._watchable.watch('*', callback);
 		},
 
-		propChanged: function (value, name) {
+		propChanged:function (value, name) {
 			// note: this has an intended side-effect: watchers will
 			// be notified.
 			this._watchable.set(name, value);
+		},
+
+		/**
+		 * Sets the binding info for this object.
+		 * TODO: do something with these bindings
+		 * @param bindings
+		 */
+		setBindings: function (bindings) {
+			this._bindings = bindings;
 		}
 
 	};
@@ -52,5 +67,5 @@ define(['./Watchable'], function (makeWatchable) {
 }(
 	typeof define == 'function'
 		? define
-		: function (factory) { module.exports = factory(); }
+		: function (factory) { module.exports = factory(require); }
 ));
