@@ -47,7 +47,7 @@ define(function () {
 
 		if(typeof orig == 'function') {
 			collection[methodName] = function(item) {
-				var at = orig.call(collection, arguments);
+				var at = orig.apply(collection, arguments);
 
 				if(at >= 0) {
 					notify(listeners, item, at);
