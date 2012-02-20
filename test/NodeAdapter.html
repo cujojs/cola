@@ -2,13 +2,13 @@
 <html lang="en-US">
 <head>
 <meta charset="UTF-8">
-<title>DomAdapter test</title>
+<title>NodeAdapter test</title>
 
 <script src="util/doh/runner.js"></script>
 <script src="test-config.js"></script>
 
 <script type="text/javascript">
-require(['cola/DomAdapter', 'domReady!'], function(DomAdapter) {
+require(['cola/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 
 	function getNode (id) {
 		return document.getElementById(id);
@@ -40,17 +40,17 @@ require(['cola/DomAdapter', 'domReady!'], function(DomAdapter) {
 	doh.register('the basics', [
 		function setBindings (doh) {
 			var bindings = { cake: 'yes' }, adaptedObject;
-			adaptedObject = new DomAdapter({});
+			adaptedObject = new NodeAdapter({});
 			adaptedObject.setBindings(bindings);
 			doh.assertEqual(bindings.cake, adaptedObject._bindings.cake);
 		},
 		function canHandle (doh) {
-			doh.assertFalse(DomAdapter.canHandle(), 'undefined');
-			doh.assertFalse(DomAdapter.canHandle(null), 'null');
-			doh.assertFalse(DomAdapter.canHandle(function(){}), 'function');
-			doh.assertFalse(DomAdapter.canHandle([]), 'array');
-			doh.assertFalse(DomAdapter.canHandle({}), 'object');
-			doh.assertTrue(DomAdapter.canHandle(getNode('test')), 'DOMNode');
+			doh.assertFalse(NodeAdapter.canHandle(), 'undefined');
+			doh.assertFalse(NodeAdapter.canHandle(null), 'null');
+			doh.assertFalse(NodeAdapter.canHandle(function(){}), 'function');
+			doh.assertFalse(NodeAdapter.canHandle([]), 'array');
+			doh.assertFalse(NodeAdapter.canHandle({}), 'object');
+			doh.assertTrue(NodeAdapter.canHandle(getNode('test')), 'DOMNode');
 		}
 	]);
 	doh.register('events', [
@@ -59,7 +59,7 @@ require(['cola/DomAdapter', 'domReady!'], function(DomAdapter) {
 			node = getNode('test');
 			init();
 			first = node.elements.first;
-			adapted = new DomAdapter(node);
+			adapted = new NodeAdapter(node);
 			adapted.setBindings({
 				// test pre-resolved node
 				first: { events: 'click', prop: 'value', node: first },
@@ -74,12 +74,12 @@ require(['cola/DomAdapter', 'domReady!'], function(DomAdapter) {
 			simulateEvent(first, 'click');
 			return dfd;
 		},
-		function propChanged (doh) {
+		function set (doh) {
 			var node, first, adapted, dfd;
 			node = getNode('test');
 			init();
 			first = node.elements.first;
-			adapted = new DomAdapter(node);
+			adapted = new NodeAdapter(node);
 			adapted.setBindings({
 				first: { events: 'click', prop: 'value', node: first },
 				last: { events: 'click', prop: 'value' }
@@ -88,7 +88,7 @@ require(['cola/DomAdapter', 'domReady!'], function(DomAdapter) {
 			adapted.watchAll(function (value, name) {
 				dfd.callback(node.elements.last.value == 'Astaire');
 			});
-			adapted.propChanged('Astaire', 'last');
+			adapted.set('last', 'Astaire');
 			return dfd;
 		}
 	]);

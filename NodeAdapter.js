@@ -16,7 +16,7 @@ define(function (require) {
 	 * @constructor
 	 * @param rootNode {DOMNode}
 	 */
-	function DomAdapter(rootNode) {
+	function NodeAdapter (rootNode) {
 		var self = this;
 
 		this._rootNode = rootNode;
@@ -29,7 +29,7 @@ define(function (require) {
 
 	}
 
-	DomAdapter.prototype = {
+	NodeAdapter.prototype = {
 
 		/**
 		 * Sets the binding info for this dom tree.
@@ -134,7 +134,7 @@ define(function (require) {
 	 * @param obj
 	 * @returns {Boolean}
 	 */
-	DomAdapter.canHandle = function (obj) {
+	NodeAdapter.canHandle = function (obj) {
 		// crude test if an object is a node.
 		return obj && obj.tagName && obj.getAttribute && obj.setAttribute;
 	};
@@ -232,7 +232,7 @@ define(function (require) {
 		}
 	}
 
-	return DomAdapter;
+	return NodeAdapter;
 
 });
 }(

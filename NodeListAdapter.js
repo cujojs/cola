@@ -5,7 +5,7 @@ define(function(require) {
 	var DomAdapter, domEvents, fireSimpleEvent, watchNode,
 		undef;
 
-	DomAdapter = require('./DomAdapter');
+	NodeAdapter = require('./NodeAdapter');
 	domEvents = require('./dom/events');
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
@@ -70,7 +70,7 @@ define(function(require) {
 			this._items.splice(index, 0, item);
 			insertAtDomIndex(this._container, domTree, index);
 			// make adapted
-			adapted = new DomAdapter(domTree);
+			adapted = new NodeAdapter(domTree);
 			// return domTree so the mediator can sync it????
 			// TODO: this doesn't seem to be in the right order. fire event before domTree is sync with itemed?
 			fireSimpleEvent(this._containerNode, colaAddedEvent, { item: item });
