@@ -2,7 +2,7 @@
 define(function(require) {
 "use strict";
 
-	var DomAdapter, domEvents, fireSimpleEvent, watchNode,
+	var NodeAdapter, domEvents, fireSimpleEvent, watchNode,
 		undef;
 
 	NodeAdapter = require('./NodeAdapter');
@@ -28,7 +28,7 @@ define(function(require) {
 			throw new Error('No container node found for DomCollectionAdapter.');
 		}
 
-		this._container = container;
+		this._containerNode = container;
 
 		this._itemNode = itemNode;
 
@@ -62,37 +62,44 @@ define(function(require) {
 			};
 		},
 
-		add: function (item) {
-			var domTree, adapted, index;
+		add: function (item, index) {
+			var domTree, adapted;
 			domTree = this._itemNode.cloneNode(true);
 			// insert into container
-			index = findInsertionIndex(item, this._items, this.comparator);
+			if (this.comparator) {
+				index = findInsertionIndex(item, this._items, this.comparator);
+			}
 			this._items.splice(index, 0, item);
-			insertAtDomIndex(this._container, domTree, index);
+			insertAtDomIndex(this._containerNode, domTree, index);
 			// make adapted
 			adapted = new NodeAdapter(domTree);
 			// return domTree so the mediator can sync it????
 			// TODO: this doesn't seem to be in the right order. fire event before domTree is sync with itemed?
-			fireSimpleEvent(this._containerNode, colaAddedEvent, { item: item });
+			fireSimpleEvent(this._containerNode, colaAddedEvent, { item: item, index: index });
 			return adapted;
 		},
 
-		update: function (item) {
-			var domTree, index;
+		update: function (item, index) {
+			var domTree;
 			// move to another position
-			index = findInsertionIndex(item, this._items, this.comparator);
+			if (this.comparator) {
+				index = findInsertionIndex(item, this._items, this.comparator);
+			}
 			domTree = this._containerNode.childNodes[index];
-			insertAtDomIndex(this._container, domTree, index);
+			insertAtDomIndex(this._containerNode, domTree, index);
 			// TODO: this doesn't seem to be in the right order.
-			fireSimpleEvent(this._containerNode, colaUpdatedEvent, { item: item });
+			fireSimpleEvent(this._containerNode, colaUpdatedEvent, { item: item, index: index });
 			return domTree;
 		},
 
-		remove: function (item) {
+		remove: function (item, index) {
 			var domTree;
-			this._containerNode.removeChild(item);
+			if (this.comparator) {
+				index = findInsertionIndex(item, this._items, this.comparator);
+			}
+			this._containerNode.removeChild(this._containerNode.childNodes[index]);
 			// TODO: this doesn't seem to be in the right order.
-			fireSimpleEvent(this._containerNode, colaRemovedEvent, { item: item });
+			fireSimpleEvent(this._containerNode, colaRemovedEvent, { item: item, index: index });
 			return item;
 		},
 
