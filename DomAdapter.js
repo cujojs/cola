@@ -4,9 +4,11 @@
 define(function (require) {
 "use strict";
 
-	var makeWatchable, undef;
+	var domEvents, fireSimpleEvent, watchNode, undef;
 
-	makeWatchable = require('./WatchableDomTree');
+	domEvents = require('./dom/events');
+	fireSimpleEvent = domEvents.fireSimpleEvent;
+	watchNode = domEvents.watchNode;
 
 	/**
 	 * Creates a cola adapter for interacting with dom nodes.  Be sure to
@@ -18,10 +20,13 @@ define(function (require) {
 		var self = this;
 
 		this._rootNode = rootNode;
-		this._watchable = makeWatchable(rootNode);
 
 		// set blank bindings
 		this.setBindings({});
+
+		// keep data values
+		this._values = {};
+
 	}
 
 	DomAdapter.prototype = {
@@ -41,13 +46,19 @@ define(function (require) {
 		 * @returns {Function} a function to call when done watching.
 		 */
 		watch: function (name, callback) {
-			var b, watchable;
+			var b, currValues;
 			b = this._getBindings(name);
-			watchable = this._watchable;
-			return watchable.watch(b.node, b.prop, b.events, function (value) {
-				callback(value, name);
-			});
-		},
+			currValues = this._values;
+			return listenToNode(b.node, b.events, function() {
+				var prev, curr;
+				// ensure value has changed
+				prev = currValues[name];
+				curr = getNodePropOrAttr(b.node, name);
+				if (curr != prev) {
+					currValues[name] = curr;
+					callback(curr, name);
+				}
+			});		},
 
 		/**
 		 * Watches all nodes that have explicit bindings.
@@ -71,12 +82,19 @@ define(function (require) {
 
 		/**
 		 * Signals that a property in a synchronized object has changed.
-		 * @param value the value of the changed property
 		 * @param name {String} the name of the changed property
+		 * @param value the value of the changed property
 		 */
-		propChanged: function (value, name) {
-			var binding = this._getBindings(name);
-			this._watchable.set(binding.node, binding.prop, value);
+		set: function (name, value) {
+			var b, current;
+			b = this._getBindings(name);
+			current = getNodePropOrAttr(b.node, name);
+			this._values[name] = current;
+			if (current != value) {
+				setNodePropOrAttr(b.node, name, value);
+				// notify watchers
+				fireSimpleEvent(b.node, colaSyntheticEvent);
+			}
 		},
 
 		/**
@@ -121,7 +139,79 @@ define(function (require) {
 		return obj && obj.tagName && obj.getAttribute && obj.setAttribute;
 	};
 
-	return DomAdapter;
+	var colaSyntheticEvent, attrToProp;
+
+	colaSyntheticEvent = '-cola-synth-set';
+
+	attrToProp = {
+		'class': 'className',
+		'for': 'htmlFor'
+	};
+
+	/**
+	 * Returns a property or attribute of a node.
+	 * @param node {DOMNode}
+	 * @param name {String}
+	 * @returns the value of the property or attribute
+	 */
+	function getNodePropOrAttr (node, name) {
+		if (name in node) {
+			return node[attrToProp[name] || name];
+		}
+		else {
+			// TODO: do we need to cast to lower case?
+			return node.getAttribute(name);
+		}
+	}
+
+	/**
+	 * Sets a property of a node.
+	 * @param node {DOMNode}
+	 * @param name {String}
+	 * @param value
+	 * @returns {DOMNode}
+	 */
+	function setNodePropOrAttr (node, name, value) {
+		if (name in node) {
+			node[attrToProp[name] || name] = value;
+		}
+		else {
+			// TODO: do we need to cast to lower case?
+			node.setAttribute(name, value);
+		}
+	}
+
+	function listenToNode (node, events, callback) {
+
+		var unwatchers, i;
+
+		if (typeof events == 'string') {
+			events = events.split(/\s*,\s*/);
+		}
+		else if (!events) {
+			events = [];
+		}
+
+		// add an event for notifying from teh set() method
+		events.push(colaSyntheticEvent);
+
+		// create unwatchers
+		unwatchers = [];
+		for (i = 0; i < events.length; i++) {
+			unwatchers.push(watchNode(node, events[i], callback));
+		}
+
+		// create and return single unwatcher to unwatch all events
+		return function () {
+			var unwatch;
+			while ((unwatch == unwatchers.pop())) squelchedUnwatch(unwatch);
+		};
+
+	}
+
+	function squelchedUnwatch (unwatch) {
+		try { unwatch(); } catch (ex) {}
+	}
 
 	/**
 	 * Crude way to find a node under the current node. This is just a
@@ -141,6 +231,8 @@ define(function (require) {
 			return rootNode.ownerDocument.getElementById(nodeName);
 		}
 	}
+
+	return DomAdapter;
 
 });
 }(
