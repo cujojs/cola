@@ -34,6 +34,7 @@ ICollectionAdapter.prototype = {
 	 *     else return w1.id - w2.id;
 	 * }
 	 * compareWidgets.identity = true;
+	 * myWidgetCollectionAdapter.comparator = compareWidgets;
 	 */
 	comparator: undefined,
 
