@@ -15,15 +15,15 @@ define(['./WatchableCollection'], function(makeWatchable) {
 			return this._watchable.watch(itemAdded, itemUpdated, itemRemoved);
 		},
 
-		itemAdded: function(item, index) {
+		itemAdded: function(item) {
 			return this._watchable.add(item);
 		},
 
-		itemUpdated: function(item, index) {
+		itemUpdated: function(item) {
 			return this._watchable.update(item);
 		},
 
-		itemRemoved: function(item, index) {
+		itemRemoved: function(item) {
 			return this._watchable.remove(item);
 		}
 	};

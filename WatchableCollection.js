@@ -50,15 +50,15 @@ define(function () {
 				var at = orig.apply(collection, arguments);
 
 				if(at >= 0) {
-					notify(listeners, item, at);
+					notify(listeners, item);
 				}
 			}
 		}
 	}
 
-	function notify(callbacks, item, at) {
+	function notify(callbacks, item) {
 		for(var i = 0, len = callbacks.length; i < len; i++) {
-			callbacks[i](item, at);
+			callbacks[i](item);
 		}
 	}
 
