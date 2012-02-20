@@ -142,7 +142,7 @@ define(function (require) {
 
 	var colaSyntheticEvent, attrToProp;
 
-	colaSyntheticEvent = '-cola-synth-set';
+	colaSyntheticEvent = '-cola-item-set';
 
 	attrToProp = {
 		'class': 'className',

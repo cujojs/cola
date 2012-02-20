@@ -35,7 +35,7 @@ define(function(require) {
 			itemNode.parentNode.removeChild(itemNode);
 		}
 
-		// list of data items
+		// list of sorted data items
 		this._items = [];
 
 	}
@@ -61,54 +61,44 @@ define(function(require) {
 		},
 
 		add: function (item, index) {
-			var node, adapted;
+			var node, newIndex;
 			node = this._itemNode.cloneNode(true);
 			// insert into container
-			if (this.comparator) {
-				index = findSortedIndex(item, this._items, this.comparator);
-			}
-			this._items.splice(index, 0, item);
-			insertAtDomIndex(this._containerNode, node, index);
+			newIndex = this._insertNodeAndItem(node, item, index);
 			// notify listeners
-			this._fireEvent(colaAddedEvent, item, index );
+			this._fireEvent(colaAddedEvent, item, newIndex);
 			// return node so the mediator can adapt it and sync it
-			return node;
+			return newIndex;
 		},
 
-		update: function (item, index) {
-			var node, prevIndex;
-			// find existing position (don't use comparator because item changed)
-			prevIndex = findIndex(item, this._items);
-			// move to another position
-			if (this.comparator) {
-				index = findSortedIndex(item, this._items, this.comparator);
-			}
-			if (prevIndex != index) {
-				node = this._containerNode.childNodes[prevIndex];
-				this._items.splice(prevIndex, 1);
-				this._items.splice(index, 0, item);
-				insertAtDomIndex(this._containerNode, node, index);
+		update: function (item, prevIndex, index) {
+			var current, newIndex;
+			// find existing node, ignore sort since item changed
+			current = this._removeNodeAndItem(item, prevIndex, true);
+			// move node and item to another position
+			newIndex = this._insertNodeAndItem(current.node, item, index);
+			if (current.index != newIndex) {
 				// notify listeners
-				this._fireEvent(colaUpdatedEvent, item, index );
+				this._fireEvent(colaUpdatedEvent, item, newIndex);
 			}
-			return node;
+			return current.index;
 		},
 
 		remove: function (item, index) {
-			var node;
-			if (this.comparator) {
-				index = findSortedIndex(item, this._items, this.comparator);
-			}
-			node = this._containerNode.removeChild(this._containerNode.childNodes[index]);
+			var newIndex;
+			newIndex = this._removeNodeAndItem(item, index).index;
 			// notify listeners
-			this._fireEvent(colaRemovedEvent, item, index );
-			return node;
+			this._fireEvent(colaRemovedEvent, item, newIndex);
+			return newIndex;
 		},
 
 		/**
-		 * Compares to data items.  Works just like the comparator function
-		 * for Array.prototype.sort.  Should be injected.  Default is to
-		 * not sort if not supplied.
+		 * Compares two data items.  Works just like the comparator function
+		 * for Array.prototype.sort. This comparator is used for two purposes:
+		 * 1. to sort the items in the list (sequence)
+		 * 2. to find an item in the list (identity)
+		 * This property should be injected.  If not supplied, the list
+		 * will rely on index data propagated through the mediators.
 		 * @param a {Object}
 		 * @param b {Object}
 		 * @returns {Number} -1, 0, 1
@@ -124,7 +114,28 @@ define(function(require) {
 				index = findSortedIndex(item, this._items, this.comparator);
 			}
 			this._items.splice(index, 0, item);
-			insertAtDomIndex(this._containerNode, node, index);
+			parent.insertBefore(node, parent.childNodes[index]);
+			return index;
+		},
+
+		_removeNodeAndItem: function (item, index, ignoreSort) {
+			var node;
+			if (this.comparator) {
+				if (ignoreSort) {
+					// straight scan (sort is invalid for this item)
+					index = findIndex(item, this._items, this.comparator);
+				}
+				else {
+					// binary search
+					index = findSortedIndex(item, this._items, this.comparator);
+				}
+			}
+			this._items.splice(index, 1);
+			node = this._containerNode.removeChild(this._containerNode.childNodes[index]);
+			return {
+				index: index,
+				node: node
+			};
 		}
 
 	};
@@ -135,12 +146,18 @@ define(function(require) {
 	colaRemovedEvent = '-cola-item-removed';
 	colaUpdatedEvent = '-cola-item-updated';
 
-	return NodeListAdapter;
-
+	/**
+	 * This binary search isn't quite like most because it also
+	 * determines where to insert an item that falls between two
+	 * others in the list.
+	 * @param item {Object}
+	 * @param list {Array} of objects
+	 * @param comparator {Function} function sort (a, b) { return a - b; }
+	 * @returns {Number} the number at which to insert into the list
+	 */
 	function findSortedIndex (item, list, comparator) {
-		var min, max, mid, round, compare, refItem;
+		var min, max, mid, compare;
 
-		round = Math.round;
 		// starting bounds are slightly larger than list
 		// so we can detect if the new items will go before the
 		// first item or after the last
@@ -148,15 +165,11 @@ define(function(require) {
 		max = list.length;
 
 		do {
-			if (compare > 0) {
-				min = mid; // don't use mid + 1 or we may miss in-between
-			}
-			else if (compare < 0) {
-				max = mid; // don't use mid - 1 or we may miss in-between
-			}
-			mid = round((min + max) / 2);
-			refItem = list[mid];
-			compare = comparator(item, refItem);
+			// don't use mid +/- 1 or we may miss in-between
+			if (compare > 0) min = mid;
+			else if (compare < 0) max = mid;
+			mid = Math.round((min + max) / 2);
+			compare = comparator(item, list[mid]);
 		}
 		while ((max - min > 1) && compare != 0);
 
@@ -164,18 +177,25 @@ define(function(require) {
 		return compare > 0 ? max : mid;
 	}
 
-	function findIndex (item, list) {
+	/**
+	 * This straight scan uses the comparator to test each item in
+	 * the list for equality and returns the first it finds or -1.
+	 * @param item {Object}
+	 * @param list {Array} of objects
+	 * @param comparator {Function} function sort (a, b) { return a - b; }
+	 */
+	function findIndex (item, list, comparator) {
 		var i;
 		i = list.length;
-		while (i >= 0 && list[--i] != item) {}
+		while (--i >= 0 && comparator(list[i], item) != 0) {}
 		return i;
 	}
 
-	function insertAtDomIndex (node, parent, index) {
-		var refNode = parent.childNodes[index];
-		parent.insertBefore(node, refNode);
-		return node;
+	function identityComparator (a, b) {
+		return a == b ? 0 : -1;
 	}
+
+	return NodeListAdapter;
 
 });
 }(
