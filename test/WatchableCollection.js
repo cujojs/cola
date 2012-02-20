@@ -33,13 +33,13 @@ buster.testCase('WatchableCollection', {
 
 	'add': {
 
-		'should notify with item and index when an item is added': function() {
+		'should notify with item when an item is added': function() {
 			var item = { id: 1 };
 
 			this.collection.addResult = 1;
 			this.watchable.add(item);
 
-			assert.calledWith(this.itemAdded, item, 1);
+			assert.calledWith(this.itemAdded, item);
 			refute.called(this.itemUpdated);
 			refute.called(this.itemRemoved);
 		},
@@ -61,13 +61,13 @@ buster.testCase('WatchableCollection', {
 
 	'update': {
 
-		'should notify with item and index when an item is updated': function() {
+		'should notify with item when an item is updated': function() {
 			var item = { id: 1 };
 
 			this.collection.updateResult = 1;
 			this.watchable.update(item);
 
-			assert.calledWith(this.itemUpdated, item, 1);
+			assert.calledWith(this.itemUpdated, item);
 			refute.called(this.itemAdded);
 			refute.called(this.itemRemoved);
 		},
@@ -100,13 +100,13 @@ buster.testCase('WatchableCollection', {
 
 	'remove': {
 
-		'should notify with item and index when an item is removed': function() {
+		'should notify with item when an item is removed': function() {
 			var item = { id: 1 };
 
 			this.collection.removeResult = 1;
 			this.watchable.remove(item);
 
-			assert.calledWith(this.itemRemoved, item, 1);
+			assert.calledWith(this.itemRemoved, item);
 			refute.called(this.itemAdded);
 			refute.called(this.itemUpdated);
 		},
