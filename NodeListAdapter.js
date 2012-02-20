@@ -45,13 +45,13 @@ define(function(require) {
 		watch: function (itemAdded, itemUpdated, itemRemoved) {
 			var unwatchAdded, unwatchUpdated, unwatchRemoved;
 			unwatchAdded = watchNode(this._containerNode, colaAddedEvent, function (evt) {
-				itemAdded(evt.data.item);
+				itemAdded(evt.data.item, evt.data.index);
 			});
 			unwatchUpdated = watchNode(this._containerNode, colaUpdatedEvent, function (evt) {
-				itemUpdated(evt.data.item);
+				itemUpdated(evt.data.item, evt.data.index);
 			});
 			unwatchRemoved = watchNode(this._containerNode, colaRemovedEvent, function (evt) {
-				itemRemoved(evt.data.item);
+				itemRemoved(evt.data.item, evt.data.index);
 			});
 			return function () {
 				unwatchAdded();
