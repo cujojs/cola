@@ -65,7 +65,7 @@ define(function(require) {
 			node = this._itemNode.cloneNode(true);
 			// insert into container
 			if (this.comparator) {
-				index = findInsertionIndex(item, this._items, this.comparator);
+				index = findSortedIndex(item, this._items, this.comparator);
 			}
 			this._items.splice(index, 0, item);
 			insertAtDomIndex(this._containerNode, node, index);
@@ -81,7 +81,7 @@ define(function(require) {
 			prevIndex = findIndex(item, this._items);
 			// move to another position
 			if (this.comparator) {
-				index = findInsertionIndex(item, this._items, this.comparator);
+				index = findSortedIndex(item, this._items, this.comparator);
 			}
 			if (prevIndex != index) {
 				node = this._containerNode.childNodes[prevIndex];
@@ -97,7 +97,7 @@ define(function(require) {
 		remove: function (item, index) {
 			var node;
 			if (this.comparator) {
-				index = findInsertionIndex(item, this._items, this.comparator);
+				index = findSortedIndex(item, this._items, this.comparator);
 			}
 			node = this._containerNode.removeChild(this._containerNode.childNodes[index]);
 			// notify listeners
@@ -121,7 +121,7 @@ define(function(require) {
 
 		_insertNodeAndItem: function (node, item, index) {
 			if (this.comparator) {
-				index = findInsertionIndex(item, this._items, this.comparator);
+				index = findSortedIndex(item, this._items, this.comparator);
 			}
 			this._items.splice(index, 0, item);
 			insertAtDomIndex(this._containerNode, node, index);
@@ -137,21 +137,31 @@ define(function(require) {
 
 	return NodeListAdapter;
 
-	function findInsertionIndex (item, list, comparator) {
-		var bisect, prev, refItem, compare;
+	function findSortedIndex (item, list, comparator) {
+		var min, max, mid, round, compare, refItem;
 
-		bisect = prev = list.length;
-		compare = -1;
-		// if there's no comparator, list.length is returned (append to end)
-		if (comparator) {
-			do {
-				bisect = bisect + ~~(bisect / 2) * compare;
-				refItem = list[bisect];
-				compare = comparator(item, refItem);
+		round = Math.round;
+		// starting bounds are slightly larger than list
+		// so we can detect if the new items will go before the
+		// first item or after the last
+		min = -1;
+		max = list.length;
+
+		do {
+			if (compare > 0) {
+				min = mid; // don't use mid + 1 or we may miss in-between
 			}
-			while (Math.abs(prev - bisect) > 0);
+			else if (compare < 0) {
+				max = mid; // don't use mid - 1 or we may miss in-between
+			}
+			mid = round((min + max) / 2);
+			refItem = list[mid];
+			compare = comparator(item, refItem);
 		}
-		return compare > 0 ? bisect : prev;
+		while ((max - min > 1) && compare != 0);
+
+		// compare will be non-zero if we ended up between two existing items
+		return compare > 0 ? max : mid;
 	}
 
 	function findIndex (item, list) {
