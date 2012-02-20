@@ -18,13 +18,13 @@ define(function(require) {
 	 * @param containerNode {DOMNode} optional parent to all itemNodes. If
 	 * omitted, the parent of itemNode is assumed to be containerNode.
 	 */
-	function DomCollectionAdapter(itemNode) {
+	function NodeListAdapter (itemNode) {
 		var container;
 
 		container = arguments[1] || itemNode.parentNode;
 
 		if (!container) {
-			throw new Error('No container node found for DomCollectionAdapter.');
+			throw new Error('No container node found for NodeListAdapter.');
 		}
 
 		this._containerNode = container;
@@ -40,7 +40,7 @@ define(function(require) {
 
 	}
 
-	DomCollectionAdapter.prototype = {
+	NodeListAdapter.prototype = {
 
 		watch: function (itemAdded, itemUpdated, itemRemoved) {
 			var unwatchAdded, unwatchUpdated, unwatchRemoved;
@@ -135,7 +135,7 @@ define(function(require) {
 	colaRemovedEvent = '-cola-item-removed';
 	colaUpdatedEvent = '-cola-item-updated';
 
-	return DomCollectionAdapter;
+	return NodeListAdapter;
 
 	function findInsertionIndex (item, list, comparator) {
 		var bisect, prev, refItem, compare;
