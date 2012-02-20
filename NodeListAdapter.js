@@ -2,10 +2,9 @@
 define(function(require) {
 "use strict";
 
-	var NodeAdapter, domEvents, fireSimpleEvent, watchNode,
+	var domEvents, fireSimpleEvent, watchNode,
 		undef;
 
-	NodeAdapter = require('./NodeAdapter');
 	domEvents = require('./dom/events');
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
@@ -17,7 +16,7 @@ define(function(require) {
 	 * @param itemNode {DOMNode} node to serve as a template for items
 	 * in the collection / list.
 	 * @param containerNode {DOMNode} optional parent to all itemNodes. If
-	 * omitted, the parent of itemNode is assumed.
+	 * omitted, the parent of itemNode is assumed to be containerNode.
 	 */
 	function DomCollectionAdapter(itemNode) {
 		var container;
@@ -33,7 +32,6 @@ define(function(require) {
 		this._itemNode = itemNode;
 
 		if (itemNode.parentNode) {
-			// TODO: is this always what we want to do?
 			itemNode.parentNode.removeChild(itemNode);
 		}
 
@@ -63,44 +61,48 @@ define(function(require) {
 		},
 
 		add: function (item, index) {
-			var domTree, adapted;
-			domTree = this._itemNode.cloneNode(true);
+			var node, adapted;
+			node = this._itemNode.cloneNode(true);
 			// insert into container
 			if (this.comparator) {
 				index = findInsertionIndex(item, this._items, this.comparator);
 			}
 			this._items.splice(index, 0, item);
-			insertAtDomIndex(this._containerNode, domTree, index);
-			// make adapted
-			adapted = new NodeAdapter(domTree);
-			// return domTree so the mediator can sync it????
-			// TODO: this doesn't seem to be in the right order. fire event before domTree is sync with itemed?
-			fireSimpleEvent(this._containerNode, colaAddedEvent, { item: item, index: index });
-			return adapted;
+			insertAtDomIndex(this._containerNode, node, index);
+			// notify listeners
+			this._fireEvent(colaAddedEvent, item, index );
+			// return node so the mediator can adapt it and sync it
+			return node;
 		},
 
 		update: function (item, index) {
-			var domTree;
+			var node, prevIndex;
+			// find existing position (don't use comparator because item changed)
+			prevIndex = findIndex(item, this._items);
 			// move to another position
 			if (this.comparator) {
 				index = findInsertionIndex(item, this._items, this.comparator);
 			}
-			domTree = this._containerNode.childNodes[index];
-			insertAtDomIndex(this._containerNode, domTree, index);
-			// TODO: this doesn't seem to be in the right order.
-			fireSimpleEvent(this._containerNode, colaUpdatedEvent, { item: item, index: index });
-			return domTree;
+			if (prevIndex != index) {
+				node = this._containerNode.childNodes[prevIndex];
+				this._items.splice(prevIndex, 1);
+				this._items.splice(index, 0, item);
+				insertAtDomIndex(this._containerNode, node, index);
+				// notify listeners
+				this._fireEvent(colaUpdatedEvent, item, index );
+			}
+			return node;
 		},
 
 		remove: function (item, index) {
-			var domTree;
+			var node;
 			if (this.comparator) {
 				index = findInsertionIndex(item, this._items, this.comparator);
 			}
-			this._containerNode.removeChild(this._containerNode.childNodes[index]);
-			// TODO: this doesn't seem to be in the right order.
-			fireSimpleEvent(this._containerNode, colaRemovedEvent, { item: item, index: index });
-			return item;
+			node = this._containerNode.removeChild(this._containerNode.childNodes[index]);
+			// notify listeners
+			this._fireEvent(colaRemovedEvent, item, index );
+			return node;
 		},
 
 		/**
@@ -111,7 +113,19 @@ define(function(require) {
 		 * @param b {Object}
 		 * @returns {Number} -1, 0, 1
 		 */
-		comparator: undef
+		comparator: undef,
+
+		_fireEvent: function (type, item, index) {
+			fireSimpleEvent(this._containerNode, type, { item: item, index: index });
+		},
+
+		_insertNodeAndItem: function (node, item, index) {
+			if (this.comparator) {
+				index = findInsertionIndex(item, this._items, this.comparator);
+			}
+			this._items.splice(index, 0, item);
+			insertAtDomIndex(this._containerNode, node, index);
+		}
 
 	};
 
@@ -138,6 +152,13 @@ define(function(require) {
 			while (Math.abs(prev - bisect) > 0);
 		}
 		return compare > 0 ? bisect : prev;
+	}
+
+	function findIndex (item, list) {
+		var i;
+		i = list.length;
+		while (i >= 0 && list[--i] != item) {}
+		return i;
 	}
 
 	function insertAtDomIndex (node, parent, index) {
