@@ -20,7 +20,7 @@ define(function () {
 
 			function forwardTo (adapter, value, name) {
 				pauseForwarding();
-				adapter.propChanged(value, name);
+				adapter.set(name, value);
 				resumeForwarding();
 			}
 

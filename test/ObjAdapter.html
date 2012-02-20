@@ -35,10 +35,10 @@ require(['cola/ObjAdapter', 'domReady!'], function(ObjAdapter) {
 			adapted.watch('first', function (value, name) {
 				dfd.callback(value == 'Martha' && name == 'first');
 			});
-			adapted.propChanged('Martha', 'first');
+			adapted.set('first', 'Martha');
 			return dfd;
 		},
-		function propChanged (doh) {
+		function set (doh) {
 			var obj, adapted, dfd;
 			obj = { first: 'Fred', last: 'Flintstone' };
 			adapted = new ObjAdapter(obj);
@@ -46,7 +46,7 @@ require(['cola/ObjAdapter', 'domReady!'], function(ObjAdapter) {
 			adapted.watchAll(function (value, name) {
 				dfd.callback(value == 'Astaire' && name == 'last');
 			});
-			adapted.propChanged('Astaire', 'last');
+			adapted.set('last','Astaire');
 			return dfd;
 		}
 	]);

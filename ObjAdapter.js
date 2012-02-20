@@ -23,15 +23,15 @@ define(function (require) {
 
 	ObjAdapter.prototype = {
 
-		watch:function (name, callback) {
+		watch: function (name, callback) {
 			return this._watchable.watch(name, callback);
 		},
 
-		watchAll:function (callback) {
+		watchAll: function (callback) {
 			return this._watchable.watch('*', callback);
 		},
 
-		propChanged:function (value, name) {
+		set: function (name, value) {
 			// note: this has an intended side-effect: watchers will
 			// be notified.
 			this._watchable.set(name, value);
