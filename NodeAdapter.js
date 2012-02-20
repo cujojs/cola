@@ -53,12 +53,13 @@ define(function (require) {
 				var prev, curr;
 				// ensure value has changed
 				prev = currValues[name];
-				curr = getNodePropOrAttr(b.node, name);
+				curr = getNodePropOrAttr(b.node, b.prop);
 				if (curr != prev) {
 					currValues[name] = curr;
-					callback(curr, name);
+					callback(name, curr);
 				}
-			});		},
+			});
+		},
 
 		/**
 		 * Watches all nodes that have explicit bindings.
@@ -91,7 +92,7 @@ define(function (require) {
 			current = getNodePropOrAttr(b.node, name);
 			this._values[name] = current;
 			if (current != value) {
-				setNodePropOrAttr(b.node, name, value);
+				setNodePropOrAttr(b.node, b.prop, value);
 				// notify watchers
 				fireSimpleEvent(b.node, colaSyntheticEvent);
 			}

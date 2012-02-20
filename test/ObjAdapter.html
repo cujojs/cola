@@ -32,7 +32,7 @@ require(['cola/ObjAdapter', 'domReady!'], function(ObjAdapter) {
 			obj = { first: 'Fred', last: 'Fintstone' };
 			adapted = new ObjAdapter(obj);
 			dfd = new doh.Deferred();
-			adapted.watch('first', function (value, name) {
+			adapted.watch('first', function (name, value) {
 				dfd.callback(value == 'Martha' && name == 'first');
 			});
 			adapted.set('first', 'Martha');
@@ -43,7 +43,7 @@ require(['cola/ObjAdapter', 'domReady!'], function(ObjAdapter) {
 			obj = { first: 'Fred', last: 'Flintstone' };
 			adapted = new ObjAdapter(obj);
 			dfd = new doh.Deferred();
-			adapted.watchAll(function (value, name) {
+			adapted.watchAll(function (name, value) {
 				dfd.callback(value == 'Astaire' && name == 'last');
 			});
 			adapted.set('last','Astaire');

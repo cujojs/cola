@@ -96,7 +96,7 @@ define(function () {
 		function notify (value, key, name) {
 			if (arguments.length < 3) name = key;
 			walkList(listeners[key], function (item) {
-				item.callback(value, name);
+				item.callback(name, value);
 			});
 		}
 

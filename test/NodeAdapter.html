@@ -67,7 +67,7 @@ require(['cola/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 				last: { events: 'click', prop: 'value' }
 			});
 			dfd = new doh.Deferred();
-			adapted.watch('first', function (value, name) {
+			adapted.watch('first', function (name, value) {
 				dfd.callback(value == 'Martha' && name == 'first');
 			});
 			first.value = 'Martha';
@@ -85,7 +85,7 @@ require(['cola/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 				last: { events: 'click', prop: 'value' }
 			});
 			dfd = new doh.Deferred();
-			adapted.watchAll(function (value, name) {
+			adapted.watchAll(function (name, value) {
 				dfd.callback(node.elements.last.value == 'Astaire');
 			});
 			adapted.set('last', 'Astaire');
