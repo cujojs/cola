@@ -1,3 +1,5 @@
+/** MIT License (c) copyright B Cavalier & J Hann */
+
 /**
  * Stores a watchable interface of collection. This is the interface
  * that all collection/list adapters must implement.
