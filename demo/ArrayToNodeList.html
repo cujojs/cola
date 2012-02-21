@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+<meta charset="UTF-8">
+<title>Array to NodeListAdapter demo</title>
+
+<script src="../test/curl/src/curl.js"></script>
+
+<script type="text/javascript">
+curl({
+	baseUrl: '../',
+	paths: {
+		curl: 'test/curl/src/curl'
+	},
+	packages: {
+		cola: { location: '.', main: 'cola' }
+	}
+});
+curl(
+	[
+		'cola/CollectionMediator', 
+		'cola/ArrayAdapter', 
+		'cola/NodeListAdapter'
+	], 
+	function (CollectionMediator, ArrayAdapter, NodeListAdapter) {
+	"use strict";
+		
+		var itemNode, data;
+
+		data = [
+			{ id: 1, first: 'Brian', last: 'Cavalier' },
+			{ id: 2, first: 'John', last: 'Hann' },
+			{ id: 3, first: 'Ian', last: 'Cavalier' }
+		];
+
+		function getNode (id) {
+			return document.getElementById(id);
+		}
+	
+		function compareById (a, b) { return a.id - b.id; }
+	
+		function init () {
+			var source, dest;
+			source = new ArrayAdapter(data, compareById);
+			dest = new NodeListAdapter(getNode('itemNode'));
+		}
+
+	}
+);
+</script>
+</head>
+<body>
+
+<form id="test">
+	<div>
+		This is not repeated.
+	</div>
+	<div>
+		<fieldset id="itemNode">
+			<input name="first" value="Fred"/>
+			<input name="last" value="Flinstone"/>
+		</fieldset>
+	</div>
+</form>
+
+</body>
+</html>
