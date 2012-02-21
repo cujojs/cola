@@ -28,9 +28,12 @@ define(function(require) {
 		function doForward(target, item, index) {
 			var newItem;
 			this.forwardTo = noop;
-			newItem = target[method](item, index);
-			this.forwardTo = doForward;
-			return newItem;
+			try {
+				newItem = target[method](item, index);
+				return newItem;
+			} finally {
+				this.forwardTo = doForward;
+			}
 		}
 
 		return {
