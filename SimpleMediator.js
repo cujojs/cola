@@ -14,7 +14,9 @@ define(function () {
 		 recursion by squelching change notifications while forwarding.
 		 */
 
-		var forwarder = noop;
+		var forwarder, unwatch1, unwatch2;
+
+		forwarder = noop;
 
 		function forwardTo (adapter, value, name) {
 			pauseForwarding();
@@ -31,17 +33,22 @@ define(function () {
 		}
 
 		// forward notifications from adapter1 to adapter2
-		adapter1.watchAll(function (value, name) {
+		unwatch1 = adapter1.watchAll(function (value, name) {
 			forwarder(adapter2, value, name);
 		});
 
 		// forward notifications from adapter2 to adapter1
-		adapter2.watchAll(function (value, name) {
+		unwatch2 = adapter2.watchAll(function (value, name) {
 			forwarder(adapter1, value, name);
 		});
 
 		// start forwarding
 		resumeForwarding();
+
+		return function unwatch () {
+			unwatch1();
+			unwatch2();
+		};
 
 	};
 
