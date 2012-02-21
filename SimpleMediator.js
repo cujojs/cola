@@ -4,48 +4,44 @@
 define(function () {
 "use strict";
 
-	return {
+	return function mediate (adapter1, adapter2) {
 
-		connectObjects: function (adapter1, adapter2) {
+		/*
+		 Assumes adapter1 and adapter2 have their bindings already.
 
-			/*
-			 Assumes adapter1 and adapter2 have their bindings already.
+		 Watch all properties from other adapter and forward change
+		 notifications. Stop immediate callbacks and infinite
+		 recursion by squelching change notifications while forwarding.
+		 */
 
-			 Watch all properties from other adapter and forward change
-			 notifications. Stop immediate callbacks and infinite
-			 recursion by squelching change notifications while forwarding.
-			 */
+		var forwarder = noop;
 
-			var forwarder = noop;
-
-			function forwardTo (adapter, value, name) {
-				pauseForwarding();
-				adapter.set(name, value);
-				resumeForwarding();
-			}
-
-			function pauseForwarding () {
-				forwarder = noop;
-			}
-
-			function resumeForwarding () {
-				forwarder = forwardTo;
-			}
-
-			// forward notifications from adapter1 to adapter2
-			adapter1.watchAll(function (value, name) {
-				forwarder(adapter2, value, name);
-			});
-
-			// forward notifications from adapter2 to adapter1
-			adapter2.watchAll(function (value, name) {
-				forwarder(adapter1, value, name);
-			});
-
-			// start forwarding
+		function forwardTo (adapter, value, name) {
+			pauseForwarding();
+			adapter.set(name, value);
 			resumeForwarding();
-
 		}
+
+		function pauseForwarding () {
+			forwarder = noop;
+		}
+
+		function resumeForwarding () {
+			forwarder = forwardTo;
+		}
+
+		// forward notifications from adapter1 to adapter2
+		adapter1.watchAll(function (value, name) {
+			forwarder(adapter2, value, name);
+		});
+
+		// forward notifications from adapter2 to adapter1
+		adapter2.watchAll(function (value, name) {
+			forwarder(adapter1, value, name);
+		});
+
+		// start forwarding
+		resumeForwarding();
 
 	};
 

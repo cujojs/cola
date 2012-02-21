@@ -31,10 +31,6 @@ define(function(require) {
 
 		this._itemNode = itemNode;
 
-		if (itemNode.parentNode) {
-			itemNode.parentNode.removeChild(itemNode);
-		}
-
 		// list of sorted data items
 		this._items = [];
 
@@ -42,30 +38,26 @@ define(function(require) {
 
 	NodeListAdapter.prototype = {
 
-		watch: function (itemAdded, itemUpdated, itemRemoved) {
-			var unwatchAdded, unwatchUpdated, unwatchRemoved;
-			unwatchAdded = itemAdded ?
+		watch: function (add, remove) {
+			var unwatchAdd, unwatchRemove;
+			unwatchAdd = add ?
 				watchNode(this._containerNode, colaAddedEvent, function (evt) {
-					itemAdded(evt.data.item);
+					add(evt.data.item);
 				}) : noop;
-			unwatchUpdated = itemUpdated ?
-				watchNode(this._containerNode, colaUpdatedEvent, function (evt) {
-					itemUpdated(evt.data.item);
-				}) : noop;
-			unwatchRemoved = itemRemoved ?
+			unwatchRemove = remove ?
 				watchNode(this._containerNode, colaRemovedEvent, function (evt) {
-					itemRemoved(evt.data.item);
+					remove(evt.data.item);
 				}) : noop;
 			return function () {
-				unwatchAdded();
-				unwatchUpdated();
-				unwatchRemoved();
+				unwatchAdd();
+				unwatchRemove();
 			};
 		},
 
-		itemAdded: function (item) {
+		add: function (item) {
 			var node;
 			node = this._itemNode.cloneNode(true);
+			// TODO: make watchable and save unwatch
 			// insert into container
 			this._insertNodeAndItem(node, item);
 			// notify listeners
@@ -74,21 +66,8 @@ define(function(require) {
 			return node;
 		},
 
-		itemUpdated: function (item) {
-			var current, newIndex;
-			// find existing node, ignore sort since item changed
-			current = this._removeNodeAndItem(item, true, true);
-			// move node and item to another position
-			newIndex = this._insertNodeAndItem(current.node, item);
-			if (current.index != newIndex) {
-				// notify listeners
-				this._fireEvent(colaUpdatedEvent, item);
-			}
-			// return node only if we swapped it for another (and we didn't!)
-			// return current.node;
-		},
-
-		itemRemoved: function (item) {
+		remove: function (item) {
+			// TODO: unwatch
 			this._removeNodeAndItem(item);
 			// notify listeners
 			this._fireEvent(colaRemovedEvent, item);
@@ -106,6 +85,18 @@ define(function(require) {
 		 * @returns {Number} -1, 0, 1
 		 */
 		comparator: undef,
+
+		_initItemNode: function () {
+			var itemNode = this._itemNode;
+			// remove from document
+			if (itemNode.parentNode) {
+				itemNode.parentNode.removeChild(itemNode);
+			}
+			// remove id because we're going to duplicate
+			if (itemNode.id) {
+				itemNode.id = '';
+			}
+		},
 
 		_fireEvent: function (type, item) {
 			fireSimpleEvent(this._containerNode, type, { item: item });
@@ -165,7 +156,6 @@ define(function(require) {
 
 	colaAddedEvent = '-cola-item-added';
 	colaRemovedEvent = '-cola-item-removed';
-	colaUpdatedEvent = '-cola-item-updated';
 
 	/**
 	 * This binary search isn't quite like most because it also

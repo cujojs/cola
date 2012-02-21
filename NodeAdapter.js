@@ -86,7 +86,7 @@ define(function (require) {
 		 * @param name {String} the name of the changed property
 		 * @param value the value of the changed property
 		 */
-		propUpdated: function (name, value) {
+		set: function (name, value) {
 			var b, current;
 			b = this._getBindings(name);
 			current = getNodePropOrAttr(b.node, name);
@@ -192,7 +192,7 @@ define(function (require) {
 			events = [];
 		}
 
-		// add an event for notifying from the propUpdated() method
+		// add an event for notifying from the set() method
 		events.push(colaSyntheticEvent);
 
 		// create unwatchers

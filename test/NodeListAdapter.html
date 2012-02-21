@@ -53,7 +53,7 @@ require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
 		}
 	]);
 	doh.register('events', [
-		function itemAdded (doh) {
+		function add (doh) {
 			var node, item, adapted, dfd;
 			init();
 			node = itemNode;
@@ -66,10 +66,10 @@ require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
 					dfd.callback(addedItem == item);
 				}
 			);
-			adapted.itemAdded(item);
+			adapted.add(item);
 			return dfd;
 		},
-		function itemUpdated (doh) {
+		function remove (doh) {
 			var node, item, adapted, dfd;
 			init();
 			node = itemNode;
@@ -77,36 +77,14 @@ require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
 			adapted.comparator = compareById;
 			dfd = new doh.Deferred();
 			item = { id: 1 };
-			adapted.itemAdded(item);
-			adapted.itemAdded({ id: 2 });
-			adapted.itemAdded({ id: 3 });
+			adapted.add(item);
 			adapted.watch(
-				null,
-				function (updatedItem) {
-					dfd.callback(updatedItem == item);
-				}
-			);
-			item.id = 5;
-			adapted.itemUpdated(item);
-			return dfd;
-		},
-		function itemRemoved (doh) {
-			var node, item, adapted, dfd;
-			init();
-			node = itemNode;
-			adapted = new NodeListAdapter(node);
-			adapted.comparator = compareById;
-			dfd = new doh.Deferred();
-			item = { id: 1 };
-			adapted.itemAdded(item);
-			adapted.watch(
-				null,
 				null,
 				function (removedItem) {
 					dfd.callback(removedItem == item);
 				}
 			);
-			adapted.itemRemoved(item)
+			adapted.remove(item)
 			return dfd;
 		}
 	]);

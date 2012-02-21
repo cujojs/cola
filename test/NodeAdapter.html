@@ -74,7 +74,7 @@ require(['cola/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 			simulateEvent(first, 'click');
 			return dfd;
 		},
-		function propUpdated (doh) {
+		function set (doh) {
 			var node, first, adapted, dfd;
 			node = getNode('test');
 			init();
@@ -88,7 +88,7 @@ require(['cola/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 			adapted.watchAll(function (name, value) {
 				dfd.callback(node.elements.last.value == 'Astaire');
 			});
-			adapted.propUpdated('last', 'Astaire');
+			adapted.set('last', 'Astaire');
 			return dfd;
 		}
 	]);
