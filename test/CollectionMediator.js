@@ -1,20 +1,19 @@
 (function(buster, createCollectionMediator) {
-
+"use strict";
 var assert, refute;
 
 assert = buster.assert;
 refute = buster.refute;
 
 /**
- * Create a mock collection adapter that has itemAdded(), itemUpdated(), and
- * itemRemoved() methods that forcibly invoke the watch callbacks
+ * Create a mock collection adapter that has add() and remove()
+ * methods that forcibly invoke the watch callbacks
  */
 function mockAdapter() {
 	return {
-		watch: function(itemAdded, itemUpdated, itemRemoved) {
-			this.itemAdded = itemAdded;
-			this.itemUpdated = itemUpdated;
-			this.itemRemoved = itemRemoved;
+		watch: function(add, remove) {
+			this.add = add;
+			this.remove = remove;
 		}
 	}
 }
@@ -28,9 +27,8 @@ buster.testCase('CollectionMediator', {
 		setUp: function() {
 			function setupMockAdapter(spies) {
 				var ma = mockAdapter();
-				ma.itemAdded   = spies.spy();
-				ma.itemUpdated = spies.spy();
-				ma.itemRemoved = spies.spy();
+				ma.add   = spies.spy();
+				ma.remove = spies.spy();
 
 				return ma;
 			}
@@ -38,64 +36,40 @@ buster.testCase('CollectionMediator', {
 			this.adapter2 = setupMockAdapter(this);
 		},
 
-		'should forward itemAdded from adapter1 to adapter2': function() {
+		'should forward add from adapter1 to adapter2': function() {
 			createCollectionMediator(this.adapter1, this.adapter2);
 
-			this.adapter1.itemAdded(item);
+			this.adapter1.add(item);
 
-			assert.calledOnceWith(this.adapter2.itemAdded, item);
-			refute.called(this.adapter2.itemUpdated);
-			refute.called(this.adapter2.itemRemoved);
+			assert.calledOnceWith(this.adapter2.add, item);
+			refute.called(this.adapter2.remove);
 		},
 
-		'should forward itemAdded from adapter2 to adapter1': function() {
+		'should forward add from adapter2 to adapter1': function() {
 			createCollectionMediator(this.adapter1, this.adapter2);
 
-			this.adapter2.itemAdded(item);
+			this.adapter2.add(item);
 
-			assert.calledOnceWith(this.adapter1.itemAdded, item);
-			refute.called(this.adapter1.itemUpdated);
-			refute.called(this.adapter1.itemRemoved);
+			assert.calledOnceWith(this.adapter1.add, item);
+			refute.called(this.adapter1.remove);
 		},
 
-		'should forward itemUpdated from adapter1 to adapter2': function() {
+		'should forward remove from adapter1 to adapter2': function() {
 			createCollectionMediator(this.adapter1, this.adapter2);
 
-			this.adapter1.itemUpdated(item);
+			this.adapter1.remove(item);
 
-			assert.calledOnceWith(this.adapter2.itemUpdated, item);
-			refute.called(this.adapter2.itemAdded);
-			refute.called(this.adapter2.itemRemoved);
+			assert.calledOnceWith(this.adapter2.remove, item);
+			refute.called(this.adapter2.add);
 		},
 
-		'should forward itemUpdated from adapter2 to adapter1': function() {
+		'should forward remove from adapter2 to adapter1': function() {
 			createCollectionMediator(this.adapter1, this.adapter2);
 
-			this.adapter2.itemUpdated(item);
+			this.adapter2.remove(item);
 
-			assert.calledOnceWith(this.adapter1.itemUpdated, item);
-			refute.called(this.adapter1.itemAdded);
-			refute.called(this.adapter1.itemRemoved);
-		},
-
-		'should forward itemRemoved from adapter1 to adapter2': function() {
-			createCollectionMediator(this.adapter1, this.adapter2);
-
-			this.adapter1.itemRemoved(item);
-
-			assert.calledOnceWith(this.adapter2.itemRemoved, item);
-			refute.called(this.adapter2.itemAdded);
-			refute.called(this.adapter2.itemUpdated);
-		},
-
-		'should forward itemRemoved from adapter2 to adapter1': function() {
-			createCollectionMediator(this.adapter1, this.adapter2);
-
-			this.adapter2.itemRemoved(item);
-
-			assert.calledOnceWith(this.adapter1.itemRemoved, item);
-			refute.called(this.adapter1.itemAdded);
-			refute.called(this.adapter1.itemUpdated);
+			assert.calledOnceWith(this.adapter1.remove, item);
+			refute.called(this.adapter1.add);
 		}
 	},
 
@@ -104,7 +78,7 @@ buster.testCase('CollectionMediator', {
 
 		},
 
-		'// should not allow cycles when forwarding itemAdded': function() {
+		'// should not allow cycles when forwarding add': function() {
 
 		},
 
@@ -112,7 +86,7 @@ buster.testCase('CollectionMediator', {
 
 		},
 
-		'// should not allow cycles when forwarding itemRemoved': function() {
+		'// should not allow cycles when forwarding remove': function() {
 
 		}
 

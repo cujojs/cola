@@ -5,7 +5,7 @@ define(function(require) {
 
 	var methodsToForward, ObjectMediator;
 
-	methodsToForward = ['itemAdded', 'itemUpdated', 'itemRemoved'];
+	methodsToForward = ['add', 'remove'];
 
 	ObjectMediator = require('./SimpleMediator');
 

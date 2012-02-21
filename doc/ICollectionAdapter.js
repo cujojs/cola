@@ -53,7 +53,7 @@ ICollectionAdapter.prototype = {
 	 * @description After adding the item, this method fires an event
 	 * to listeners.
 	 */
-	itemAdded: function (item) {},
+	add: function (item) {},
 
 	/**
 	 * Indicates that an item in the collection should be removed.
@@ -66,35 +66,14 @@ ICollectionAdapter.prototype = {
 	 * only sorts will not work. After adding the item, this method fires
 	 * an event to listeners.
 	 */
-	itemRemoved: function (item) {},
+	remove: function (item) {},
 
 	/**
-	 * Indicates that an item in the collection has changed and likely
-	 * needs to be moved.
+	 * Stores callback functions for listening to add and remove calls.
 	 * @memberOf ICollectionAdapter
 	 *
-	 * @param item {Object} an adapted object with get(), set(), and watch()
-	 *
-	 * @returns {Object} a new unadapted object, if one was created. The
-	 * collection may not need to create a new object if it can reuse
-	 * the object it already has or can consume adapted objects directly.
-	 *
-	 * @description The particulars of what has changed is not communicated
-	 * in this method call. This is only an indication that an item of
-	 * interest has changed and has probably moved. The update of the
-	 * actual object has already happened.
-	 * this
-	 */
-	itemUpdated: function (item) {},
-
-	/**
-	 * Stores callback functions for listening to itemAdded, itemRemoved,
-	 * and itemUpdated events.
-	 * @memberOf ICollectionAdapter
-	 *
-	 * @param itemAdded {Function} function (item) {}
-	 * @param itemUpdated {Function} function (item) {}
-	 * @param itemRemoved {Function} function (item) {}
+	 * @param add {Function} function (item) {}
+	 * @param remove {Function} function (item) {}
 	 *
 	 * @returns {Function} function () {} a function to call to stop
 	 * listening.
@@ -102,7 +81,7 @@ ICollectionAdapter.prototype = {
 	 * @description No checks for recursion are made in the callbacks.
 	 * It is the job of a mediator to ensure that there are no cycles.
 	 */
-	watch: function (itemAdded, itemUpdated, itemRemoved) {}
+	watch: function (add, remove) {}
 
 };
 
