@@ -64,7 +64,7 @@ define(function (require) {
 			if(key in index) {
 				this._data[index[key]] = item;
 			} else {
-				throw new Error('ArrayAdapter: cannot update item', item);
+				throw new Error('ArrayAdapter: cannot update non-existent item', item);
 			}
 		},
 
@@ -84,6 +84,8 @@ define(function (require) {
 				this._index = {};
 
 				addAll(this, data);
+			} else {
+				throw new Error('ArrayAdapter: Cannot remove non-existent item', itemOrId);
 			}
 		}
 

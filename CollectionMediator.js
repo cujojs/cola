@@ -19,9 +19,9 @@ define(function() {
 	};
 
 	function createForwarder(method) {
-		function doForward(target, item, index) {
+		function doForward(target, item) {
 			this.forwardTo = noop;
-			target[method](item, index);
+			target[method](item);
 			this.forwardTo = doForward;
 		}
 
@@ -31,8 +31,8 @@ define(function() {
 	}
 
 	function createCallback(forwarder, to) {
-		return function(item, index) {
-			forwarder.forwardTo(to, item, index);
+		return function(item) {
+			forwarder.forwardTo(to, item);
 		}
 	}
 

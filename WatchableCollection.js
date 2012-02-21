@@ -43,15 +43,26 @@ define(function () {
 	}
 
 	function replaceMethod(collection, methodName, listeners) {
-		var orig = collection[methodName];
+		var orig, paused;
+
+		orig = collection[methodName];
+		paused = false;
 
 		if(typeof orig == 'function') {
 			collection[methodName] = function(item) {
-				// TODO: Should we catch exceptions from the original?
-				// I say no: let the original behave as it would have before we replaced it.
-				var result = orig.apply(collection, arguments);
+//				if(paused) return;
 
-				notify(listeners, item);
+				paused = true;
+
+				try {
+					// TODO: Should we catch exceptions from the original?
+					// I say no: let the original behave as it would have before we replaced it.
+					var result = orig.apply(collection, arguments);
+
+					notify(listeners, item);
+				} finally {
+					paused = false;
+				}
 
 				return result;
 			}
@@ -63,6 +74,7 @@ define(function () {
 			try {
 				callbacks[i](item);
 			} catch(e) {
+				console.error(e);
 				// TODO: Handle exceptions for itemAdded/itemUpdated/itemRemoved
 			}
 		}
