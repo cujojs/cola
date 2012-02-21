@@ -9,9 +9,23 @@ define(function(require) {
 
 	ObjectMediator = require('./SimpleMediator');
 
-	return function (adapter1, adapter2) {
+	/**
+	 * Sets up mediation between two collection adapters
+	 * @param adapter1 {Object} collection adapter
+	 * @param adapter2 {Object} collection adapter
+	 * @param options {Object} options
+	 * @param options.sync {Boolean} whether to immediately synchronize data from
+	 *   adapter1 to adapter2.  Default is true
+	 */
+	return function (adapter1, adapter2, options) {
 
 		var unwatch1, unwatch2, unwatchObjects;
+
+		if(!options) options = {};
+
+		if(!('sync' in options) || options.sync) {
+			adapter1.syncTo(adapter2);
+		}
 
 		unwatchObjects = createUnwatcher();
 		unwatch1 = initForwarding(adapter1, adapter2, unwatchObjects);
@@ -26,11 +40,9 @@ define(function(require) {
 
 	function createForwarder(method) {
 		function doForward(target, item, index) {
-			var newItem;
 			this.forwardTo = noop;
 			try {
-				newItem = target[method](item, index);
-				return newItem;
+				target[method](item, index);
 			} finally {
 				this.forwardTo = doForward;
 			}
@@ -43,13 +55,7 @@ define(function(require) {
 
 	function createCallback(forwarder, to) {
 		return function (item, index) {
-			var newItem;
-			newItem = forwarder.forwardTo(to, item, index);
-			// if the forwarded function created a related item, we
-			// mediate a relationship with the original item
-			if (newItem) {
-				forwarder.unwatcher.push(ObjectMediator(item, newItem));
-			}
+			forwarder.forwardTo(to, item, index);
 		}
 	}
 
