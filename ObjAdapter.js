@@ -31,7 +31,7 @@ define(function (require) {
 			return this._watchable.watch('*', callback);
 		},
 
-		set: function (name, value) {
+		propUpdated: function (name, value) {
 			// note: this has an intended side-effect: watchers will
 			// be notified.
 			this._watchable.set(name, value);
