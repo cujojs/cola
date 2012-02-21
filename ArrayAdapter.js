@@ -89,6 +89,10 @@ define(function (require) {
 
 	};
 
+	ArrayAdapter.canHandle = function(it) {
+		return it && Object.prototype.toString.call(it) == '[object Array]';
+	};
+
 	function defaultKeyFunc(item) {
 		return typeof item == 'object' ? item.id : item;
 	}

@@ -1,6 +1,6 @@
 (function(buster, ArrayAdapter) {
 
-var assert, refute;
+var assert, refute, undef;
 
 assert = buster.assert;
 refute = buster.refute;
@@ -12,6 +12,20 @@ function idComparator(a, b) {
 }
 
 buster.testCase('ArrayAdapter', {
+
+	'canHandle': {
+		'should return true for an Array': function() {
+			assert(ArrayAdapter.canHandle([]));
+		},
+
+		'should return false for a non-Array': function() {
+			refute(ArrayAdapter.canHandle(null));
+			refute(ArrayAdapter.canHandle(undef));
+			refute(ArrayAdapter.canHandle(0));
+			refute(ArrayAdapter.canHandle(true));
+			refute(ArrayAdapter.canHandle({ length: 1 }));
+		}
+	},
 
 	'itemAdded': {
 
