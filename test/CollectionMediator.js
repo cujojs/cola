@@ -11,6 +11,7 @@ refute = buster.refute;
  */
 function mockAdapter() {
 	return {
+		syncTo: function() {},
 		watch: function(add, remove) {
 			this.add = add;
 			this.remove = remove;
@@ -29,13 +30,21 @@ buster.testCase('CollectionMediator', {
 				var ma = {
 					watch: function() {}
 				};
-				ma.add   = spies.spy();
+				ma.syncTo = spies.spy();
+				ma.add    = spies.spy();
 				ma.remove = spies.spy();
 
 				return ma;
 			}
 			this.sendingAdapter = mockAdapter();
 			this.receivingAdapter = setupMockAdapter(this);
+		},
+
+		'should sync existing items to receiver on creation': function() {
+			this.sendingAdapter.syncTo = this.spy();
+			createCollectionMediator(this.sendingAdapter, this.receivingAdapter);
+
+			assert.calledOnceWith(this.sendingAdapter.syncTo, this.receivingAdapter);
 		},
 
 		'should forward itemAdded from sender to receiver': function() {

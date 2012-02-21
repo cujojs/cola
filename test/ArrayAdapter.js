@@ -60,13 +60,36 @@ buster.testCase('ArrayAdapter', {
 				{ id: 1 }, { id: 2 }
 			], idComparator);
 
-			pa.watch(null, null, function(item) {
+			pa.watch(null, function(item) {
 				assert.equals(item.id, 1);
 				done();
 			});
 
 			pa.remove({ id: 1 });
 		}
+	},
+
+	'syncTo': {
+
+		'should propagate all items from source to destination adapter': function() {
+			var src, dst, itemAdded;
+
+			src = new ArrayAdapter([
+				{ id: 1 }, { id: 2 }
+			], idComparator);
+
+			itemAdded = this.spy();
+
+			dst = new ArrayAdapter();
+			dst.watch(itemAdded, null);
+
+			src.syncTo(dst);
+
+			assert.calledTwice(itemAdded);
+			assert.calledWith(itemAdded, { id: 1 });
+			assert.calledWith(itemAdded, { id: 2 });
+		}
+
 	}
 });
 })(
