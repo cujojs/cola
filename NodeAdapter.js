@@ -104,7 +104,6 @@ define(function (require) {
 		 * @returns {Object} {
 		 *     node: aNode,
 		 *     prop: 'aProp',
-		 *     attr: 'anAttr', // optional
 		 *     events: 'event1,event2' // optional
 		 * }
 		 */
