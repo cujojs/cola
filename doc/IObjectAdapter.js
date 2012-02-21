@@ -37,7 +37,7 @@ IObjectAdapter.prototype = {
 	 * @param name {String} the name of the changed property
 	 * @param value the value of the changed property
 	 */
-	propUpdated: function (name, value) {}
+	set: function (name, value) {}
 
 };
 
