@@ -4,7 +4,7 @@
 define(function () {
 "use strict";
 
-	return function mediate (adapter1, adapter2) {
+	return function mediate (adapter1, adapter2, options) {
 
 		/*
 		 Assumes adapter1 and adapter2 have their bindings already.
@@ -44,6 +44,10 @@ define(function () {
 
 		// start forwarding
 		resumeForwarding();
+
+		if (!options || options.sync !== false) {
+			adapter1.syncTo(adapter2)
+		}
 
 		return function unwatch () {
 			unwatch1();
