@@ -37,7 +37,14 @@ IObjectAdapter.prototype = {
 	 * @param name {String} the name of the changed property
 	 * @param value the value of the changed property
 	 */
-	set: function (name, value) {}
+	set: function (name, value) {},
+
+	/**
+	 * Pushes data to the other adapter by calling set() for each
+	 * property on this adapter's object.
+	 * @param adapter {IObjectAdapter}
+	 */
+	syncTo: function (adapter) {}
 
 };
 
