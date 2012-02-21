@@ -81,7 +81,14 @@ ICollectionAdapter.prototype = {
 	 * @description No checks for recursion are made in the callbacks.
 	 * It is the job of a mediator to ensure that there are no cycles.
 	 */
-	watch: function (add, remove) {}
+	watch: function (add, remove) {},
+
+	/**
+	 * Pushes data to the other adapter by calling add() for each
+	 * item in this adapter's collection/list.
+	 * @param adapter {ICollectionAdapter}
+	 */
+	syncTo: function (adapter) {}
 
 };
 
