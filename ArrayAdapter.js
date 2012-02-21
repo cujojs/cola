@@ -64,7 +64,6 @@ define(function (require) {
 			if(key in index) {
 				this._data[index[key]] = item;
 			} else {
-				console.log(item);
 				throw new Error('ArrayAdapter: cannot update item', item);
 			}
 		},

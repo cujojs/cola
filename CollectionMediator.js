@@ -3,7 +3,7 @@
 (function(define) {
 define(function() {
 
-	var methodsToForward = ['add', 'update', 'remove'];
+	var methodsToForward = ['itemAdded', 'itemUpdated', 'itemRemoved'];
 
 	return function(adapter1, adapter2) {
 

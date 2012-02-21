@@ -49,7 +49,11 @@ define(function () {
 			collection[methodName] = function(item) {
 				var result = orig.apply(collection, arguments);
 
-				notify(listeners, item);
+				try {
+					notify(listeners, item);
+				} catch(e) {
+					// TODO: Handle exceptions for itemAdded/itemUpdated/itemRemoved
+				}
 
 				return result;
 			}

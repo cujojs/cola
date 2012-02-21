@@ -12,9 +12,18 @@ refute = buster.refute;
 function mockAdapter() {
 	return {
 		watch: function(itemAdded, itemUpdated, itemRemoved) {
-			this.add = itemAdded;
-			this.update = itemUpdated;
-			this.remove = itemRemoved;
+			this._itemAdded = itemAdded;
+			this._itemUpdated = itemUpdated;
+			this._itemRemoved = itemRemoved;
+		},
+		itemAdded: function(item) {
+			return this._itemAdded(item);
+		},
+		itemUpdated: function(item) {
+			return this._itemUpdated(item);
+		},
+		itemRemoved: function(item) {
+			return this._itemRemoved(item);
 		}
 	}
 }
@@ -27,75 +36,77 @@ buster.testCase('CollectionMediator', {
 
 		setUp: function() {
 			function setupMockAdapter(spies) {
-				var ma = mockAdapter();
+				var ma = {
+					watch: function() {}
+				};
 				ma.itemAdded   = spies.spy();
 				ma.itemUpdated = spies.spy();
 				ma.itemRemoved = spies.spy();
 
 				return ma;
 			}
-			this.adapter1 = setupMockAdapter(this);
-			this.adapter2 = setupMockAdapter(this);
+			this.sendingAdapter = mockAdapter();
+			this.receivingAdapter = setupMockAdapter(this);
 		},
 
-		'should forward itemAdded from adapter1 to adapter2': function() {
-			createCollectionMediator(this.adapter1, this.adapter2);
+		'should forward itemAdded from sender to receiver': function() {
+			createCollectionMediator(this.sendingAdapter, this.receivingAdapter);
 
-			this.adapter1.add(item);
+			this.sendingAdapter.itemAdded(item);
 
-			assert.calledOnceWith(this.adapter2.itemAdded, item);
-			refute.called(this.adapter2.itemUpdated);
-			refute.called(this.adapter2.itemRemoved);
+			assert.calledOnceWith(this.receivingAdapter.itemAdded, item);
+			refute.called(this.receivingAdapter.itemUpdated);
+			refute.called(this.receivingAdapter.itemRemoved);
 		},
 
-		'should forward itemAdded from adapter2 to adapter1': function() {
-			createCollectionMediator(this.adapter1, this.adapter2);
+		'should forward itemAdded from sender to receiver reversed': function() {
+			createCollectionMediator(this.receivingAdapter, this.sendingAdapter);
 
-			this.adapter2.add(item);
+			this.sendingAdapter.itemAdded(item);
 
-			assert.calledOnceWith(this.adapter1.itemAdded, item);
-			refute.called(this.adapter1.itemUpdated);
-			refute.called(this.adapter1.itemRemoved);
+			assert.calledOnceWith(this.receivingAdapter.itemAdded, item);
+			refute.called(this.receivingAdapter.itemUpdated);
+			refute.called(this.receivingAdapter.itemRemoved);
 		},
 
-		'should forward itemUpdated from adapter1 to adapter2': function() {
-			createCollectionMediator(this.adapter1, this.adapter2);
+		'should forward itemUpdated from sendingAdapter to receivingAdapter': function() {
+			createCollectionMediator(this.sendingAdapter, this.receivingAdapter);
 
-			this.adapter1.update(item);
+			this.sendingAdapter.itemUpdated(item);
 
-			assert.calledOnceWith(this.adapter2.itemUpdated, item);
-			refute.called(this.adapter2.itemAdded);
-			refute.called(this.adapter2.itemRemoved);
+			assert.calledOnceWith(this.receivingAdapter.itemUpdated, item);
+			refute.called(this.receivingAdapter.itemAdded);
+			refute.called(this.receivingAdapter.itemRemoved);
 		},
 
-		'should forward itemUpdated from adapter2 to adapter1': function() {
-			createCollectionMediator(this.adapter1, this.adapter2);
+		'should forward itemUpdated from sendingAdapter to receivingAdapter reversed': function() {
+			createCollectionMediator(this.receivingAdapter, this.sendingAdapter);
 
-			this.adapter2.update(item);
+			this.sendingAdapter.itemUpdated(item);
 
-			assert.calledOnceWith(this.adapter1.itemUpdated, item);
-			refute.called(this.adapter1.itemAdded);
-			refute.called(this.adapter1.itemRemoved);
+			assert.calledOnceWith(this.receivingAdapter.itemUpdated, item);
+			refute.called(this.receivingAdapter.itemAdded);
+			refute.called(this.receivingAdapter.itemRemoved);
 		},
 
-		'should forward itemRemoved from adapter1 to adapter2': function() {
-			createCollectionMediator(this.adapter1, this.adapter2);
+		'should forward itemRemoved from sendingAdapter to receivingAdapter': function() {
+			createCollectionMediator(this.sendingAdapter, this.receivingAdapter);
 
-			this.adapter1.remove(item);
+			this.sendingAdapter.itemRemoved(item);
 
-			assert.calledOnceWith(this.adapter2.itemRemoved, item);
-			refute.called(this.adapter2.itemAdded);
-			refute.called(this.adapter2.itemUpdated);
+			assert.calledOnceWith(this.receivingAdapter.itemRemoved, item);
+			refute.called(this.receivingAdapter.itemAdded);
+			refute.called(this.receivingAdapter.itemUpdated);
 		},
 
-		'should forward itemRemoved from adapter2 to adapter1': function() {
-			createCollectionMediator(this.adapter1, this.adapter2);
+		'should forward itemRemoved from sendingAdapter to receivingAdapter reversed': function() {
+			createCollectionMediator(this.receivingAdapter, this.sendingAdapter);
 
-			this.adapter2.remove(item);
+			this.sendingAdapter.itemRemoved(item);
 
-			assert.calledOnceWith(this.adapter1.itemRemoved, item);
-			refute.called(this.adapter1.itemAdded);
-			refute.called(this.adapter1.itemUpdated);
+			assert.calledOnceWith(this.receivingAdapter.itemRemoved, item);
+			refute.called(this.receivingAdapter.itemAdded);
+			refute.called(this.receivingAdapter.itemUpdated);
 		}
 	},
 
