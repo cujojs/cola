@@ -26,9 +26,8 @@ define(function () {
 			}
 		};
 
-		replaceMethod(collection, 'itemAdded', added);
-		replaceMethod(collection, 'itemUpdated', updated);
-		replaceMethod(collection, 'itemRemoved', removed);
+		replaceMethod(collection, 'add', added);
+		replaceMethod(collection, 'remove', removed);
 
 		return collection;
 	}
@@ -50,7 +49,7 @@ define(function () {
 
 		if(typeof orig == 'function') {
 			collection[methodName] = function(item) {
-//				if(paused) return;
+				if(paused) return;
 
 				paused = true;
 
@@ -74,7 +73,6 @@ define(function () {
 			try {
 				callbacks[i](item);
 			} catch(e) {
-				console.error(e);
 				// TODO: Handle exceptions for itemAdded/itemUpdated/itemRemoved
 			}
 		}

@@ -9,21 +9,25 @@ buster.testCase('WatchableCollection', {
 	setUp: function() {
 		// Create spy callbacks we can use as WatchableCollection callbacks
 		this.itemAdded   = this.spy();
-		this.itemUpdated = this.spy();
 		this.itemRemoved = this.spy();
 
 		this.collection = {
-			add: function() {
-				return this.addResult;
+			add: function(item) {
+				if(this.exception) {
+					throw new Error();
+				}
+
+				return item;
 			},
 
-			remove: function() {
-				return this.removeResult;
-			},
+			remove: function(item) {
+				if(this.exception) {
+					throw new Error();
+				}
 
-			update: function() {
-				return this.updateResult;
+				return item;
 			}
+
 		};
 
 		this.watchable = makeWatchable(this.collection);
@@ -36,18 +40,30 @@ buster.testCase('WatchableCollection', {
 		'should notify with item when an item is added': function() {
 			var item = { id: 1 };
 
-			this.collection.addResult = 1;
 			this.watchable.add(item);
 
 			assert.calledWith(this.itemAdded, item);
-			refute.called(this.itemUpdated);
+			refute.called(this.itemRemoved);
+		},
+
+		'should not notify when an existing item is added': function() {
+			var item = { id: 1 };
+			this.watchable.add(item);
+
+			// The exception doesn't matter here, what matters is that
+			// itemAdded/Removed callbacks are not called
+			this.collection.exception = true;
+			try {
+				this.watchable.add(item);
+			} catch(e) {}
+
+			assert.calledOnce(this.itemAdded);
 			refute.called(this.itemRemoved);
 		},
 
 		'should not notify after callbacks are removed': function() {
 			var item = { id: 1 };
 
-			this.collection.addResult = 1;
 			this.watchable.add(item);
 			assert.calledOnce(this.itemAdded);
 
@@ -59,62 +75,20 @@ buster.testCase('WatchableCollection', {
 
 	},
 
-	'update': {
-
-		'should notify with item when an item is updated': function() {
-			var item = { id: 1 };
-
-			this.collection.updateResult = 1;
-			this.watchable.update(item);
-
-			assert.calledWith(this.itemUpdated, item);
-			refute.called(this.itemAdded);
-			refute.called(this.itemRemoved);
-		},
-
-		'should not notify after callbacks are removed': function() {
-			var item = { id: 1 };
-
-			this.collection.updateResult = 1;
-			this.watchable.update(item);
-			assert.calledOnce(this.itemUpdated);
-
-			this.removeCallbacks();
-
-			this.watchable.update(item);
-			refute.calledTwice(this.itemUpdated);
-		},
-
-		'should not notify when a non-existent item is updated': function() {
-			var item = { id: 1 };
-
-			this.collection.updateResult = -1;
-			this.watchable.update(item);
-
-			refute.called(this.itemAdded);
-			refute.called(this.itemUpdated);
-			refute.called(this.itemRemoved);
-		}
-
-	},
-
 	'remove': {
 
 		'should notify with item when an item is removed': function() {
 			var item = { id: 1 };
 
-			this.collection.removeResult = 1;
 			this.watchable.remove(item);
 
 			assert.calledWith(this.itemRemoved, item);
 			refute.called(this.itemAdded);
-			refute.called(this.itemUpdated);
 		},
 
 		'should not notify after callbacks are removed': function() {
 			var item = { id: 1 };
 
-			this.collection.removeResult = 1;
 			this.watchable.remove(item);
 			assert.calledOnce(this.itemRemoved);
 
@@ -127,11 +101,14 @@ buster.testCase('WatchableCollection', {
 		'should not notify when a non-existent item is removed': function() {
 			var item = { id: 1 };
 
-			this.collection.removeResult = -1;
-			this.watchable.remove(item);
+			// The exception doesn't matter here, what matters is that
+			// itemAdded/Removed callbacks are not called
+			this.collection.exception = true;
+			try {
+				this.watchable.remove(item);
+			} catch(e) {}
 
 			refute.called(this.itemAdded);
-			refute.called(this.itemUpdated);
 			refute.called(this.itemRemoved);
 		}
 

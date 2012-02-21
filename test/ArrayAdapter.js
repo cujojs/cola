@@ -27,19 +27,18 @@ buster.testCase('ArrayAdapter', {
 		}
 	},
 
-	'itemAdded': {
+	'add': {
 
-		'should add new items': function(done) {
+		'should add new items': function() {
 			var pa = new ArrayAdapter([
 				{ id: 1 }
 			], idComparator);
 
 			pa.watch(function(item) {
 				assert.equals(item.id, 2);
-				done();
 			});
 
-			pa.itemAdded({ id: 2 });
+			pa.add({ id: 2 });
 		},
 
 		'should throw when adding an item that already exists': function() {
@@ -48,13 +47,13 @@ buster.testCase('ArrayAdapter', {
 			], idComparator);
 
 			assert.exception(function() {
-				pa.itemAdded({ id: 1 });
+				pa.add({ id: 1 });
 			}, 'Error');
 		}
 
 	},
 
-	'itemRemoved': {
+	'remove': {
 
 		'should remove items': function(done) {
 			var pa = new ArrayAdapter([
@@ -66,35 +65,8 @@ buster.testCase('ArrayAdapter', {
 				done();
 			});
 
-			pa.itemRemoved({ id: 1 });
+			pa.remove({ id: 1 });
 		}
-	},
-
-	'itemUpdate': {
-
-		'should update an item with the same key': function() {
-			var pa = new ArrayAdapter([
-				{ id: 1, val: 1 }
-			], idComparator);
-
-			pa.watch(null, function(item) {
-				assert.equals(item.id, 1);
-				assert.equals(item.val, 2);
-			});
-
-			pa.itemUpdated({ id: 1, val: 2 });
-		},
-
-		'should not add or update an item with a non-existent key': function() {
-			var pa = new ArrayAdapter([
-				{ id: 1, val: 1 }
-			], idComparator);
-
-			assert.exception(function() {
-				pa.itemUpdated({ id: 2, val: 2 });
-			});
-		}
-
 	}
 });
 })(
