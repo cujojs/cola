@@ -44,15 +44,18 @@ define(function(require) {
 
 		watch: function (itemAdded, itemUpdated, itemRemoved) {
 			var unwatchAdded, unwatchUpdated, unwatchRemoved;
-			unwatchAdded = watchNode(this._containerNode, colaAddedEvent, function (evt) {
-				itemAdded(evt.data.item);
-			});
-			unwatchUpdated = watchNode(this._containerNode, colaUpdatedEvent, function (evt) {
-				itemUpdated(evt.data.item);
-			});
-			unwatchRemoved = watchNode(this._containerNode, colaRemovedEvent, function (evt) {
-				itemRemoved(evt.data.item);
-			});
+			unwatchAdded = itemAdded ?
+				watchNode(this._containerNode, colaAddedEvent, function (evt) {
+					itemAdded(evt.data.item);
+				}) : noop;
+			unwatchUpdated = itemUpdated ?
+				watchNode(this._containerNode, colaUpdatedEvent, function (evt) {
+					itemUpdated(evt.data.item);
+				}) : noop;
+			unwatchRemoved = itemRemoved ?
+				watchNode(this._containerNode, colaRemovedEvent, function (evt) {
+					itemRemoved(evt.data.item);
+				}) : noop;
 			return function () {
 				unwatchAdded();
 				unwatchUpdated();
@@ -74,7 +77,7 @@ define(function(require) {
 		itemUpdated: function (item) {
 			var current, newIndex;
 			// find existing node, ignore sort since item changed
-			current = this._removeNodeAndItem(item, true);
+			current = this._removeNodeAndItem(item, true, true);
 			// move node and item to another position
 			newIndex = this._insertNodeAndItem(current.node, item);
 			if (current.index != newIndex) {
@@ -109,18 +112,24 @@ define(function(require) {
 		},
 
 		_insertNodeAndItem: function (node, item) {
-			var index;
+			var index, parent, refNode;
 			if (typeof this.comparator != 'function') {
 				throw createError('NodeListAdapter: Cannot insert without a comparator.', item);
 			}
 			index = findSortedIndex(item, this._items, this.comparator);
 			this._items.splice(index, 0, item);
-			parent.insertBefore(node, parent.childNodes[index]);
+			parent = this._containerNode;
+			refNode = parent.childNodes[index];
+			// Firefox cries when you try to insert before yourself
+			// which can happen if we're moving into the same position.
+			if (node != refNode) {
+				parent.insertBefore(node, refNode);
+			}
 			return index;
 		},
 
-		_removeNodeAndItem: function (item, ignoreSort) {
-			var node, index = -1;
+		_removeNodeAndItem: function (item, ignoreSort, dontRemoveNode) {
+			var node, index = -1, parent;
 			if (typeof this.comparator != 'function') {
 				throw createError('NodeListAdapter: Cannot remove without a comparator.', item);
 			}
@@ -136,7 +145,9 @@ define(function(require) {
 				throw createError('NodeListAdapter: Cannot remove item.', item);
 			}
 			this._items.splice(index, 1);
-			node = this._containerNode.removeChild(this._containerNode.childNodes[index]);
+			parent = this._containerNode;
+			node = parent.childNodes[index];
+			if (!dontRemoveNode) parent.removeChild(node);
 			return {
 				index: index,
 				node: node
@@ -174,14 +185,13 @@ define(function(require) {
 		min = -1;
 		max = list.length;
 
-		do {
+		while ((max - min > 1) && compare != 0) {
+			mid = Math.round((min + max) / 2);
+			compare = comparator(item, list[mid]);
 			// don't use mid +/- 1 or we may miss in-between
 			if (compare > 0) min = mid;
 			else if (compare < 0) max = mid;
-			mid = Math.round((min + max) / 2);
-			compare = comparator(item, list[mid]);
 		}
-		while ((max - min > 1) && compare != 0);
 
 		// compare will be non-zero if we ended up between two existing items
 		return compare > 0 ? max : mid;
@@ -201,15 +211,13 @@ define(function(require) {
 		return i;
 	}
 
-	function identityComparator (a, b) {
-		return a == b ? 0 : -1;
-	}
-
 	function createError(message, data) {
 		var error = new Error(message);
 		error.data = data;
 		return error;
 	}
+
+	function noop () {}
 
 	return NodeListAdapter;
 
