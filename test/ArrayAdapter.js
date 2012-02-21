@@ -40,6 +40,16 @@ buster.testCase('ArrayAdapter', {
 			});
 
 			pa.itemAdded({ id: 2 });
+		},
+
+		'should throw when adding an item that already exists': function() {
+			var pa = new ArrayAdapter([
+				{ id: 1 }
+			], idComparator);
+
+			assert.exception(function() {
+				pa.itemAdded({ id: 1 });
+			}, 'Error');
 		}
 
 	},
