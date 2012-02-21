@@ -28,6 +28,8 @@ require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
 		}
 	}
 
+	function compareById (a, b) { return a.id - b.id; };
+
 	function init () {
 		// this function has to run to ensure that the browser hasn't
 		// attempted to preserve form values across a browser reload
@@ -56,7 +58,7 @@ require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
 			init();
 			node = itemNode;
 			adapted = new NodeListAdapter(node);
-			adapted.comparator = function (a, b) { return a == b ? 0 : -1; };
+			adapted.comparator = compareById;
 			dfd = new doh.Deferred();
 			item = { id: 1 };
 			adapted.watch(
@@ -72,9 +74,7 @@ require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
 			init();
 			node = itemNode;
 			adapted = new NodeListAdapter(node);
-			adapted.comparator = function (a, b) {
-				return a.id - b.id;
-			};
+			adapted.comparator = compareById;
 			dfd = new doh.Deferred();
 			item = { id: 1 };
 			adapted.itemAdded(item);
@@ -95,7 +95,7 @@ require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
 			init();
 			node = itemNode;
 			adapted = new NodeListAdapter(node);
-			adapted.comparator = function (a, b) { return a == b ? 0 : -1; };
+			adapted.comparator = compareById;
 			dfd = new doh.Deferred();
 			item = { id: 1 };
 			adapted.itemAdded(item);
