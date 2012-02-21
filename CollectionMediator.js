@@ -1,28 +1,36 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
 (function(define) {
-define(function() {
+define(function(require) {
 
-	var methodsToForward = ['add', 'update', 'remove'];
+	var methodsToForward, ObjectMediator;
 
-	return function(adapter1, adapter2) {
+	methodsToForward = ['itemAdded', 'itemUpdated', 'itemRemoved'];
 
-		var unwatch1, unwatch2;
+	ObjectMediator = require('./SimpleMediator');
 
-		unwatch1 = initForwarding(adapter1, adapter2);
-		unwatch2 = initForwarding(adapter2, adapter1);
+	return function (adapter1, adapter2) {
 
-		return function() {
+		var unwatch1, unwatch2, unwatchObjects;
+
+		unwatchObjects = createUnwatcher();
+		unwatch1 = initForwarding(adapter1, adapter2, unwatchObjects);
+		unwatch2 = initForwarding(adapter2, adapter1, unwatchObjects);
+
+		return function () {
 			unwatch1();
 			unwatch2();
+			unwatchObjects();
 		};
 	};
 
 	function createForwarder(method) {
 		function doForward(target, item, index) {
+			var newItem;
 			this.forwardTo = noop;
-			target[method](item, index);
+			newItem = target[method](item, index);
 			this.forwardTo = doForward;
+			return newItem;
 		}
 
 		return {
@@ -31,22 +39,41 @@ define(function() {
 	}
 
 	function createCallback(forwarder, to) {
-		return function(item, index) {
-			forwarder.forwardTo(to, item, index);
+		return function (item, index) {
+			var newItem;
+			newItem = forwarder.forwardTo(to, item, index);
+			// if the forwarded function created a related item, we
+			// mediate a relationship with the original item
+			if (newItem) {
+				forwarder.unwatcher.push(ObjectMediator(item, newItem));
+			}
 		}
 	}
 
-	function initForwarding(from, to) {
+	function initForwarding(from, to, itemUnwatcher) {
 		var forwarder, callbacks, i, len;
 
-
 		callbacks = [];
-		for(i = 0, len = methodsToForward.length; i < len; i++) {
+		for (i = 0, len = methodsToForward.length; i < len; i++) {
 			forwarder = createForwarder(methodsToForward[i]);
+			forwarder.unwatcher = itemUnwatcher;
 			callbacks.push(createCallback(forwarder, to));
 		}
 
 		return from.watch.apply(from, callbacks);
+	}
+
+	function createUnwatcher() {
+		var unwatchers;
+		unwatchers = [];
+		function unwatchAll() {
+			var unwatch;
+			while ((unwatch = unwatchers.pop())) unwatch();
+		}
+		unwatchAll.push = function addUnwatcher(unwatcher) {
+			unwatchers.push(unwatcher);
+		};
+		return unwatchAll;
 	}
 
 	function noop() {}
@@ -55,5 +82,5 @@ define(function() {
 }(
 	typeof define == 'function'
 		? define
-		: function(factory) { module.exports = factory(); }
+		: function(factory) { module.exports = factory(require); }
 ));
