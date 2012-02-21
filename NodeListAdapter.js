@@ -31,10 +31,6 @@ define(function(require) {
 
 		this._itemNode = itemNode;
 
-		if (itemNode.parentNode) {
-			itemNode.parentNode.removeChild(itemNode);
-		}
-
 		// list of sorted data items
 		this._items = [];
 
@@ -106,6 +102,18 @@ define(function(require) {
 		 * @returns {Number} -1, 0, 1
 		 */
 		comparator: undef,
+
+		_initItemNode: function () {
+			var itemNode = this._itemNode;
+			// remove from document
+			if (itemNode.parentNode) {
+				itemNode.parentNode.removeChild(itemNode);
+			}
+			// remove id because we're going to duplicate
+			if (itemNode.id) {
+				itemNode.id = '';
+			}
+		},
 
 		_fireEvent: function (type, item) {
 			fireSimpleEvent(this._containerNode, type, { item: item });
