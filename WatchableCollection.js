@@ -47,13 +47,11 @@ define(function () {
 
 		if(typeof orig == 'function') {
 			collection[methodName] = function(item) {
+				// TODO: Should we catch exceptions from the original?
+				// I say no: let the original behave as it would have before we replaced it.
 				var result = orig.apply(collection, arguments);
 
-				try {
-					notify(listeners, item);
-				} catch(e) {
-					// TODO: Handle exceptions for itemAdded/itemUpdated/itemRemoved
-				}
+				notify(listeners, item);
 
 				return result;
 			}
@@ -62,7 +60,11 @@ define(function () {
 
 	function notify(callbacks, item) {
 		for(var i = 0, len = callbacks.length; i < len; i++) {
-			callbacks[i](item);
+			try {
+				callbacks[i](item);
+			} catch(e) {
+				// TODO: Handle exceptions for itemAdded/itemUpdated/itemRemoved
+			}
 		}
 	}
 
