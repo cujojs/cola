@@ -98,6 +98,14 @@ define(function (require) {
 			}
 		},
 
+		syncTo: function (adapter) {
+			var p, b;
+			for (p in this._bindings) {
+				b = this._bindings[p];
+				adapter.set(p, getNodePropOrAttr(b.node, b.prop));
+			}
+		},
+
 		/**
 		 * Returns the binding info for a node, if it exists.
 		 * @param name {String} the name of the node
