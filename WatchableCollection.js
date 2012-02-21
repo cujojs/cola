@@ -26,9 +26,9 @@ define(function () {
 			}
 		};
 
-		replaceMethod(collection, 'add', added);
-		replaceMethod(collection, 'update', updated);
-		replaceMethod(collection, 'remove', removed);
+		replaceMethod(collection, 'itemAdded', added);
+		replaceMethod(collection, 'itemUpdated', updated);
+		replaceMethod(collection, 'itemRemoved', removed);
 
 		return collection;
 	}
@@ -47,11 +47,11 @@ define(function () {
 
 		if(typeof orig == 'function') {
 			collection[methodName] = function(item) {
-				var at = orig.apply(collection, arguments);
+				var result = orig.apply(collection, arguments);
 
-				if(at >= 0) {
-					notify(listeners, item);
-				}
+				notify(listeners, item);
+
+				return result;
 			}
 		}
 	}
