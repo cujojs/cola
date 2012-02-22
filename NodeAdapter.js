@@ -89,12 +89,14 @@ define(function (require) {
 		set: function (name, value) {
 			var b, current;
 			b = this._getBindings(name);
-			current = getNodePropOrAttr(b.node, name);
-			this._values[name] = current;
-			if (current != value) {
-				setNodePropOrAttr(b.node, b.prop, value);
-				// notify watchers
-				fireSimpleEvent(b.node, colaSyntheticEvent);
+			if (b && b.node) {
+				current = getNodePropOrAttr(b.node, name);
+				this._values[name] = current;
+				if (current != value) {
+					setNodePropOrAttr(b.node, b.prop, value);
+					// notify watchers
+					fireSimpleEvent(b.node, colaSyntheticEvent);
+				}
 			}
 		},
 
@@ -118,7 +120,7 @@ define(function (require) {
 		_getBindings: function (name) {
 			var bindings, binding;
 			bindings = this._bindings;
-			if (name in bindings) {
+			if (bindings && name in bindings) {
 				binding = bindings[name];
 			}
 			else {
