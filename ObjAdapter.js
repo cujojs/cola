@@ -41,9 +41,9 @@ define(function () {
 			}
 		},
 
-		syncTo: function (adapter) {
+		forEach: function (lambda) {
 			for (var p in this._obj) {
-				adapter.set(p, this._obj[p]);
+				lambda(this._obj[p], p);
 			}
 		},
 
@@ -54,6 +54,10 @@ define(function () {
 		 */
 		setBindings: function (bindings) {
 			this._bindings = bindings;
+		},
+
+		getBindings: function () {
+			return this._bindings;
 		}
 
 	};

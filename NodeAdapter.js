@@ -39,6 +39,10 @@ define(function (require) {
 			this._bindings = bindings;
 		},
 
+		getBindings: function () {
+			return this._bindings;
+		},
+
 		/**
 		 * Watches a specific property and calls back when it changes.
 		 * @param name {String} the name of the property to watch.
@@ -47,7 +51,7 @@ define(function (require) {
 		 */
 		watch: function (name, callback) {
 			var b, currValues;
-			b = this._getBindings(name);
+			b = this._getBindingsFor(name);
 			currValues = this._values;
 			return listenToNode(b.node, b.events, function() {
 				var prev, curr;
@@ -88,7 +92,7 @@ define(function (require) {
 		 */
 		set: function (name, value) {
 			var b, current;
-			b = this._getBindings(name);
+			b = this._getBindingsFor(name);
 			if (b && b.node) {
 				current = getNodePropOrAttr(b.node, name);
 				this._values[name] = current;
@@ -100,11 +104,11 @@ define(function (require) {
 			}
 		},
 
-		syncTo: function (adapter) {
+		forEach: function (lambda) {
 			var p, b;
 			for (p in this._bindings) {
 				b = this._bindings[p];
-				adapter.set(p, getNodePropOrAttr(b.node, b.prop));
+				lambda(getNodePropOrAttr(b.node, b.prop), p);
 			}
 		},
 
@@ -117,7 +121,7 @@ define(function (require) {
 		 *     events: 'event1,event2' // optional
 		 * }
 		 */
-		_getBindings: function (name) {
+		_getBindingsFor: function (name) {
 			var bindings, binding;
 			bindings = this._bindings;
 			if (bindings && name in bindings) {
@@ -125,6 +129,7 @@ define(function (require) {
 			}
 			else {
 				binding = {
+					// TODO: value is also very popular. try to autoguessif we're in a form input?
 					prop: 'innerHTML',
 					// TODO: should we pass these or none?
 					events: ['change', 'blur']
