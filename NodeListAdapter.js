@@ -2,12 +2,10 @@
 define(function(require) {
 "use strict";
 
-	var domEvents, NodeAdapter, mediate, fireSimpleEvent, watchNode,
+	var domEvents, fireSimpleEvent, watchNode,
 		undef;
 
 	domEvents = require('./dom/events');
-	NodeAdapter = require('./NodeAdapter');
-	mediate = require('./SimpleMediator');
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
 
@@ -67,22 +65,10 @@ define(function(require) {
 			itemData.node = this._templateNode.cloneNode(true);
 			// find index
 			index = findSortedIndex(item, this._itemData, this.comparator);
-			itemData.index = index;
-			// make watchable, watch for prop updates, and save unwatch
-			itemData.adapted = this._adaptListNode(itemData.node);
-			self = this;
-			itemData.unwatches = [
-				mediate(item, itemData.adapted),
-				itemData.adapted.watchAll(function (prop, value) {
-					self._itemUpdated(itemData, prop, value);
-				})
-			];
 			// save all data
 			this._itemData.splice(index, 0, itemData);
 			// insert into container
 			this._insertNodeAt(itemData.node, index);
-			// sync
-			itemData.item.syncTo(itemData.adapted);
 			// notify listeners
 			this._fireEvent(colaAddedEvent, item);
 		},
@@ -97,8 +83,6 @@ define(function(require) {
 				throw createError('NodeListAdapter: Cannot remove item.', item);
 			}
 			itemData = this._itemData[index];
-			// unwatch everything
-			while ((unwatch = itemData.unwatches.pop())) unwatch();
 			// remove node
 			this._removeNode(itemData.node);
 			// remove itemData
@@ -107,8 +91,38 @@ define(function(require) {
 			this._fireEvent(colaRemovedEvent, item);
 		},
 
+		forEach: function (lambda) {
+			for (var i = 0, len = this._itemData.length; i < len; i++) {
+				lambda(this._itemData[i].item);
+			}
+		},
+
+		checkPosition: function (item) {
+			var itemData, oldIndex, newIndex;
+			if (typeof this.comparator != 'function') {
+				throw createError('NodeListAdapter: Cannot move without a comparator.', item);
+			}
+			// first check in the already sorted place (optimization)
+			oldIndex = findSortedIndex(item, this._itemData, this.comparator);
+			if (item != this._itemData[oldIndex]) {
+				// apparently, it did move!
+				newIndex = findIndex(item, this._itemData, this.comparator);
+				if (newIndex < 0 || newIndex > this._itemData.length) {
+					throw createError('NodeListAdapter: Cannot move item.', item);
+				}
+				itemData = this._itemData[newIndex];
+				// move item and node
+				this._itemData.splice(newIndex, 0, this._itemData.splice(oldIndex, 1));
+				this._insertNodeAt(itemData.node, newIndex);
+			}
+		},
+
 		setBindings: function (bindings) {
 			this._bindings = bindings;
+		},
+
+		getBindings: function () {
+			return this._bindings;
 		},
 
 		/**
@@ -124,6 +138,9 @@ define(function(require) {
 		 */
 		comparator: undef,
 
+		// TODO: enable this by incorporating a decent map:
+//		namer: undef,
+
 		_initTemplateNode: function () {
 			var templateNode = this._templateNode;
 			// remove from document
@@ -134,13 +151,6 @@ define(function(require) {
 			if (templateNode.id) {
 				templateNode.id = '';
 			}
-		},
-
-		_adaptListNode: function (node) {
-			// TODO: this seems to be doing the job of a mediator. revisit
-			var adapted = new NodeAdapter(node);
-			adapted.setBindings(this._bindings);
-			return adapted;
 		},
 
 		_fireEvent: function (type, item) {
@@ -162,19 +172,6 @@ define(function(require) {
 			var parent;
 			parent = this._containerNode;
 			parent.removeChild(node);
-		},
-
-		_itemUpdated: function (itemData, prop, value) {
-			var oldIndex, newIndex;
-			// check if we need to move the node and itemData
-			oldIndex = itemData.index;
-			// Note: we already know we have a comparator by the time we get here
-			newIndex = findSortedIndex(itemData.item, this._itemData, this.comparator);
-			if (newIndex != oldIndex) {
-				this._itemData.splice(newIndex, 0, this._itemData.splice(oldIndex, 1));
-				itemData.index = newIndex;
-				this._insertNodeAt(itemData.node, newIndex);
-			}
 		}
 
 	};
@@ -209,7 +206,7 @@ define(function(require) {
 
 		while ((max - min > 1) && compare != 0) {
 			mid = Math.floor((min + max) / 2);
-			compare = comparator(item, list[mid]);
+			compare = comparator(item, list[mid].item);
 			// don't use mid +/- 1 or we may miss in-between
 			if (compare > 0) min = mid;
 			else if (compare < 0) max = mid;
@@ -229,7 +226,7 @@ define(function(require) {
 	function findIndex (item, list, comparator) {
 		var i;
 		i = list.length;
-		while (--i >= 0 && comparator(list[i], item) != 0) {}
+		while (--i >= 0 && comparator(item, list[i].item) != 0) {}
 		return i;
 	}
 
