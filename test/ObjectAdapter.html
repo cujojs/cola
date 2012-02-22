@@ -22,9 +22,9 @@ require(['cola/ObjectAdapter', 'domReady!'], function(ObjectAdapter) {
 			doh.assertFalse(ObjectAdapter.canHandle(), 'undefined');
 			doh.assertFalse(ObjectAdapter.canHandle(null), 'null');
 			doh.assertFalse(ObjectAdapter.canHandle(function(){}), 'function');
-			doh.assertTrue(ObjectAdapter.canHandle([]), 'array');
+			doh.assertFalse(ObjectAdapter.canHandle([]), 'array');
 			doh.assertTrue(ObjectAdapter.canHandle({}), 'object');
-			doh.assertTrue(ObjectAdapter.canHandle(document.body), 'DOMNode');
+			doh.assertFalse(ObjectAdapter.canHandle(document.body), 'DOMNode');
 		}
 	]);
 	doh.register('events', [
