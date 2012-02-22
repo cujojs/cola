@@ -27,8 +27,8 @@ define(function (require) {
 		if (!options) options = {};
 
 		// these maps keep track of items that are being watched
-		itemMap1 = createMap(primary.comparator, primary.namer);
-		itemMap2 = createMap(secondary.comparator, secondary.namer);
+		itemMap1 = createMap(primary.comparator, primary.symbolizer);
+		itemMap2 = createMap(secondary.comparator, secondary.symbolizer);
 
 		// these functions handle any item-to-item mediation
 		mediationHandler1 = createItemMediatorHandler(primary, itemMap1, resolver);
@@ -157,8 +157,8 @@ define(function (require) {
 		}
 
 		// if adapter2 wants a keyFunc and doesn't have one, copy it from adapter1
-		if ('namer' in to && !to.namer && from.namer) {
-			to.namer = from.namer;
+		if ('symbolizer' in to && !to.symbolizer && from.symbolizer) {
+			to.symbolizer = from.symbolizer;
 		}
 		// if adapter2 wants a comparator and doesn't have one, copy it from adapter1
 		if ('comparator' in to && !to.comparator && from.comparator) {
@@ -169,7 +169,7 @@ define(function (require) {
 	}
 
 	// it's pretty clear we need to share this kind of thing all over the place :)
-	function createMap (comparator, namer) {
+	function createMap (comparator, symbolizer) {
 		var index, list, finder;
 
 		index = {};
@@ -196,21 +196,21 @@ define(function (require) {
 			while (max - min > 1 && !isNaN(compare));
 		}
 
-		if (!namer) {
+		if (!symbolizer) {
 			if (comparator) finder = search;
 			else finder = scan;
 		}
 
-		if (namer) return {
+		if (symbolizer) return {
 			get: function (key) {
-				return list[index[namer(key)]];
+				return list[index[symbolizer(key)]];
 			},
 			set: function (key, object) {
-				index[namer(key)] = list.push(object);
+				index[symbolizer(key)] = list.push(object);
 				return object;
 			},
 			remove: function (key) {
-				var name = namer(key);
+				var name = symbolizer(key);
 				delete list[index[name]]; // makes the array sparse
 				delete index[name];
 			},

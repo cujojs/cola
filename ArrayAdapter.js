@@ -9,7 +9,7 @@ define(function () {
 
 	function ArrayAdapter(dataArray, comparator, keyFunc) {
 		this.comparator = comparator || compare;
-		this._keyFunc = this.namer = keyFunc || defaultKeyFunc;
+		this._keyFunc = this.symbolizer = keyFunc || defaultKeyFunc;
 
 		this._data = [];
 		this._index = {};
@@ -28,7 +28,7 @@ define(function () {
 
 		comparator: undef,
 
-		namer: undef,
+		symbolizer: undef,
 
 		watch: function(itemAdded, itemRemoved) {
 			var added, removed;

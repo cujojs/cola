@@ -139,7 +139,7 @@ define(function(require) {
 		comparator: undef,
 
 		// TODO: enable this by incorporating a decent map:
-//		namer: undef,
+//		symbolizer: undef,
 
 		_initTemplateNode: function () {
 			var templateNode = this._templateNode;

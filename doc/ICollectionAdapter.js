@@ -49,7 +49,7 @@ ICollectionAdapter.prototype = {
 	 *
 	 * @returns {String}
 	 */
-	namer: undefined,
+	symbolizer: undefined,
 
 	/**
 	 * Indicates that a new item should be added to the collection.
