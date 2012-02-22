@@ -7,6 +7,7 @@ define(function () {
 
 	var undef;
 
+	// TODO: somehowchange ArrayAdapter to take comparator and keyFunc as properties?
 	function ArrayAdapter(dataArray, comparator, keyFunc) {
 		this.comparator = comparator || compare;
 		this._keyFunc = this.symbolizer = keyFunc || defaultKeyFunc;
@@ -29,6 +30,10 @@ define(function () {
 		comparator: undef,
 
 		symbolizer: undef,
+
+		// just stubs for now
+		getBindings: function () {},
+		setBindings: function () {},
 
 		watch: function(itemAdded, itemRemoved) {
 			var added, removed;
