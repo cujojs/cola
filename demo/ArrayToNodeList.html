@@ -22,10 +22,10 @@ curl(
 		'cola/ArrayAdapter', 
 		'cola/NodeListAdapter',
 		'cola/NodeAdapter',
-		'cola/ObjAdapter',
+		'cola/ObjectAdapter',
 		'cola/AdapterResolver'
 	], 
-	function (CollectionMediator, ArrayAdapter, NodeListAdapter, NodeAdapter, ObjAdapter, AdapterResolver) {
+	function (CollectionMediator, ArrayAdapter, NodeListAdapter, NodeAdapter, ObjectAdapter, AdapterResolver) {
 	"use strict";
 		
 		var itemNode, data;
@@ -57,7 +57,7 @@ curl(
 			AdapterResolver.register(ArrayAdapter, 'collection');
 			AdapterResolver.register(NodeListAdapter, 'collection');
 			AdapterResolver.register(NodeAdapter, 'object');
-			AdapterResolver.register(ObjAdapter, 'object');
+			AdapterResolver.register(ObjectAdapter, 'object');
 
 			// create adapters
 			source = new ArrayAdapter(data, compareById, symbolizer);

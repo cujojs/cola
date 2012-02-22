@@ -10,7 +10,7 @@ define(function () {
 	 * @param options {Object}
 	 * @returns {Watchable}
 	 */
-	function ObjAdapter(obj, options) {
+	function ObjectAdapter(obj, options) {
 
 		this._obj = obj;
 		this._options = options;
@@ -18,7 +18,7 @@ define(function () {
 
 	}
 
-	ObjAdapter.prototype = {
+	ObjectAdapter.prototype = {
 
 		watch: function (name, callback) {
 			return listen(this._listeners, name, callback);
@@ -59,14 +59,14 @@ define(function () {
 	 * @param obj
 	 * @returns {Boolean}
 	 */
-	ObjAdapter.canHandle = function (obj) {
+	ObjectAdapter.canHandle = function (obj) {
 		// this seems close enough to ensure that instanceof works.
 		// a RegExp will pass as a valid prototype, but I am not sure
 		// this is a bad thing even if it is unusual.
 		return Object.prototype.toString.call(obj) == '[object Object]';
 	};
 
-	return ObjAdapter;
+	return ObjectAdapter;
 
 	/**
 	 * Registers a listener and returns a function to unlisten.
