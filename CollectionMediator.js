@@ -207,7 +207,7 @@ define(function (require) {
 				return list[index[symbolizer(key)]];
 			},
 			set: function (key, object) {
-				index[symbolizer(key)] = list.push(object);
+				index[symbolizer(key)] = list.push(object) - 1;
 				return object;
 			},
 			remove: function (key) {
