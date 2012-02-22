@@ -46,7 +46,9 @@ define(function () {
 		resumeForwarding();
 
 		if (!options || options.sync !== false) {
-			adapter1.syncTo(adapter2)
+			adapter1.forEach(function (value, prop) {
+				adapter2.set(prop, value);
+			});
 		}
 
 		return function unwatch () {
