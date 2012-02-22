@@ -19,7 +19,7 @@ define(function (require) {
 	 * @param options.bind if truthy, immediately synchronize data primary
 	 *   primary secondary secondary.
 	 */
-	return function (primary, secondary, resolver, options) {
+	return function CollectionMediator (primary, secondary, resolver, options) {
 
 		var itemMap1, itemMap2, mediationHandler1, mediationHandler2,
 			watchHandler1, unwatch1, unwatch2;
@@ -69,6 +69,7 @@ define(function (require) {
 
 	function createAdapter (object, resolver, type, options) {
 		var Adapter = resolver(object, type);
+		if (!Adapter) throw new Error('CollectionMediator: could not find Adapter constructor for ' + type);
 		return new Adapter(object, options);
 	}
 
