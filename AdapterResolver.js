@@ -34,6 +34,8 @@ define(function () {
 		adapters[type].push(Adapter);
 	};
 
+	return AdapterResolver;
+
 });
 }(
 	typeof define == 'function'
