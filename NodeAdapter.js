@@ -15,14 +15,15 @@ define(function (require) {
 	 * unwatch any watches to prevent memory leaks in Internet Explorer 6-8.
 	 * @constructor
 	 * @param rootNode {DOMNode}
+	 * @param options {Object}
 	 */
-	function NodeAdapter (rootNode) {
+	function NodeAdapter (rootNode, options) {
 		var self = this;
 
 		this._rootNode = rootNode;
 
-		// set blank bindings
-		this.setBindings({});
+		// set options
+		this._options = options
 
 		// keep data values
 		this._values = {};
@@ -31,15 +32,7 @@ define(function (require) {
 
 	NodeAdapter.prototype = {
 
-		/**
-		 * Sets the binding info for this dom tree.
-		 * @param bindings
-		 */
-		setBindings: function (bindings) {
-			this._bindings = bindings;
-		},
-
-		getBindings: function () {
+		getOptions: function () {
 			return this._bindings;
 		},
 
@@ -76,7 +69,7 @@ define(function (require) {
 		watchAll: function (callback) {
 			var unwatchers;
 			unwatchers = [];
-			for (var p in this._bindings) {
+			for (var p in this._options.bindings) {
 				unwatchers.push(this.watch(p, callback));
 			}
 			return function () {
@@ -106,8 +99,8 @@ define(function (require) {
 
 		forEach: function (lambda) {
 			var p, b;
-			for (p in this._bindings) {
-				b = this._bindings[p];
+			for (p in this._options.bindings) {
+				b = this._options.bindings[p];
 				lambda(getNodePropOrAttr(b.node, b.prop), p);
 			}
 		},
@@ -123,7 +116,7 @@ define(function (require) {
 		 */
 		_getBindingsFor: function (name) {
 			var bindings, binding;
-			bindings = this._bindings;
+			bindings = this._options.bindings;
 			if (bindings && name in bindings) {
 				binding = bindings[name];
 			}

@@ -11,11 +11,12 @@
 require(['cola/ObjAdapter', 'domReady!'], function(ObjAdapter) {
 
 	doh.register('the basics', [
-		function setBindings (doh) {
+		function getOptions (doh) {
 			var bindings = {}, adaptedObject;
-			adaptedObject = new ObjAdapter({});
-			adaptedObject.setBindings(bindings);
-			doh.assertEqual(bindings, adaptedObject._bindings);
+			adaptedObject = new ObjAdapter({}, {
+				bindings: bindings
+			});
+			doh.assertEqual(bindings, adaptedObject.getOptions().bindings);
 		},
 		function canHandle (doh) {
 			doh.assertFalse(ObjAdapter.canHandle(), 'undefined');

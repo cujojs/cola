@@ -18,7 +18,7 @@ define(function(require) {
 	 * @param containerNode {DOMNode} optional parent to all itemNodes. If
 	 * omitted, the parent of templateNode is assumed to be containerNode.
 	 */
-	function NodeListAdapter (templateNode) {
+	function NodeListAdapter (templateNode, options) {
 		var container;
 
 		container = arguments[1] || templateNode.parentNode;
@@ -26,6 +26,8 @@ define(function(require) {
 		if (!container) {
 			throw new Error('No container node found for NodeListAdapter.');
 		}
+
+		this._options = options;
 
 		this._containerNode = container;
 
@@ -71,6 +73,8 @@ define(function(require) {
 			this._insertNodeAt(itemData.node, index);
 			// notify listeners
 			this._fireEvent(colaAddedEvent, item);
+			// return node so mediator can adapt and mediate it
+			return itemData.node;
 		},
 
 		remove: function (item) {
@@ -117,12 +121,8 @@ define(function(require) {
 			}
 		},
 
-		setBindings: function (bindings) {
-			this._bindings = bindings;
-		},
-
-		getBindings: function () {
-			return this._bindings;
+		getOptions: function () {
+			return this._options;
 		},
 
 		/**

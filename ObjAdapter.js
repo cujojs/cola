@@ -7,15 +7,15 @@ define(function () {
 	/**
 	 * @constructor
 	 * @param obj {Object}
+	 * @param options {Object}
 	 * @returns {Watchable}
 	 */
-	function ObjAdapter(obj) {
+	function ObjAdapter(obj, options) {
 
 		this._obj = obj;
+		this._options = options;
 		this._listeners = {};
 
-		// set blank bindings
-		this.setBindings({});
 	}
 
 	ObjAdapter.prototype = {
@@ -47,17 +47,8 @@ define(function () {
 			}
 		},
 
-		/**
-		 * Sets the binding info for this object.
-		 * TODO: do something with these bindings
-		 * @param bindings
-		 */
-		setBindings: function (bindings) {
-			this._bindings = bindings;
-		},
-
-		getBindings: function () {
-			return this._bindings;
+		getOptions: function () {
+			return this._options;
 		}
 
 	};
@@ -72,7 +63,7 @@ define(function () {
 		// this seems close enough to ensure that instanceof works.
 		// a RegExp will pass as a valid prototype, but I am not sure
 		// this is a bad thing even if it is unusual.
-		return obj && typeof obj == 'object';
+		return Object.prototype.toString.call(obj) == '[object Object]';
 	};
 
 	return ObjAdapter;

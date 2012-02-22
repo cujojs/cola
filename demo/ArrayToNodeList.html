@@ -20,9 +20,12 @@ curl(
 	[
 		'cola/CollectionMediator', 
 		'cola/ArrayAdapter', 
-		'cola/NodeListAdapter'
+		'cola/NodeListAdapter',
+		'cola/NodeAdapter',
+		'cola/ObjAdapter',
+		'cola/AdapterResolver'
 	], 
-	function (CollectionMediator, ArrayAdapter, NodeListAdapter) {
+	function (CollectionMediator, ArrayAdapter, NodeListAdapter, NodeAdapter, ObjAdapter, AdapterResolver) {
 	"use strict";
 		
 		var itemNode, data;
@@ -30,7 +33,8 @@ curl(
 		data = [
 			{ id: 1, first: 'Brian', last: 'Cavalier' },
 			{ id: 2, first: 'John', last: 'Hann' },
-			{ id: 3, first: 'Ian', last: 'Cavalier' }
+			{ id: 3, first: 'Ian', last: 'Cavalier' },
+			{ id: 4, first: 'Scott', last: 'Andrews' }
 		];
 
 		function getNode (id) {
@@ -38,12 +42,37 @@ curl(
 		}
 	
 		function compareById (a, b) { return a.id - b.id; }
+
+		function symbolizer (o) { return o && o.id; }
+
+		function querySelector (selector, node) {
+			return node.querySelector(selector);
+		}
 	
 		function init () {
 			var source, dest;
-			source = new ArrayAdapter(data, compareById);
-			dest = new NodeListAdapter(getNode('itemNode'));
+
+			// register adapter constructors
+			AdapterResolver.register(ArrayAdapter, 'collection');
+			AdapterResolver.register(NodeListAdapter, 'collection');
+			AdapterResolver.register(NodeAdapter, 'object');
+			AdapterResolver.register(ObjAdapter, 'object');
+
+			// create adapters
+			source = new ArrayAdapter(data, compareById, symbolizer);
+			dest = new NodeListAdapter(getNode('itemNode'), {
+				querySelector: querySelector,
+				bindings: {
+					first: { node: '[name=first]', prop: 'value' },
+					last: { node: '[name=last]', prop: 'value' }
+				}
+			});
+
+			CollectionMediator(source, dest, AdapterResolver, { sync: true });
+
 		}
+
+		curl('domReady!', init);
 
 	}
 );

@@ -110,19 +110,11 @@ ICollectionAdapter.prototype = {
 	checkPosition: function (item) {},
 
 	/**
-	 * Optional method to set binding information.
-	 * @param bindings
-	 */
-	setBindings: function (bindings) {
-
-	},
-
-	/**
-	 * Optional method to get the bindings information that
-	 * were previously set with setBindings()
+	 * Optional method to get the options information that
+	 * were provided to the adapter
 	 * @returns {Object}
 	 */
-	getBindings: function () {
+	getOptions: function () {
 
 	}
 

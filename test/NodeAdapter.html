@@ -38,11 +38,10 @@ require(['cola/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 	}
 
 	doh.register('the basics', [
-		function setBindings (doh) {
+		function getOptions (doh) {
 			var bindings = { cake: 'yes' }, adaptedObject;
-			adaptedObject = new NodeAdapter({});
-			adaptedObject.setBindings(bindings);
-			doh.assertEqual(bindings.cake, adaptedObject._bindings.cake);
+			adaptedObject = new NodeAdapter({}, { bindings: bindings });
+			doh.assertEqual(bindings.cake, adaptedObject.getOptions().cake);
 		},
 		function canHandle (doh) {
 			doh.assertFalse(NodeAdapter.canHandle(), 'undefined');
@@ -59,12 +58,13 @@ require(['cola/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 			node = getNode('test');
 			init();
 			first = node.elements.first;
-			adapted = new NodeAdapter(node);
-			adapted.setBindings({
-				// test pre-resolved node
-				first: { events: 'click', prop: 'value', node: first },
-				// test auto-resolved form node (guessNode)
-				last: { events: 'click', prop: 'value' }
+			adapted = new NodeAdapter(node, {
+				bindings: {
+					// test pre-resolved node
+					first: { events: 'click', prop: 'value', node: first },
+					// test auto-resolved form node (guessNode)
+					last: { events: 'click', prop: 'value' }
+				}
 			});
 			dfd = new doh.Deferred();
 			adapted.watch('first', function (name, value) {
@@ -79,10 +79,13 @@ require(['cola/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 			node = getNode('test');
 			init();
 			first = node.elements.first;
-			adapted = new NodeAdapter(node);
-			adapted.setBindings({
-				first: { events: 'click', prop: 'value', node: first },
-				last: { events: 'click', prop: 'value' }
+			adapted = new NodeAdapter(node, {
+				bindings: {
+					// test pre-resolved node
+					first: { events: 'click', prop: 'value', node: first },
+					// test auto-resolved form node (guessNode)
+					last: { events: 'click', prop: 'value' }
+				}
 			});
 			dfd = new doh.Deferred();
 			adapted.watchAll(function (name, value) {

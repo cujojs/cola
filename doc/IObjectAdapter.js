@@ -10,19 +10,11 @@ function IObjectAdapter (object) {}
 IObjectAdapter.prototype = {
 
 	/**
-	 * Sets the binding info for this object.  We haven't determined
-	 * whether derived values will be handled here or external to
-	 * the adapter.  Some adapters need binding info to do their job.
-	 * @param bindings
-	 */
-	setBindings: function (bindings) {},
-
-	/**
-	 * Gets the bindings information that
-	 * were previously set with setBindings()
+	 * Gets the options information that
+	 * were provided to the adapter.
 	 * @returns {Object}
 	 */
-	getBindings: function () {
+	getOptions: function () {
 
 	},
 

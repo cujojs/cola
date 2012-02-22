@@ -32,8 +32,7 @@ define(function () {
 		symbolizer: undef,
 
 		// just stubs for now
-		getBindings: function () {},
-		setBindings: function () {},
+		getOptions: function () {},
 
 		watch: function(itemAdded, itemRemoved) {
 			var added, removed;

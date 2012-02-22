@@ -18,7 +18,7 @@ define(function () {
 
 		forwarder = noop;
 
-		function forwardTo (adapter, value, name) {
+		function forwardTo (adapter, name, value) {
 			pauseForwarding();
 			adapter.set(name, value);
 			resumeForwarding();
@@ -33,13 +33,13 @@ define(function () {
 		}
 
 		// forward notifications from adapter1 to adapter2
-		unwatch1 = adapter1.watchAll(function (value, name) {
-			forwarder(adapter2, value, name);
+		unwatch1 = adapter1.watchAll(function (name, value) {
+			forwarder(adapter2,name, value);
 		});
 
 		// forward notifications from adapter2 to adapter1
-		unwatch2 = adapter2.watchAll(function (value, name) {
-			forwarder(adapter1, value, name);
+		unwatch2 = adapter2.watchAll(function (name, value) {
+			forwarder(adapter1, name, value);
 		});
 
 		// start forwarding

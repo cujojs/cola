@@ -26,6 +26,15 @@ define(function (require) {
 
 		if (!options) options = {};
 
+		// if adapter2 wants a keyFunc and doesn't have one, copy it from adapter1
+		if ('symbolizer' in secondary && !secondary.symbolizer && primary.symbolizer) {
+			secondary.symbolizer = primary.symbolizer;
+		}
+		// if adapter2 wants a comparator and doesn't have one, copy it from adapter1
+		if ('comparator' in secondary && !secondary.comparator && primary.comparator) {
+			secondary.comparator = primary.comparator;
+		}
+
 		// these maps keep track of items that are being watched
 		itemMap1 = createMap(primary.comparator, primary.symbolizer);
 		itemMap2 = createMap(secondary.comparator, secondary.symbolizer);
@@ -85,7 +94,7 @@ define(function (require) {
 				}
 				else {
 					itemData = itemMap.set(item, {
-						adapter: createAdapter(item, resolver, 'object', target.getBindings())
+						adapter: createAdapter(item, resolver, 'object', target.getOptions())
 					});
 				}
 				itemData.unwatch = itemData.adapter.watchAll(function (prop, value) {
@@ -114,10 +123,10 @@ define(function (require) {
 			}
 			else {
 				itemData = itemMap.set(refItem, {
-					adapter: createAdapter(refItem, resolver, 'object', sender.getBindings())
+					adapter: createAdapter(refItem, resolver, 'object', sender.getOptions())
 				});
 			}
-			newAdapter = createAdapter(newItem, resolver, 'object', target.getBindings());
+			newAdapter = createAdapter(newItem, resolver, 'object', target.getOptions());
 			itemData.unmediate = ObjectMediator(itemData.adapter, newAdapter);
 		}
 	}
@@ -155,15 +164,6 @@ define(function (require) {
 		for (i = 0, len = methodsToForward.length; i < len; i++) {
 			forwarder = createForwarder(methodsToForward[i], discoveryCallback);
 			callbacks.push(createCallback(forwarder, to));
-		}
-
-		// if adapter2 wants a keyFunc and doesn't have one, copy it from adapter1
-		if ('symbolizer' in to && !to.symbolizer && from.symbolizer) {
-			to.symbolizer = from.symbolizer;
-		}
-		// if adapter2 wants a comparator and doesn't have one, copy it from adapter1
-		if ('comparator' in to && !to.comparator && from.comparator) {
-			to.comparator = from.comparator;
 		}
 
 		return from.watch.apply(from, callbacks);
