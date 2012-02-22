@@ -43,14 +43,15 @@ define(function (require) {
 		 * @returns {Function} a function to call when done watching.
 		 */
 		watch: function (name, callback) {
-			var b, currValues;
+			var b, node, currValues;
 			b = this._getBindingsFor(name);
+			node = this._getNode(b.node);
 			currValues = this._values;
-			return listenToNode(b.node, b.events, function() {
+			return listenToNode(node, b.events, function() {
 				var prev, curr;
 				// ensure value has changed
 				prev = currValues[name];
-				curr = getNodePropOrAttr(b.node, b.prop);
+				curr = getNodePropOrAttr(node, b.prop);
 				if (curr != prev) {
 					currValues[name] = curr;
 					callback(name, curr);
@@ -84,24 +85,26 @@ define(function (require) {
 		 * @param value the value of the changed property
 		 */
 		set: function (name, value) {
-			var b, current;
+			var b, node, current;
 			b = this._getBindingsFor(name);
-			if (b && b.node) {
-				current = getNodePropOrAttr(b.node, name);
+			node = this._getNode(b.node);
+			if (b && node) {
+				current = getNodePropOrAttr(node, name);
 				this._values[name] = current;
 				if (current != value) {
-					setNodePropOrAttr(b.node, b.prop, value);
+					setNodePropOrAttr(node, b.prop, value);
 					// notify watchers
-					fireSimpleEvent(b.node, colaSyntheticEvent);
+					fireSimpleEvent(node, colaSyntheticEvent);
 				}
 			}
 		},
 
 		forEach: function (lambda) {
-			var p, b;
+			var p, b, node;
 			for (p in this._options.bindings) {
 				b = this._options.bindings[p];
-				lambda(getNodePropOrAttr(b.node, b.prop), p);
+				node = this._getNode(b.node);
+				lambda(getNodePropOrAttr(node, b.prop), p);
 			}
 		},
 
@@ -128,13 +131,22 @@ define(function (require) {
 					events: ['change', 'blur']
 				};
 			}
-			if (!('node' in binding)) {
-				binding.node = guessNode(this._rootNode, name);
-			}
-			else if (typeof binding.node == 'string') {
-				binding.node = this._options.querySelector(binding.node, this._rootNode);
-			}
 			return binding;
+		},
+
+		_getNode: function (selector) {
+			// TODO: cache querySelector lookups?
+			var node;
+			if (!selector) {
+				node = guessNode(this._rootNode, selector);
+			}
+			else if (typeof selector == 'string') {
+				node = this._options.querySelector(selector, this._rootNode);
+			}
+			else {
+				node = selector; // is this possible?
+			}
+			return node;
 		}
 
 	};
