@@ -8,9 +8,9 @@
 <script src="test-config.js"></script>
 
 <script type="text/javascript">
-require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
+require(['cola/NodeListAdapter', 'cola/ObjAdapter', 'domReady!'], function(NodeListAdapter, ObjAdapter) {
 
-	var itemNode;
+	var itemNode, bindings;
 	
 	function getNode (id) {
 		return document.getElementById(id);
@@ -28,7 +28,8 @@ require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
 		}
 	}
 
-	function compareById (a, b) { return a.id - b.id; };
+	function compareById (a, b) { return a.id - b.id; }
+
 
 	function init () {
 		// this function has to run to ensure that the browser hasn't
@@ -40,6 +41,10 @@ require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
 		first.value = 'Fred';
 		last.value = 'Flintstone';
 		itemNode = document.getElementsByTagName('fieldset')[0];
+		bindings = {
+			first: { node: first, prop: 'value' },
+			last: { node: last, prop: 'value' }
+		};
 	}
 
 	doh.register('the basics', [
@@ -60,7 +65,7 @@ require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
 			adapted = new NodeListAdapter(node);
 			adapted.comparator = compareById;
 			dfd = new doh.Deferred();
-			item = { id: 1 };
+			item = new ObjAdapter({ id: 1 });
 			adapted.watch(
 				function (addedItem) {
 					dfd.callback(addedItem == item);
@@ -76,7 +81,7 @@ require(['cola/NodeListAdapter', 'domReady!'], function(NodeListAdapter) {
 			adapted = new NodeListAdapter(node);
 			adapted.comparator = compareById;
 			dfd = new doh.Deferred();
-			item = { id: 1 };
+			item = new ObjAdapter({ id: 1 });
 			adapted.add(item);
 			adapted.watch(
 				null,

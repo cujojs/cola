@@ -2,10 +2,12 @@
 define(function(require) {
 "use strict";
 
-	var domEvents, fireSimpleEvent, watchNode,
+	var domEvents, NodeAdapter, mediate, fireSimpleEvent, watchNode,
 		undef;
 
 	domEvents = require('./dom/events');
+	NodeAdapter = require('./NodeAdapter');
+	mediate = require('./SimpleMediator');
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
 
@@ -13,15 +15,15 @@ define(function(require) {
 	 * Manages a collection of dom trees that are synced with a data
 	 * collection.
 	 * @constructor
-	 * @param itemNode {DOMNode} node to serve as a template for items
+	 * @param templateNode {DOMNode} node to serve as a template for items
 	 * in the collection / list.
 	 * @param containerNode {DOMNode} optional parent to all itemNodes. If
-	 * omitted, the parent of itemNode is assumed to be containerNode.
+	 * omitted, the parent of templateNode is assumed to be containerNode.
 	 */
-	function NodeListAdapter (itemNode) {
+	function NodeListAdapter (templateNode) {
 		var container;
 
-		container = arguments[1] || itemNode.parentNode;
+		container = arguments[1] || templateNode.parentNode;
 
 		if (!container) {
 			throw new Error('No container node found for NodeListAdapter.');
@@ -29,10 +31,11 @@ define(function(require) {
 
 		this._containerNode = container;
 
-		this._itemNode = itemNode;
+		this._templateNode = templateNode;
+		this._initTemplateNode();
 
-		// list of sorted data items
-		this._items = [];
+		// list of sorted data items, nodes, and unwatch functions
+		this._itemData = [];
 
 	}
 
@@ -55,22 +58,57 @@ define(function(require) {
 		},
 
 		add: function (item) {
-			var node;
-			node = this._itemNode.cloneNode(true);
-			// TODO: make watchable and save unwatch
+			var itemData, self, index;
+			if (typeof this.comparator != 'function') {
+				throw createError('NodeListAdapter: Cannot add without a comparator.', item);
+			}
+			itemData = { item: item };
+			// create node
+			itemData.node = this._templateNode.cloneNode(true);
+			// find index
+			index = findSortedIndex(item, this._itemData, this.comparator);
+			itemData.index = index;
+			// make watchable, watch for prop updates, and save unwatch
+			itemData.adapted = this._adaptListNode(itemData.node);
+			self = this;
+			itemData.unwatches = [
+				mediate(item, itemData.adapted),
+				itemData.adapted.watchAll(function (prop, value) {
+					self._itemUpdated(itemData, prop, value);
+				})
+			];
+			// save all data
+			this._itemData.splice(index, 0, itemData);
 			// insert into container
-			this._insertNodeAndItem(node, item);
+			this._insertNodeAt(itemData.node, index);
+			// sync
+			itemData.item.syncTo(itemData.adapted);
 			// notify listeners
 			this._fireEvent(colaAddedEvent, item);
-			// return node so the mediator can adapt it and sync it
-			return node;
 		},
 
 		remove: function (item) {
-			// TODO: unwatch
-			this._removeNodeAndItem(item);
+			var itemData, index = -1, unwatch;
+			if (typeof this.comparator != 'function') {
+				throw createError('NodeListAdapter: Cannot remove without a comparator.', item);
+			}
+			index = findSortedIndex(item, this._itemData, this.comparator);
+			if (index < 0 || index > this._itemData.length) {
+				throw createError('NodeListAdapter: Cannot remove item.', item);
+			}
+			itemData = this._itemData[index];
+			// unwatch everything
+			while ((unwatch = itemData.unwatches.pop())) unwatch();
+			// remove node
+			this._removeNode(itemData.node);
+			// remove itemData
+			this._itemData.splice(index, 1);
 			// notify listeners
 			this._fireEvent(colaRemovedEvent, item);
+		},
+
+		setBindings: function (bindings) {
+			this._bindings = bindings;
 		},
 
 		/**
@@ -86,29 +124,31 @@ define(function(require) {
 		 */
 		comparator: undef,
 
-		_initItemNode: function () {
-			var itemNode = this._itemNode;
+		_initTemplateNode: function () {
+			var templateNode = this._templateNode;
 			// remove from document
-			if (itemNode.parentNode) {
-				itemNode.parentNode.removeChild(itemNode);
+			if (templateNode.parentNode) {
+				templateNode.parentNode.removeChild(templateNode);
 			}
 			// remove id because we're going to duplicate
-			if (itemNode.id) {
-				itemNode.id = '';
+			if (templateNode.id) {
+				templateNode.id = '';
 			}
+		},
+
+		_adaptListNode: function (node) {
+			// TODO: this seems to be doing the job of a mediator. revisit
+			var adapted = new NodeAdapter(node);
+			adapted.setBindings(this._bindings);
+			return adapted;
 		},
 
 		_fireEvent: function (type, item) {
 			fireSimpleEvent(this._containerNode, type, { item: item });
 		},
 
-		_insertNodeAndItem: function (node, item) {
-			var index, parent, refNode;
-			if (typeof this.comparator != 'function') {
-				throw createError('NodeListAdapter: Cannot insert without a comparator.', item);
-			}
-			index = findSortedIndex(item, this._items, this.comparator);
-			this._items.splice(index, 0, item);
+		_insertNodeAt: function (node, index) {
+			var parent, refNode;
 			parent = this._containerNode;
 			refNode = parent.childNodes[index];
 			// Firefox cries when you try to insert before yourself
@@ -116,33 +156,25 @@ define(function(require) {
 			if (node != refNode) {
 				parent.insertBefore(node, refNode);
 			}
-			return index;
 		},
 
-		_removeNodeAndItem: function (item, ignoreSort, dontRemoveNode) {
-			var node, index = -1, parent;
-			if (typeof this.comparator != 'function') {
-				throw createError('NodeListAdapter: Cannot remove without a comparator.', item);
-			}
-			if (ignoreSort) {
-				// straight scan (sort is invalid for this item)
-				index = findIndex(item, this._items, this.comparator);
-			}
-			else {
-				// binary search
-				index = findSortedIndex(item, this._items, this.comparator);
-			}
-			if (index < 0 || index > this._items.length) {
-				throw createError('NodeListAdapter: Cannot remove item.', item);
-			}
-			this._items.splice(index, 1);
+		_removeNode: function (node) {
+			var parent;
 			parent = this._containerNode;
-			node = parent.childNodes[index];
-			if (!dontRemoveNode) parent.removeChild(node);
-			return {
-				index: index,
-				node: node
-			};
+			parent.removeChild(node);
+		},
+
+		_itemUpdated: function (itemData, prop, value) {
+			var oldIndex, newIndex;
+			// check if we need to move the node and itemData
+			oldIndex = itemData.index;
+			// Note: we already know we have a comparator by the time we get here
+			newIndex = findSortedIndex(itemData.item, this._itemData, this.comparator);
+			if (newIndex != oldIndex) {
+				this._itemData.splice(newIndex, 0, this._itemData.splice(oldIndex, 1));
+				itemData.index = newIndex;
+				this._insertNodeAt(itemData.node, newIndex);
+			}
 		}
 
 	};
@@ -176,7 +208,7 @@ define(function(require) {
 		max = list.length;
 
 		while ((max - min > 1) && compare != 0) {
-			mid = Math.round((min + max) / 2);
+			mid = Math.floor((min + max) / 2);
 			compare = comparator(item, list[mid]);
 			// don't use mid +/- 1 or we may miss in-between
 			if (compare > 0) min = mid;
