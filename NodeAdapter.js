@@ -33,7 +33,7 @@ define(function (require) {
 	NodeAdapter.prototype = {
 
 		getOptions: function () {
-			return this._bindings;
+			return this._options;
 		},
 
 		/**
