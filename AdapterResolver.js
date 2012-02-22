@@ -1,5 +1,5 @@
 (function (define) {
-define(function (require) {
+define(function () {
 "use strict";
 
 	var adapters;
@@ -38,5 +38,5 @@ define(function (require) {
 }(
 	typeof define == 'function'
 		? define
-		: function(factory) { module.exports = factory(require); }
+		: function (factory) { module.exports = factory(); }
 ))
