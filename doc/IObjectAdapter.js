@@ -18,6 +18,15 @@ IObjectAdapter.prototype = {
 	setBindings: function (bindings) {},
 
 	/**
+	 * Gets the bindings information that
+	 * were previously set with setBindings()
+	 * @returns {Object}
+	 */
+	getBindings: function () {
+
+	},
+
+	/**
 	 * Watches a specific property and calls back when it changes.
 	 * @param name {String} the name of the property to watch.
 	 * @param callback {Function} function (propValue, propName) {}
@@ -40,11 +49,11 @@ IObjectAdapter.prototype = {
 	set: function (name, value) {},
 
 	/**
-	 * Pushes data to the other adapter by calling set() for each
-	 * property on this adapter's object.
-	 * @param adapter {IObjectAdapter}
+	 * Iterates over all (known) properties and calls the lambda
+	 * function for each.
+	 * @param lambda {Function} function (value, name) {}
 	 */
-	syncTo: function (adapter) {}
+	forEach: function (lambda) {}
 
 };
 

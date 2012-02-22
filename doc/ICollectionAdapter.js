@@ -41,10 +41,21 @@ ICollectionAdapter.prototype = {
 	comparator: undefined,
 
 	/**
+	 * Uniquely names a data item. This isn't a key generator,
+	 * it extracts a unique string representation from an object.
+	 * @memberOf ICollectionAdapter
+	 *
+	 * @param object {Object}
+	 *
+	 * @returns {String}
+	 */
+	namer: undefined,
+
+	/**
 	 * Indicates that a new item should be added to the collection.
 	 * @memberOf ICollectionAdapter
 	 *
-	 * @param item {Object} an adapted object with get(), set(), and watch()
+	 * @param item {Object}
 	 *
 	 * @returns {Object} a new unadapted object, if one was created. The
 	 * collection may not need to create a new object if it can consume
@@ -59,7 +70,7 @@ ICollectionAdapter.prototype = {
 	 * Indicates that an item in the collection should be removed.
 	 * @memberOf ICollectionAdapter
 	 *
-	 * @param item {Object} an adapted object with get(), set(), and watch()
+	 * @param item {Object}
 	 *
 	 * @description This function will only work if the collection has a
 	 * comparator function that can detect identity. A comparator that
@@ -84,11 +95,36 @@ ICollectionAdapter.prototype = {
 	watch: function (add, remove) {},
 
 	/**
-	 * Pushes data to the other adapter by calling add() for each
-	 * item in this adapter's collection/list.
-	 * @param adapter {ICollectionAdapter}
+	 * Iterates over all of the items in the collection and runs the
+	 * lambda functionfor each one.
+	 * @param lambda {Function} function (item) { }
 	 */
-	syncTo: function (adapter) {}
+	forEach: function (lambda) {},
+
+	/**
+	 * Optional. Determines if the given item has changed sufficiently that
+	 * it needs to be repositioned in the collection.
+	 *
+	 * @param item {Object}
+	 */
+	checkPosition: function (item) {},
+
+	/**
+	 * Optional method to set binding information.
+	 * @param bindings
+	 */
+	setBindings: function (bindings) {
+
+	},
+
+	/**
+	 * Optional method to get the bindings information that
+	 * were previously set with setBindings()
+	 * @returns {Object}
+	 */
+	getBindings: function () {
+
+	}
 
 };
 
