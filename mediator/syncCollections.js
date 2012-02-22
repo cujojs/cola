@@ -4,11 +4,11 @@
 define(function (require) {
 "use strict";
 
-	var methodsToForward, linkProperties;
+	var methodsToForward, syncProperties;
 
 	methodsToForward = ['add', 'remove'];
 
-	linkProperties = require('./linkProperties');
+	syncProperties = require('./syncProperties');
 
 	/**
 	 * Sets up mediation between two collection adapters
@@ -19,7 +19,7 @@ define(function (require) {
 	 * @param options.bind if truthy, immediately synchronize data primary
 	 *   primary secondary secondary.
 	 */
-	return function linkCollections (primary, secondary, resolver, options) {
+	return function syncCollections (primary, secondary, resolver, options) {
 
 		var itemMap1, itemMap2, mediationHandler1, mediationHandler2,
 			watchHandler1, unwatch1, unwatch2;
@@ -78,7 +78,7 @@ define(function (require) {
 
 	function createAdapter (object, resolver, type, options) {
 		var Adapter = resolver(object, type);
-		if (!Adapter) throw new Error('linkCollections: could not find Adapter constructor for ' + type);
+		if (!Adapter) throw new Error('syncCollections: could not find Adapter constructor for ' + type);
 		return new Adapter(object, options);
 	}
 
@@ -127,7 +127,7 @@ define(function (require) {
 				});
 			}
 			newAdapter = createAdapter(newItem, resolver, 'object', target.getOptions());
-			itemData.unmediate = linkProperties(itemData.adapter, newAdapter);
+			itemData.unmediate = syncProperties(itemData.adapter, newAdapter);
 		}
 	}
 

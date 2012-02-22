@@ -1,4 +1,4 @@
-(function(buster, linkCollections) {
+(function(buster, syncCollections) {
 "use strict";
 var assert, refute;
 
@@ -21,7 +21,7 @@ function mockAdapter() {
 
 var item = { id: 1 };
 
-buster.testCase('linkCollections', {
+buster.testCase('syncCollections', {
 
 	'forwarding': {
 
@@ -42,13 +42,13 @@ buster.testCase('linkCollections', {
 
 		'should sync existing items to receiver on creation': function() {
 			this.sendingAdapter.syncTo = this.spy();
-			linkCollections(this.sendingAdapter, this.receivingAdapter);
+			syncCollections(this.sendingAdapter, this.receivingAdapter);
 
 			assert.calledOnceWith(this.sendingAdapter.syncTo, this.receivingAdapter);
 		},
 
 		'should forward itemAdded from sender to receiver': function() {
-			linkCollections(this.sendingAdapter, this.receivingAdapter);
+			syncCollections(this.sendingAdapter, this.receivingAdapter);
 
 			this.sendingAdapter.add(item);
 
@@ -57,7 +57,7 @@ buster.testCase('linkCollections', {
 		},
 
 		'should forward itemAdded from sender to receiver reversed': function() {
-			linkCollections(this.receivingAdapter, this.sendingAdapter);
+			syncCollections(this.receivingAdapter, this.sendingAdapter);
 
 			this.sendingAdapter.add(item);
 
@@ -66,7 +66,7 @@ buster.testCase('linkCollections', {
 		},
 
 		'should forward itemRemoved from sender to receiver': function() {
-			linkCollections(this.sendingAdapter, this.receivingAdapter);
+			syncCollections(this.sendingAdapter, this.receivingAdapter);
 
 			this.sendingAdapter.remove(item);
 
@@ -75,7 +75,7 @@ buster.testCase('linkCollections', {
 		},
 
 		'should forward itemRemoved from sender to receiver reversed': function() {
-			linkCollections(this.receivingAdapter, this.sendingAdapter);
+			syncCollections(this.receivingAdapter, this.sendingAdapter);
 
 			this.sendingAdapter.remove(item);
 
@@ -107,5 +107,5 @@ buster.testCase('linkCollections', {
 
 })(
 	require('buster'),
-	require('../../mediator/linkCollections')
+	require('../../mediator/syncCollections')
 );
