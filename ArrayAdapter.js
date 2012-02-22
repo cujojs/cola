@@ -9,7 +9,7 @@ define(function () {
 
 	function ArrayAdapter(dataArray, comparator, keyFunc) {
 		this.comparator = comparator || compare;
-		this._keyFunc = keyFunc || defaultKeyFunc;
+		this._keyFunc = this.namer = keyFunc || defaultKeyFunc;
 
 		this._data = [];
 		this._index = {};
@@ -28,6 +28,8 @@ define(function () {
 
 		comparator: undef,
 
+		namer: undef,
+
 		watch: function(itemAdded, itemRemoved) {
 			var added, removed;
 
@@ -43,7 +45,7 @@ define(function () {
 			}
 		},
 
-		syncTo: function(collectionAdapter) {
+		forEach: function(lambda) {
 			var i, data, len;
 
 			i = 0;
@@ -51,8 +53,8 @@ define(function () {
 			len = data.length;
 
 			for(; i < len; i++) {
-				// TODO: Should we catch exceptions here for pre-existing items?
-				collectionAdapter.add(data[i]);
+				// TODO: Should we catch exceptions here?
+				lambda(data[i]);
 			}
 		},
 
