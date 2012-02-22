@@ -43,20 +43,27 @@ define(function (require) {
 		 * @returns {Function} a function to call when done watching.
 		 */
 		watch: function (name, callback) {
-			var b, node, currValues;
+			var b, node, events, prop, currValues;
 			b = this._getBindingsFor(name);
 			node = this._getNode(b.node);
-			currValues = this._values;
-			return listenToNode(node, b.events, function() {
-				var prev, curr;
-				// ensure value has changed
-				prev = currValues[name];
-				curr = getNodePropOrAttr(node, b.prop);
-				if (curr != prev) {
-					currValues[name] = curr;
-					callback(name, curr);
-				}
-			});
+			if (b && node) {
+				events = 'events' in b ? b.events : guessEventsFor(node);
+				prop = 'prop' in b ? b.prop : guessPropFor(node);
+				currValues = this._values;
+				return listenToNode(node, events, function() {
+					var prev, curr;
+					// ensure value has changed
+					prev = currValues[name];
+					curr = getNodePropOrAttr(node, prop);
+					if (curr != prev) {
+						currValues[name] = curr;
+						callback(name, curr);
+					}
+				});
+			}
+			else {
+				return noop;
+			}
 		},
 
 		/**
@@ -85,14 +92,15 @@ define(function (require) {
 		 * @param value the value of the changed property
 		 */
 		set: function (name, value) {
-			var b, node, current;
+			var b, node, prop, current;
 			b = this._getBindingsFor(name);
 			node = this._getNode(b.node);
 			if (b && node) {
+				prop = 'prop' in b ? b.prop : guessPropFor(node);
 				current = getNodePropOrAttr(node, name);
 				this._values[name] = current;
 				if (current != value) {
-					setNodePropOrAttr(node, b.prop, value);
+					setNodePropOrAttr(node, prop, value);
 					// notify watchers
 					fireSimpleEvent(node, colaSyntheticEvent);
 				}
@@ -124,12 +132,7 @@ define(function (require) {
 				binding = bindings[name];
 			}
 			else {
-				binding = {
-					// TODO: value is also very popular. try to autoguessif we're in a form input?
-					prop: 'innerHTML',
-					// TODO: should we pass these or none?
-					events: ['change', 'blur']
-				};
+				binding = {};
 			}
 			return binding;
 		},
@@ -254,6 +257,26 @@ define(function (require) {
 			return rootNode.ownerDocument.getElementById(nodeName);
 		}
 	}
+
+	function guessEventsFor (node) {
+		if (/^input$/i.test(node.tagName) || /^select$/i.test(node.tagName)) {
+			return ['change', 'blur'];
+		}
+		else {
+			return [];
+		}
+	}
+
+	function guessPropFor (node) {
+		if (/^input$/i.test(node.tagName) || /^select$/i.test(node.tagName)) {
+			return 'value';
+		}
+		else {
+			return 'innerHTML';
+		}
+	}
+
+	function noop () {}
 
 	return NodeAdapter;
 
