@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <title>NodeAdapter test</title>
 
-<script src="util/doh/runner.js"></script>
-<script src="test-config.js"></script>
+<script src="../util/doh/runner.js"></script>
+<script src="../test-config.js"></script>
 
 <script type="text/javascript">
-require(['cola/NodeAdapter', 'domReady!'], function(NodeAdapter) {
+require(['cola/dom/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 
 	function getNode (id) {
 		return document.getElementById(id);
@@ -41,7 +41,7 @@ require(['cola/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 		function getOptions (doh) {
 			var bindings = { cake: 'yes' }, adaptedObject;
 			adaptedObject = new NodeAdapter({}, { bindings: bindings });
-			doh.assertEqual(bindings.cake, adaptedObject.getOptions().cake);
+			doh.assertEqual(bindings.cake, adaptedObject.getOptions().bindings.cake);
 		},
 		function canHandle (doh) {
 			doh.assertFalse(NodeAdapter.canHandle(), 'undefined');

@@ -107,5 +107,5 @@ buster.testCase('CollectionMediator', {
 
 })(
 	require('buster'),
-	require('../CollectionMediator')
+	require('../../mediator/CollectionMediator')
 );

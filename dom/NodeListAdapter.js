@@ -5,7 +5,7 @@ define(function(require) {
 	var domEvents, fireSimpleEvent, watchNode,
 		undef;
 
-	domEvents = require('./dom/events');
+	domEvents = require('./events');
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
 
