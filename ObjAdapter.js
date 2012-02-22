@@ -43,7 +43,7 @@ define(function () {
 
 		syncTo: function (adapter) {
 			for (var p in this._obj) {
-				adapter.set(this._obj[p]);
+				adapter.set(p, this._obj[p]);
 			}
 		},
 
