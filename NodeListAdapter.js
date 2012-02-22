@@ -21,7 +21,7 @@ define(function(require) {
 	function NodeListAdapter (templateNode, options) {
 		var container;
 
-		container = arguments[1] || templateNode.parentNode;
+		container = arguments[2] || templateNode.parentNode;
 
 		if (!container) {
 			throw new Error('No container node found for NodeListAdapter.');
@@ -213,7 +213,7 @@ define(function(require) {
 		}
 
 		// compare will be non-zero if we ended up between two existing items
-		return compare > 0 ? max : mid;
+		return compare == 0 ? mid : max;
 	}
 
 	/**
