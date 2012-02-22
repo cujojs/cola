@@ -30,7 +30,7 @@ define(function () {
 	}
 
 	AdapterResolver.register = function registerAdapter (Adapter, type) {
-		if (!type in adapters) adapters[type] = [];
+		if (!(type in adapters)) adapters[type] = [];
 		adapters[type].push(Adapter);
 	};
 
