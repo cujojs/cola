@@ -211,7 +211,7 @@ define(function (require) {
 			},
 			remove: function (key) {
 				var name = namer(key);
-				list.splice(index[name], 1);
+				delete list[index[name]]; // makes the array sparse
 				delete index[name];
 			},
 			forEach: function (lambda) {
