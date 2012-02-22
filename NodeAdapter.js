@@ -131,6 +131,9 @@ define(function (require) {
 			if (!('node' in binding)) {
 				binding.node = guessNode(this._rootNode, name);
 			}
+			else if (typeof binding.node == 'string') {
+				binding.node = this._options.querySelector(binding.node, this._rootNode);
+			}
 			return binding;
 		}
 
