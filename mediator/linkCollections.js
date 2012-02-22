@@ -4,11 +4,11 @@
 define(function (require) {
 "use strict";
 
-	var methodsToForward, ObjectMediator;
+	var methodsToForward, linkProperties;
 
 	methodsToForward = ['add', 'remove'];
 
-	ObjectMediator = require('./SimpleMediator');
+	linkProperties = require('./linkProperties');
 
 	/**
 	 * Sets up mediation between two collection adapters
@@ -19,7 +19,7 @@ define(function (require) {
 	 * @param options.bind if truthy, immediately synchronize data primary
 	 *   primary secondary secondary.
 	 */
-	return function CollectionMediator (primary, secondary, resolver, options) {
+	return function linkCollections (primary, secondary, resolver, options) {
 
 		var itemMap1, itemMap2, mediationHandler1, mediationHandler2,
 			watchHandler1, unwatch1, unwatch2;
@@ -78,7 +78,7 @@ define(function (require) {
 
 	function createAdapter (object, resolver, type, options) {
 		var Adapter = resolver(object, type);
-		if (!Adapter) throw new Error('CollectionMediator: could not find Adapter constructor for ' + type);
+		if (!Adapter) throw new Error('linkCollections: could not find Adapter constructor for ' + type);
 		return new Adapter(object, options);
 	}
 
@@ -127,7 +127,7 @@ define(function (require) {
 				});
 			}
 			newAdapter = createAdapter(newItem, resolver, 'object', target.getOptions());
-			itemData.unmediate = ObjectMediator(itemData.adapter, newAdapter);
+			itemData.unmediate = linkProperties(itemData.adapter, newAdapter);
 		}
 	}
 

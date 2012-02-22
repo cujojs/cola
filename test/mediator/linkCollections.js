@@ -1,4 +1,4 @@
-(function(buster, createCollectionMediator) {
+(function(buster, linkCollections) {
 "use strict";
 var assert, refute;
 
@@ -21,7 +21,7 @@ function mockAdapter() {
 
 var item = { id: 1 };
 
-buster.testCase('CollectionMediator', {
+buster.testCase('linkCollections', {
 
 	'forwarding': {
 
@@ -42,13 +42,13 @@ buster.testCase('CollectionMediator', {
 
 		'should sync existing items to receiver on creation': function() {
 			this.sendingAdapter.syncTo = this.spy();
-			createCollectionMediator(this.sendingAdapter, this.receivingAdapter);
+			linkCollections(this.sendingAdapter, this.receivingAdapter);
 
 			assert.calledOnceWith(this.sendingAdapter.syncTo, this.receivingAdapter);
 		},
 
 		'should forward itemAdded from sender to receiver': function() {
-			createCollectionMediator(this.sendingAdapter, this.receivingAdapter);
+			linkCollections(this.sendingAdapter, this.receivingAdapter);
 
 			this.sendingAdapter.add(item);
 
@@ -57,7 +57,7 @@ buster.testCase('CollectionMediator', {
 		},
 
 		'should forward itemAdded from sender to receiver reversed': function() {
-			createCollectionMediator(this.receivingAdapter, this.sendingAdapter);
+			linkCollections(this.receivingAdapter, this.sendingAdapter);
 
 			this.sendingAdapter.add(item);
 
@@ -66,7 +66,7 @@ buster.testCase('CollectionMediator', {
 		},
 
 		'should forward itemRemoved from sender to receiver': function() {
-			createCollectionMediator(this.sendingAdapter, this.receivingAdapter);
+			linkCollections(this.sendingAdapter, this.receivingAdapter);
 
 			this.sendingAdapter.remove(item);
 
@@ -75,7 +75,7 @@ buster.testCase('CollectionMediator', {
 		},
 
 		'should forward itemRemoved from sender to receiver reversed': function() {
-			createCollectionMediator(this.receivingAdapter, this.sendingAdapter);
+			linkCollections(this.receivingAdapter, this.sendingAdapter);
 
 			this.sendingAdapter.remove(item);
 
@@ -107,5 +107,5 @@ buster.testCase('CollectionMediator', {
 
 })(
 	require('buster'),
-	require('../../mediator/CollectionMediator')
+	require('../../mediator/linkCollections')
 );

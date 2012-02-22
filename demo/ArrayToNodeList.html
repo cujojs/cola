@@ -18,14 +18,14 @@ curl({
 });
 curl(
 	[
-		'cola/mediator/CollectionMediator',
+		'cola/mediator/linkCollections',
 		'cola/ArrayAdapter', 
 		'cola/dom/NodeListAdapter',
 		'cola/dom/NodeAdapter',
 		'cola/ObjectAdapter',
 		'cola/AdapterResolver'
 	], 
-	function (CollectionMediator, ArrayAdapter, NodeListAdapter, NodeAdapter, ObjectAdapter, AdapterResolver) {
+	function (linkCollections, ArrayAdapter, NodeListAdapter, NodeAdapter, ObjectAdapter, AdapterResolver) {
 	"use strict";
 		
 		var itemNode, data;
@@ -70,7 +70,7 @@ curl(
 				}
 			});
 
-			CollectionMediator(source, dest, AdapterResolver, { sync: true });
+			linkCollections(source, dest, AdapterResolver, { sync: true });
 
 		}
 
