@@ -30,11 +30,12 @@ curl(
 		
 		var itemNode, data;
 
-		data = [
+		window.names = data = [
 			{ id: 1, first: 'Brian', last: 'Cavalier' },
 			{ id: 2, first: 'John', last: 'Hann' },
 			{ id: 3, first: 'Ian', last: 'Cavalier' },
-			{ id: 4, first: 'Scott', last: 'Andrews' }
+			{ id: 4, first: 'Scott', last: 'Andrews' },
+			{ id: 5, first: 'Ilia', last: 'Gilderman' }
 		];
 
 		function getNode (id) {
@@ -64,7 +65,8 @@ curl(
 				querySelector: querySelector,
 				bindings: {
 					first: { node: '[name=first]', prop: 'value' },
-					last: { node: '[name=last]', prop: 'value' }
+					last: { node: '[name=last]', prop: 'value' },
+					id: { node: 'label' }
 				}
 			});
 
@@ -86,6 +88,7 @@ curl(
 	</div>
 	<div>
 		<fieldset id="itemNode">
+			<label></label>
 			<input name="first" value="Fred"/>
 			<input name="last" value="Flinstone"/>
 		</fieldset>
