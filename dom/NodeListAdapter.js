@@ -1,10 +1,11 @@
-(function (define, global) {
-define(function(require) {
+(function (define) {
+	define(function(require) {
 "use strict";
 
-	var domEvents, fireSimpleEvent, watchNode,
+	var when, domEvents, fireSimpleEvent, watchNode,
 		undef;
 
+	when = require('when');
 	domEvents = require('./events');
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
@@ -13,9 +14,9 @@ define(function(require) {
 	 * Manages a collection of dom trees that are synced with a data
 	 * collection.
 	 * @constructor
-	 * @param templateNode {DOMNode} node to serve as a template for items
+	 * @param templateNode {Node} node to serve as a template for items
 	 * in the collection / list.
-	 * @param containerNode {DOMNode} optional parent to all itemNodes. If
+	 * @param options.containerNode {Node} optional parent to all itemNodes. If
 	 * omitted, the parent of templateNode is assumed to be containerNode.
 	 */
 	function NodeListAdapter (templateNode, options) {
@@ -43,14 +44,17 @@ define(function(require) {
 
 		watch: function (add, remove) {
 			var unwatchAdd, unwatchRemove;
+
 			unwatchAdd = add ?
 				watchNode(this._containerNode, colaAddedEvent, function (evt) {
-					add(evt.data.item);
+					return add(evt.data.item);
 				}) : noop;
+
 			unwatchRemove = remove ?
 				watchNode(this._containerNode, colaRemovedEvent, function (evt) {
-					remove(evt.data.item);
+					return remove(evt.data.item);
 				}) : noop;
+
 			return function () {
 				unwatchAdd();
 				unwatchRemove();
@@ -58,7 +62,7 @@ define(function(require) {
 		},
 
 		add: function (item) {
-			var itemData, self, index;
+			var itemData, index;
 			if (typeof this.comparator != 'function') {
 				throw createError('NodeListAdapter: Cannot add without a comparator.', item);
 			}
@@ -73,13 +77,13 @@ define(function(require) {
 			this._insertNodeAt(itemData.node, index);
 			// notify listeners
 			// return node so mediator can adapt and mediate it
-			return this._fireEvent(colaAddedEvent, item).then(
+			return when(this._fireEvent(colaAddedEvent, item),
 				function() { return itemData.node }
 			);
 		},
 
 		remove: function (item) {
-			var itemData, index = -1, unwatch;
+			var itemData, index = -1;
 			if (typeof this.comparator != 'function') {
 				throw createError('NodeListAdapter: Cannot remove without a comparator.', item);
 			}
@@ -182,10 +186,10 @@ define(function(require) {
 		return obj && obj.tagName && obj.insertBefore && obj.removeChild;
 	};
 
-	var colaAddedEvent, colaRemovedEvent, colaUpdatedEvent;
+	var colaAddedEvent, colaRemovedEvent;
 
-	colaAddedEvent = '-cola-item-added';
-	colaRemovedEvent = '-cola-item-removed';
+	colaAddedEvent = 'ColaItemAdded';
+	colaRemovedEvent = 'ColaItemRemoved';
 
 	/**
 	 * This binary search isn't quite like most because it also
@@ -245,6 +249,5 @@ define(function(require) {
 }(
 	typeof define == 'function'
 		? define
-		: function (factory) { module.exports = factory(require); },
-	this
+		: function (factory) { module.exports = factory(require); }
 ));

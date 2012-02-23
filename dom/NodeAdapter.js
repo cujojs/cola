@@ -102,7 +102,7 @@ define(function (require) {
 				if (current != value) {
 					setNodePropOrAttr(node, prop, value);
 					// notify watchers
-					fireSimpleEvent(node, colaSyntheticEvent);
+					return fireSimpleEvent(node, colaSyntheticEvent);
 				}
 			}
 		},
@@ -167,7 +167,7 @@ define(function (require) {
 
 	var colaSyntheticEvent, attrToProp;
 
-	colaSyntheticEvent = '-cola-item-prop-updated';
+	colaSyntheticEvent = 'ColaItemPropUpdated';
 
 	attrToProp = {
 		'class': 'className',

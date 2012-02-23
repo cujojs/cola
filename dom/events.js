@@ -2,11 +2,10 @@
 define(function (require) {
 "use strict";
 
-	var when, doWatchNode, fireSimpleEvent, eventResultsProp, allUnwatches;
+	var when, doWatchNode, fireSimpleEvent, allUnwatches;
 
 	when = require('when');
 
-	eventResultsProp = '-cola-handler-results';
 	allUnwatches = [];
 
 	function has(feature) {
@@ -39,7 +38,9 @@ define(function (require) {
 		// Wrap the callback in a function that records its return value
 		// so that async event handlers that return promises can be coordinated
 		function handler(e) {
-			e[eventResultsProp].push(callback(e));
+			if(e._colaHandlerResults) {
+				e._colaHandlerResults.push(callback(e));
+			}
 		}
 
 		// Call environment-specific doWatchNode to setup the actual DOM event
@@ -86,19 +87,19 @@ define(function (require) {
 	 * @param evt {Event}
 	 */
 	function initEventPromise(node, type, evt) {
-		var deferred, unwatch, eventResults;
+		var deferred, unwatch;
 
-		eventResults = evt[eventResultsProp] = [];
+		evt._colaHandlerResults = [];
 
 		deferred = when.defer();
-		unwatch = doWatchNode(node, type, function(e) {
+		unwatch = doWatchNode(node, type, function(evt) {
 			unwatch();
 			// TODO: This only works if event handlers are invoked in the
 			// order they were registered, which is true for sane browsers.
 			// May need a setTimeout here to make IE work correctly.
 //			setTimeout(function() {
-				when.all(eventResults, deferred.resolve, deferred.reject);
-//			}, 0);
+				when.all(evt._colaHandlerResults, deferred.resolve, deferred.reject);
+//			}, 100);
 		});
 
 		return deferred.promise;
@@ -115,6 +116,13 @@ define(function (require) {
 
 			promise = initEventPromise(node, type, evt);
 
+			// dispatchEvent executes all callbacks synchronously, so you'd think
+			// we could just return when.all(evt[eventResultsProp]) after this statement,
+			// but we're seeing signs that the browser re-uses or shares this event object,
+			// and/or does not guarantee that this event object is the same object as gets
+			// passed to all handlers for this particular dispatch.
+			// Putting the when.all itself inside an event handler (in initEventPromise
+			// above) seems to guarantee that it will resolve the "correct" eventResultsProp
 			node.dispatchEvent(evt);
 
 			return promise;
@@ -127,8 +135,10 @@ define(function (require) {
 			evt = document.createEventObject();
 			evt.data = data;
 
-			promise = initEventPromise(evt);
+			promise = initEventPromise(node, type, evt);
 
+			// FIXME: This does not work for custom event types. Need to use ondataavailable
+			// or some other standard event type for IE and manage the handlers ourselves.
 			node.fireEvent('on' + type, evt);
 
 			return promise;

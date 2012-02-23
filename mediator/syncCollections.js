@@ -48,6 +48,8 @@ define(function (require) {
 		// this function handles property changes that could affect collection order
 		watchHandler1 = createItemWatcherHandler(primary, secondary, resolver);
 
+		// TODO: This intitial sync may need to cause other operations to delay
+		// until it is complete (which may happen async if secondary is async)
 		if (!('sync' in options) || options.sync) {
 			primary.forEach(function (item) {
 				// watch for item changes

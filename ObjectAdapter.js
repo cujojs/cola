@@ -1,14 +1,18 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
 (function (define) {
-define(function () {
+define(function (require) {
 "use strict";
+
+	var when, stopIteration;
+
+	when = require('when');
+	stopIteration = {};
 
 	/**
 	 * @constructor
 	 * @param obj {Object}
 	 * @param options {Object}
-	 * @returns {Watchable}
 	 */
 	function ObjectAdapter(obj, options) {
 
@@ -28,16 +32,14 @@ define(function () {
 			return listen(this._listeners, '*', callback);
 		},
 
-//		get: function (name) {
-//			return this._obj[name];
-//		},
-
 		set: function (name, value) {
 			var obj = this._obj;
 			if (obj[name] != value) {
 				obj[name] = value;
-				notify(this._listeners, value, name);
-				notify(this._listeners, value, '*', name); // also notify any wildcard listeners
+				return when.all([
+					notify(this._listeners, value, name),
+					notify(this._listeners, value, '*', name) // also notify any wildcard listeners
+				]);
 			}
 		},
 
@@ -76,18 +78,17 @@ define(function () {
 	 * @param callback {Function}
 	 */
 	function listen (listeners, name, callback) {
-		var list, head;
+		var list;
 
-		list = listeners[name];
-		head = { callback: callback, prev: list };
-		listeners[name] = head;
+		list = listeners[name] || (listeners[name] = []);
+		list.push(callback);
 
 		// return unwatch function
 		return function () {
-			return walkList(listeners[name], function (item) {
-				if (item == head) {
-					listeners[name] = head.prev;
-					return walkList.stopSignal;
+			return walkArray(listeners[name], function (item, i, arr) {
+				if(item === callback) {
+					arr.splice(i, 1);
+					return stopIteration;
 				}
 			});
 		};
@@ -102,28 +103,29 @@ define(function () {
 	 */
 	function notify (listeners, value, key, name) {
 		if (arguments.length < 3) name = key;
-		return walkList(listeners[key], function (item) {
-			item.callback(name, value);
-		});
+		return when.reduce(listeners[key], function(original, handler) {
+			return when(handler(name, original), function() {
+				return original;
+			})
+		}, value);
 	}
 
 	/**
 	 * Walks a linked list
 	 * @private
-	 * @param list
+	 * @param array
 	 * @param callback {Function} function (itemInList, callback) {}
 	 */
-	function walkList (list, callback) {
-		var item = list;
-		while (item && callback(item) !== walkList.stopSignal) {
-			item = item.prev;
+	function walkArray (array, callback) {
+		var result, i, len;
+		for(i = 0, len = array.length; i < len && result != stopIteration; i++) {
+			result = callback(array[i], i, array);
 		}
 	}
-	walkList.stopSignal = {};
 
 });
 }(
 	typeof define == 'function'
 		? define
-		: function (factory) { module.exports = factory(); }
+		: function (factory) { module.exports = factory(require); }
 ));

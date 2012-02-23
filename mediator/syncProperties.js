@@ -20,8 +20,11 @@ define(function () {
 
 		function forwardTo (adapter, name, value) {
 			pauseForwarding();
-			adapter.set(name, value);
-			resumeForwarding();
+			try {
+				return adapter.set(name, value);
+			} finally {
+				resumeForwarding();
+			}
 		}
 
 		function pauseForwarding () {
@@ -34,17 +37,19 @@ define(function () {
 
 		// forward notifications from adapter1 to adapter2
 		unwatch1 = adapter1.watchAll(function (name, value) {
-			forwarder(adapter2,name, value);
+			return forwarder(adapter2,name, value);
 		});
 
 		// forward notifications from adapter2 to adapter1
 		unwatch2 = adapter2.watchAll(function (name, value) {
-			forwarder(adapter1, name, value);
+			return forwarder(adapter1, name, value);
 		});
 
 		// start forwarding
 		resumeForwarding();
 
+		// TODO: This intitial sync may need to cause other operations to delay
+		// until it is complete (which may happen async if secondary is async)
 		if (!options || options.sync !== false) {
 			adapter1.forEach(function (value, prop) {
 				adapter2.set(prop, value);

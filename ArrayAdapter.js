@@ -70,9 +70,7 @@ define(function (require) {
 			key = this._keyFunc(item);
 			index = this._index;
 
-			if (key in index) {
-//				throw new Error('ArrayAdapter: item already exists', item);
-			} else {
+			if (!(key in index)) {
 				index[key] = this._data.push(item) - 1;
 				return notify(this._listeners.added, item);
 			}
@@ -95,8 +93,6 @@ define(function (require) {
 				this._index = buildIndex(data, this._keyFunc);
 
 				return notify(this._listeners.removed, item);
-			} else {
-//				throw new Error('ArrayAdapter: Cannot remove non-existent item', itemOrId);
 			}
 		}
 
