@@ -71,7 +71,7 @@ define(function (require) {
 			index = this._index;
 
 			if (key in index) {
-				throw new Error('ArrayAdapter: item already exists', item);
+//				throw new Error('ArrayAdapter: item already exists', item);
 			} else {
 				index[key] = this._data.push(item) - 1;
 				return notify(this._listeners.added, item);
@@ -86,21 +86,17 @@ define(function (require) {
 
 			if(key in index) {
 				data = this._data;
-				this._data = [];
 
 				at = index[key];
 				item = data[at];
 				data.splice(at, 1);
 
-				delete index[key];
-				this._index = {};
-
 				// Rebuild index before notifying
-				addAll(this, data, at);
+				this._index = buildIndex(data, this._keyFunc);
 
 				return notify(this._listeners.removed, item);
 			} else {
-				throw new Error('ArrayAdapter: Cannot remove non-existent item', itemOrId);
+//				throw new Error('ArrayAdapter: Cannot remove non-existent item', itemOrId);
 			}
 		}
 
@@ -125,12 +121,23 @@ define(function (require) {
 	 * to the supplied adapter.
 	 * @param adapter
 	 * @param items
-	 * @param [start] {Number}
 	 */
-	function addAll(adapter, items, start) {
-		for(var i = start||0, len = items.length; i < len; i++) {
+	function addAll(adapter, items) {
+		for(var i = 0, len = items.length; i < len; i++) {
 			adapter.add(items[i]);
 		}
+	}
+
+	function buildIndex(items, keyFunc) {
+		var index, i, len;
+
+		index = {};
+
+		for(i = 0, len = items.length; i < len; i++) {
+			index[keyFunc(items[i])] = i;
+		}
+
+		return index;
 	}
 
 	function notify(callbacks, item) {

@@ -89,7 +89,7 @@ define(function (require) {
 	function createItemWatcherHandler (primary, secondary, resolver) {
 		if (typeof primary.checkPosition == 'function' || typeof secondary.checkPosition == 'function') {
 			return function watchItem (item, target, itemMap) {
-				var itemData, newAdapter;
+				var itemData;
 				itemData = itemMap.get(item);
 				if (itemData) {
 					// the item was already being watched
@@ -136,43 +136,21 @@ define(function (require) {
 	}
 
 	function createForwarder (method, discoveryCallback) {
-		function doForward(target, item, index) {
-			var self = this;
-			function resumeForward() {
-				self.forwardTo = doForward;
-			}
-
-			this.forwardTo = noop;
-
-			try {
-				return when(target[method](item, index),
-					function(copy) {
-						// if adapter2 returns a copy we need to propagate it
-						if (copy) {
-							return discoveryCallback(copy, item, target);
-						}
+		return function doForward(target, item, index) {
+			return when(target[method](item, index),
+				function(copy) {
+					// if adapter2 returns a copy we need to propagate it
+					if (copy) {
+						return discoveryCallback(copy, item, target);
 					}
-				).then(resumeForward, function(e) {
-						// Resume forwarding, but also "rethrow", propagate the failure
-						resumeForward();
-						throw e;
-					}); // like finally
-
-			} catch(e) {
-				// if target[method] throws, we have to catch it here, since in that
-				// case, when() will never be invoked at all.
-				resumeForward();
-			}
-		}
-
-		return {
-			forwardTo: doForward
+				}
+			);
 		};
 	}
 
 	function createCallback (forwarder, to) {
 		return function (item, index) {
-			return forwarder.forwardTo(to, item, index);
+			return forwarder(to, item, index);
 		}
 	}
 
