@@ -11,7 +11,7 @@ refute = buster.refute;
  */
 function mockAdapter() {
 	return {
-		syncTo: function() {},
+		forEach: function() {},
 		watch: function(add, remove) {
 			this.add = add;
 			this.remove = remove;
@@ -30,7 +30,7 @@ buster.testCase('syncCollections', {
 				var ma = {
 					watch: function() {}
 				};
-				ma.syncTo = spies.spy();
+				ma.forEach = spies.spy();
 				ma.add    = spies.spy();
 				ma.remove = spies.spy();
 
@@ -41,10 +41,10 @@ buster.testCase('syncCollections', {
 		},
 
 		'should sync existing items to receiver on creation': function() {
-			this.sendingAdapter.syncTo = this.spy();
+			this.sendingAdapter.forEach = this.spy();
 			syncCollections(this.sendingAdapter, this.receivingAdapter);
 
-			assert.calledOnceWith(this.sendingAdapter.syncTo, this.receivingAdapter);
+			assert.calledOnceWith(this.sendingAdapter.forEach, this.receivingAdapter);
 		},
 
 		'should forward itemAdded from sender to receiver': function() {

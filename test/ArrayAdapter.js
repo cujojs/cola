@@ -69,7 +69,7 @@ buster.testCase('ArrayAdapter', {
 		}
 	},
 
-	'syncTo': {
+	'forEach': {
 
 		'should propagate all items from source to destination adapter': function() {
 			var src, dst, itemAdded;
@@ -83,7 +83,9 @@ buster.testCase('ArrayAdapter', {
 			dst = new ArrayAdapter();
 			dst.watch(itemAdded, null);
 
-			src.syncTo(dst);
+			src.forEach(function (item) {
+				dst.add(item);
+			});
 
 			assert.calledTwice(itemAdded);
 			assert.calledWith(itemAdded, { id: 1 });
