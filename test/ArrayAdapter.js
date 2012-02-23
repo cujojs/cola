@@ -29,26 +29,31 @@ buster.testCase('ArrayAdapter', {
 
 	'add': {
 
-		'should add new items': function() {
+		'should add new items': function(done) {
 			var pa = new ArrayAdapter([
 				{ id: 1 }
 			], idComparator);
 
 			pa.watch(function(item) {
 				assert.equals(item.id, 2);
+				done();
 			});
 
-			pa.add({ id: 2 });
+			assert(pa.add({ id: 2 }));
 		},
 
-		'should throw when adding an item that already exists': function() {
+		'should allow adding an item that already exists': function(done) {
 			var pa = new ArrayAdapter([
 				{ id: 1 }
 			], idComparator);
 
-			assert.exception(function() {
-				pa.add({ id: 1 });
-			}, 'Error');
+			pa.watch(function() {
+				buster.fail();
+				done();
+			});
+
+			refute.defined(pa.add({ id: 1 }));
+			done();
 		}
 
 	},
@@ -66,6 +71,18 @@ buster.testCase('ArrayAdapter', {
 			});
 
 			pa.remove({ id: 1 });
+		},
+
+		'should allow removing non-existent items': function(done) {
+			var pa = new ArrayAdapter([], idComparator);
+
+			pa.watch(null, function() {
+				buster.fail();
+				done();
+			});
+
+			refute.defined(pa.remove({ id: 1 }));
+			done();
 		}
 	},
 
