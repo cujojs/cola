@@ -97,7 +97,7 @@
 			// remove itemData
 			this._itemData.splice(index, 1);
 			// notify listeners
-			this._fireEvent(colaRemovedEvent, item);
+			return this._fireEvent(colaRemovedEvent, item);
 		},
 
 		forEach: function (lambda) {
