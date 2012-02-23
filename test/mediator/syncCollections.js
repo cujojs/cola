@@ -44,7 +44,7 @@ buster.testCase('syncCollections', {
 			this.sendingAdapter.forEach = this.spy();
 			syncCollections(this.sendingAdapter, this.receivingAdapter);
 
-			assert.calledOnceWith(this.sendingAdapter.forEach, this.receivingAdapter);
+			assert.calledOnce(this.sendingAdapter.forEach);
 		},
 
 		'should forward itemAdded from sender to receiver': function() {

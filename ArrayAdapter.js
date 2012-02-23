@@ -1,11 +1,13 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
 (function(define) {
-define(function () {
+define(function (require) {
 
 	"use strict";
 
-	var undef;
+	var when, undef;
+
+	when = require('when');
 
 	// TODO: somehowchange ArrayAdapter to take comparator and keyFunc as properties?
 	function ArrayAdapter(dataArray, comparator, keyFunc) {
@@ -72,7 +74,7 @@ define(function () {
 				throw new Error('ArrayAdapter: item already exists', item);
 			} else {
 				index[key] = this._data.push(item) - 1;
-				notify(this._listeners.added, item);
+				return notify(this._listeners.added, item);
 			}
 		},
 
@@ -96,7 +98,7 @@ define(function () {
 				// Rebuild index before notifying
 				addAll(this, data, at);
 
-				notify(this._listeners.removed, item);
+				return notify(this._listeners.removed, item);
 			} else {
 				throw new Error('ArrayAdapter: Cannot remove non-existent item', itemOrId);
 			}
@@ -132,13 +134,11 @@ define(function () {
 	}
 
 	function notify(callbacks, item) {
-		for(var i = 0, len = callbacks.length; i < len; i++) {
-			try {
-				callbacks[i](item);
-			} catch(e) {
-				// TODO: Handle exceptions for itemAdded/itemUpdated/itemRemoved
-			}
-		}
+		return when.reduce(callbacks, function(original, callback) {
+			return when(callback(original), function() {
+				return original;
+			});
+		}, item);
 	}
 
 	function removeFromArray(arr, item) {
@@ -158,5 +158,5 @@ define(function () {
 })(
 	typeof define == 'function'
 		? define
-		: function(factory) { module.exports = factory(); }
+		: function(factory) { module.exports = factory(require); }
 );

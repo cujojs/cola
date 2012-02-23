@@ -60,7 +60,7 @@
 //	addPackage({ name: 'dijit', location: 'test/lib/dijit', main: 'lib/main' });
 //	addPackage({ name: 'sizzle', location: 'support/sizzle' });
 //	addPackage({ name: 'aop', location: 'support/aop' });
-//	addPackage({ name: 'when', location: 'support/when' });
+	addPackage({ name: 'when', location: 'node_modules/when' });
 
 	// That's right y'all, document.write FTW
 	doc.write('<script src="' + baseUrl + loaderPath + '.js' + '"></script>');

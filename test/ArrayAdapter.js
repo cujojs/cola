@@ -71,25 +71,20 @@ buster.testCase('ArrayAdapter', {
 
 	'forEach': {
 
-		'should propagate all items from source to destination adapter': function() {
-			var src, dst, itemAdded;
+		'should iterate over all items': function() {
+			var src, forEachSpy;
 
 			src = new ArrayAdapter([
 				{ id: 1 }, { id: 2 }
 			], idComparator);
 
-			itemAdded = this.spy();
+			forEachSpy = this.spy();
 
-			dst = new ArrayAdapter();
-			dst.watch(itemAdded, null);
+			src.forEach(forEachSpy);
 
-			src.forEach(function (item) {
-				dst.add(item);
-			});
-
-			assert.calledTwice(itemAdded);
-			assert.calledWith(itemAdded, { id: 1 });
-			assert.calledWith(itemAdded, { id: 2 });
+			assert.calledTwice(forEachSpy);
+			assert.calledWith(forEachSpy, { id: 1 });
+			assert.calledWith(forEachSpy, { id: 2 });
 		}
 
 	}

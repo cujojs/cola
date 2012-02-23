@@ -72,9 +72,10 @@ define(function(require) {
 			// insert into container
 			this._insertNodeAt(itemData.node, index);
 			// notify listeners
-			this._fireEvent(colaAddedEvent, item);
 			// return node so mediator can adapt and mediate it
-			return itemData.node;
+			return this._fireEvent(colaAddedEvent, item).then(
+				function() { return itemData.node }
+			);
 		},
 
 		remove: function (item) {
@@ -154,7 +155,7 @@ define(function(require) {
 		},
 
 		_fireEvent: function (type, item) {
-			fireSimpleEvent(this._containerNode, type, { item: item });
+			return fireSimpleEvent(this._containerNode, type, { item: item });
 		},
 
 		_insertNodeAt: function (node, index) {

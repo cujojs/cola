@@ -84,7 +84,7 @@ define(function () {
 
 		// return unwatch function
 		return function () {
-			walkList(listeners[name], function (item) {
+			return walkList(listeners[name], function (item) {
 				if (item == head) {
 					listeners[name] = head.prev;
 					return walkList.stopSignal;
@@ -102,7 +102,7 @@ define(function () {
 	 */
 	function notify (listeners, value, key, name) {
 		if (arguments.length < 3) name = key;
-		walkList(listeners[key], function (item) {
+		return walkList(listeners[key], function (item) {
 			item.callback(name, value);
 		});
 	}

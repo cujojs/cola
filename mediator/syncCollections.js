@@ -4,11 +4,13 @@
 define(function (require) {
 "use strict";
 
-	var methodsToForward, syncProperties;
+	var methodsToForward, syncProperties, when;
 
-	methodsToForward = ['add', 'remove'];
+	when = require('when');
 
 	syncProperties = require('./syncProperties');
+
+	methodsToForward = ['add', 'remove'];
 
 	/**
 	 * Sets up mediation between two collection adapters
@@ -48,15 +50,17 @@ define(function (require) {
 
 		if (!('sync' in options) || options.sync) {
 			primary.forEach(function (item) {
-				var copy;
 				// watch for item changes
 				watchHandler1(item, primary, itemMap1);
 				// push item into secondary
-				copy = secondary.add(item);
-				// if secondary returns a copy
-				if (copy) {
-					mediationHandler1(copy, item, secondary);
-				}
+				when(secondary.add(item), function(copy) {
+					// if secondary returns a copy
+					if (copy) {
+						mediationHandler1(copy, item, secondary);
+					}
+
+					return copy;
+				});
 			});
 		}
 
@@ -133,16 +137,31 @@ define(function (require) {
 
 	function createForwarder (method, discoveryCallback) {
 		function doForward(target, item, index) {
-			var copy, copyAdapter;
-			this.forwardTo = noop;
-			try {
-				copy = target[method](item, index);
-			} finally {
-				this.forwardTo = doForward;
+			var self = this;
+			function resumeForward() {
+				self.forwardTo = doForward;
 			}
-			// if adapter2 returns a copy
-			if (copy) {
-				discoveryCallback(copy, item, target);
+
+			this.forwardTo = noop;
+
+			try {
+				return when(target[method](item, index),
+					function(copy) {
+						// if adapter2 returns a copy we need to propagate it
+						if (copy) {
+							return discoveryCallback(copy, item, target);
+						}
+					}
+				).then(resumeForward, function(e) {
+						// Resume forwarding, but also "rethrow", propagate the failure
+						resumeForward();
+						throw e;
+					}); // like finally
+
+			} catch(e) {
+				// if target[method] throws, we have to catch it here, since in that
+				// case, when() will never be invoked at all.
+				resumeForward();
 			}
 		}
 
@@ -153,7 +172,7 @@ define(function (require) {
 
 	function createCallback (forwarder, to) {
 		return function (item, index) {
-			forwarder.forwardTo(to, item, index);
+			return forwarder.forwardTo(to, item, index);
 		}
 	}
 
