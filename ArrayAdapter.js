@@ -5,9 +5,9 @@ define(function (require) {
 
 	"use strict";
 
-	var when, undef;
+	var Notifier, undef;
 
-	when = require('when');
+	Notifier = require('./Notifier');
 
 	// TODO: somehowchange ArrayAdapter to take comparator and keyFunc as properties?
 	function ArrayAdapter(dataArray, comparator, keyFunc) {
@@ -17,10 +17,7 @@ define(function (require) {
 		this._data = [];
 		this._index = {};
 
-		this._listeners = {
-			added: [],
-			removed: []
-		};
+		this._notifier = new Notifier();
 
 		if(dataArray && dataArray.length) {
 			addAll(this, dataArray);
@@ -37,17 +34,16 @@ define(function (require) {
 		getOptions: function () {},
 
 		watch: function(itemAdded, itemRemoved) {
-			var added, removed;
+			var unlistenAdd, unlistenRemove, notifier;
 
-			added = this._listeners.added;
-			removed = this._listeners.removed;
+			notifier = this._notifier;
 
-			itemAdded && added.push(itemAdded);
-			itemRemoved && removed.push(itemRemoved);
+			unlistenAdd = notifier.listen('add', itemAdded);
+			unlistenRemove = notifier.listen('remove', itemRemoved);
 
 			return function() {
-				itemAdded && removeFromArray(added, itemAdded);
-				itemRemoved && removeFromArray(removed, itemRemoved);
+				unlistenAdd();
+				unlistenRemove();
 			}
 		},
 
@@ -72,7 +68,7 @@ define(function (require) {
 
 			if (!(key in index)) {
 				index[key] = this._data.push(item) - 1;
-				return notify(this._listeners.added, item);
+				return this._notifier.notify('add', item);
 			}
 		},
 
@@ -92,7 +88,7 @@ define(function (require) {
 				// Rebuild index before notifying
 				this._index = buildIndex(data, this._keyFunc);
 
-				return notify(this._listeners.removed, item);
+				return this._notifier.notify('remove', item);
 			}
 		}
 
@@ -134,25 +130,6 @@ define(function (require) {
 		}
 
 		return index;
-	}
-
-	function notify(callbacks, item) {
-		return when.reduce(callbacks, function(original, callback) {
-			return when(callback(original), function() {
-				return original;
-			});
-		}, item);
-	}
-
-	function removeFromArray(arr, item) {
-		var i = arr.length - 1;
-
-		for(; i >= 0; --i) {
-			if(arr[i] === item) {
-				arr.splice(i, 1);
-				return;
-			}
-		}
 	}
 
 	return ArrayAdapter;

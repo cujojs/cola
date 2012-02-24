@@ -4,9 +4,9 @@
 define(function (require) {
 "use strict";
 
-	var when, stopIteration;
+	var Notifier, stopIteration;
 
-	when = require('when');
+	Notifier = require('./Notifier');
 	stopIteration = {};
 
 	/**
@@ -18,28 +18,25 @@ define(function (require) {
 
 		this._obj = obj;
 		this._options = options;
-		this._listeners = {};
+		this._notifier = new Notifier();
 
 	}
 
 	ObjectAdapter.prototype = {
 
 		watch: function (name, callback) {
-			return listen(this._listeners, name, callback);
+			return this._notifier.listen(name, callback);
 		},
 
 		watchAll: function (callback) {
-			return listen(this._listeners, '*', callback);
+			return this._notifier.listen('*', callback);
 		},
 
 		set: function (name, value) {
 			var obj = this._obj;
 			if (obj[name] != value) {
 				obj[name] = value;
-				return when.all([
-					notify(this._listeners, value, name),
-					notify(this._listeners, value, '*', name) // also notify any wildcard listeners
-				]);
+				return notify(this._notifier, value, [name, '*'], name);
 			}
 		},
 
@@ -71,56 +68,16 @@ define(function (require) {
 	return ObjectAdapter;
 
 	/**
-	 * Registers a listener and returns a function to unlisten.
-	 * Internal implementation of watch/unwatch.
-	 * @private
-	 * @param name {String}
-	 * @param callback {Function}
-	 */
-	function listen (listeners, name, callback) {
-		var list;
-
-		list = listeners[name] || (listeners[name] = []);
-		list.push(callback);
-
-		// return unwatch function
-		return function () {
-			return walkArray(listeners[name], function (item, i, arr) {
-				if(item === callback) {
-					arr.splice(i, 1);
-					return stopIteration;
-				}
-			});
-		};
-	}
-
-	/**
 	 * Calls all listener functions with the details of a modified
 	 * property.
 	 * @private
-	 * @param value
-	 * @param key
+	 * @param notifier {Notifier} notifier whose listeners will be notified
+	 * @param value the new value of the property that changed
+	 * @param signals {String} the listener signals to notify
+	 * @param [name] {String} name of the property that changed.  If not supplied, key will be used
 	 */
-	function notify (listeners, value, key, name) {
-		if (arguments.length < 3) name = key;
-		return when.reduce(listeners[key], function(original, handler) {
-			return when(handler(name, original), function() {
-				return original;
-			})
-		}, value);
-	}
-
-	/**
-	 * Walks a linked list
-	 * @private
-	 * @param array
-	 * @param callback {Function} function (itemInList, callback) {}
-	 */
-	function walkArray (array, callback) {
-		var result, i, len;
-		for(i = 0, len = array.length; i < len && result != stopIteration; i++) {
-			result = callback(array[i], i, array);
-		}
+	function notify (notifier, value, signals, name) {
+		return notifier.notifyAll(signals, name, value);
 	}
 
 });
