@@ -37,8 +37,10 @@ define(function () {
 	};
 
 	/**
-	 * A map that uses a binary tree to store its items
-	 * @param comparator {Function} function(a, b) returns -1 when a < b,
+	 * A map that uses a binary tree to store its items if a comparator is
+	 * provided, and a simple array with a linear scan if a comparator is
+	 * NOT provided.
+	 * @param [comparator] {Function} function(a, b) returns -1 when a < b,
 	 * 1 when a > b, and 0 when a == b
 	 */
 	function TreeMap(comparator) {
