@@ -4,10 +4,11 @@
 define(function (require) {
 "use strict";
 
-	var methodsToForward, syncProperties, when;
+	var methodsToForward, syncProperties, when, map;
 
 	when = require('when');
 
+	map = require('../map');
 	syncProperties = require('./syncProperties');
 
 	methodsToForward = ['add', 'remove'];
@@ -38,8 +39,8 @@ define(function (require) {
 		}
 
 		// these maps keep track of items that are being watched
-		itemMap1 = createMap(primary.comparator, primary.symbolizer);
-		itemMap2 = createMap(secondary.comparator, secondary.symbolizer);
+		itemMap1 = map.create({ symbolizer: primary.symbolizer, comparator: primary.comparator });
+		itemMap2 = map.create({ symbolizer: secondary.symbolizer, comparator: secondary.comparator });
 
 		// these functions handle any item-to-item mediation
 		mediationHandler1 = createItemMediatorHandler(primary, itemMap1, resolver);
@@ -166,76 +167,6 @@ define(function (require) {
 		}
 
 		return from.watch.apply(from, callbacks);
-	}
-
-	// it's pretty clear we need to share this kind of thing all over the place :)
-	function createMap (comparator, symbolizer) {
-		var index, list, finder;
-
-		index = {};
-		list = [];
-
-		function scan (key) {
-			var i, entry;
-			i = list.length;
-			while ((entry = list[--i])) if (entry.object == key) return i;
-		}
-
-		function search (key) {
-			var min, max, mid, compare;
-			min = 0;
-			max = list.length;
-			do {
-				mid = Math.floor((min + max) / 2);
-				compare = comparator(key, list[mid].key);
-				// don't use mid +/- 1 or we may miss in-between
-				if (compare > 0) min = mid;
-				else if (compare < 0) max = mid;
-				else return mid;
-			}
-			while (max - min > 1 && !isNaN(compare));
-		}
-
-		if (!symbolizer) {
-			if (comparator) finder = search;
-			else finder = scan;
-		}
-
-		if (symbolizer) return {
-			get: function (key) {
-				return list[index[symbolizer(key)]];
-			},
-			set: function (key, object) {
-				index[symbolizer(key)] = list.push(object) - 1;
-				return object;
-			},
-			remove: function (key) {
-				var name = symbolizer(key);
-				delete list[index[name]]; // makes the array sparse
-				delete index[name];
-			},
-			forEach: function (lambda) {
-				for (var p in index) lambda(list[index[p]], p);
-			}
-		};
-		else return {
-			get: function (key) {
-				var entry = list[finder(key)];
-				return entry && entry.object;
-			},
-			set: function (key, object) {
-				list.splice(finder(key) || list.length, 0, { key: key, object: object});
-				return object;
-			},
-			remove: function (key) {
-				list.splice(finder(key) || list.length, 1);
-			},
-			forEach: function (lambda) {
-				var i, entry;
-				i= list.length;
-				while ((entry = list[--i])) lambda(entry.object, entry.key);
-			}
-		}
 	}
 
 	function noop () {}
