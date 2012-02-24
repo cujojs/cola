@@ -44,7 +44,7 @@ define(function (require) {
 		 *
 		 * @param signal {String} name of the signal to notify
 		 *
-		 * @return {Promise} a promise that will complete once all handlers have been
+		 * @return a promise that will complete once all handlers have been
 		 *  invoked **and** all promises returned by them have completed.
 		 */
 		notify: function(signal) {
@@ -65,7 +65,7 @@ define(function (require) {
 		 *
 		 * @param signals {Array} array of String signal names to notify
 		 *
-		 * @return {Promise} a promise that will complete once all handlers have been
+		 * @return a promise that will complete once all handlers have been
 		 *  invoked **and** all promises returned by them have completed.
 		 */
 		notifyAll: function(signals) {

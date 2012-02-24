@@ -14,7 +14,7 @@ curl({
 	},
 	packages: {
 		cola: { location: '.', main: 'cola' },
-		when: { location: '../when', main: 'when' }
+		when: { location: 'support/when', main: 'when' }
 	}
 });
 curl(
@@ -24,9 +24,10 @@ curl(
 		'cola/dom/NodeListAdapter',
 		'cola/dom/NodeAdapter',
 		'cola/ObjectAdapter',
-		'cola/AdapterResolver'
+		'cola/AdapterResolver',
+		'when'
 	], 
-	function (syncCollections, ArrayAdapter, NodeListAdapter, NodeAdapter, ObjectAdapter, AdapterResolver) {
+	function (syncCollections, ArrayAdapter, NodeListAdapter, NodeAdapter, ObjectAdapter, AdapterResolver, when) {
 	"use strict";
 		
 		var itemNode, data;
@@ -63,6 +64,7 @@ curl(
 			// create adapters
 			source = new ArrayAdapter(data, compareById, symbolizer);
 			dest = new NodeListAdapter(getNode('itemNode'), {
+				comparator: compareById,
 				querySelector: querySelector,
 				bindings: {
 					first: { node: '[name=first]', prop: 'value' },
@@ -71,7 +73,25 @@ curl(
 				}
 			});
 
+			console.log("START");
+
 			syncCollections(source, dest, AdapterResolver, { sync: true });
+
+			console.log("BEFORE");
+
+			when(dest.add({ id: 6, first: 'bob', last: 'smith' }), function() {
+				console.log(arguments);
+				source.forEach(function(item) {
+					console.log(item.first);
+				});
+			});
+			console.log("AFTER");
+
+			document.getElementById('print').onclick = function(e) {
+				dest.forEach(function(item) {
+					console.log(item);
+				});
+			};
 
 		}
 
@@ -94,6 +114,7 @@ curl(
 			<input name="last" value="Flinstone"/>
 		</fieldset>
 	</div>
+	<button type="button" id="print">print</button>
 </form>
 
 </body>

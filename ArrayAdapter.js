@@ -9,10 +9,21 @@ define(function (require) {
 
 	Notifier = require('./Notifier');
 
-	// TODO: somehowchange ArrayAdapter to take comparator and keyFunc as properties?
-	function ArrayAdapter(dataArray, comparator, keyFunc) {
-		this.comparator = comparator || compare;
-		this._keyFunc = this.symbolizer = keyFunc || defaultKeyFunc;
+	/**
+	 * Manages a collection of objects taken from the supplied dataArray
+	 * @param dataArray {Array} array of data objects to use as the initial
+	 * population
+	 * @param options.keyFunc {Function} function that returns a key/id for
+	 * a data item.
+	 * @param options.comparator {Function} comparator function that will
+	 * be propagated to other adapters as needed
+	 */
+	function ArrayAdapter(dataArray, options) {
+
+		if(!options) options = {};
+
+		this.comparator = options.comparator;
+		this._keyFunc = this.symbolizer = options.keyFunc || defaultKeyFunc;
 
 		this._data = [];
 		this._index = {};
@@ -100,12 +111,6 @@ define(function (require) {
 
 	function defaultKeyFunc(item) {
 		return typeof item == 'object' ? item.id : item;
-	}
-
-	function compare(a, b) {
-		return a < b ? -1
-			: a > b ? 1
-				: 0;
 	}
 
 	/**

@@ -16,19 +16,26 @@
 	 * @constructor
 	 * @param templateNode {Node} node to serve as a template for items
 	 * in the collection / list.
+	 * @param options.comparator {Function} comparator function to use for
+	 *  ordering nodes
 	 * @param options.containerNode {Node} optional parent to all itemNodes. If
 	 * omitted, the parent of templateNode is assumed to be containerNode.
+	 * @param options.querySelector {Function} DOM query function
 	 */
 	function NodeListAdapter (templateNode, options) {
 		var container;
 
-		container = arguments[2] || templateNode.parentNode;
+		if(!options) options = {};
+
+		this._options = options;
+
+		container = options.containerNode || templateNode.parentNode;
 
 		if (!container) {
 			throw new Error('No container node found for NodeListAdapter.');
 		}
 
-		this._options = options;
+		this.comparator = options.comparator;
 
 		this._containerNode = container;
 

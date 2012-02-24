@@ -1,12 +1,12 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
-(function (define, global) {
-define(function (require) {
+
+(function (define) {
+	define(function (require) {
 "use strict";
 
-	var domEvents, fireSimpleEvent, watchNode, undef;
-
-	domEvents = require('./events');
+	var domEvents, fireSimpleEvent, watchNode;
+		domEvents = require('./events');
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
 
@@ -14,16 +14,15 @@ define(function (require) {
 	 * Creates a cola adapter for interacting with dom nodes.  Be sure to
 	 * unwatch any watches to prevent memory leaks in Internet Explorer 6-8.
 	 * @constructor
-	 * @param rootNode {DOMNode}
+	 * @param rootNode {Node}
 	 * @param options {Object}
 	 */
 	function NodeAdapter (rootNode, options) {
-		var self = this;
 
 		this._rootNode = rootNode;
 
 		// set options
-		this._options = options
+		this._options = options;
 
 		// keep data values
 		this._values = {};
@@ -176,7 +175,7 @@ define(function (require) {
 
 	/**
 	 * Returns a property or attribute of a node.
-	 * @param node {DOMNode}
+	 * @param node {Node}
 	 * @param name {String}
 	 * @returns the value of the property or attribute
 	 */
@@ -192,10 +191,9 @@ define(function (require) {
 
 	/**
 	 * Sets a property of a node.
-	 * @param node {DOMNode}
+	 * @param node {Node}
 	 * @param name {String}
 	 * @param value
-	 * @returns {DOMNode}
 	 */
 	function setNodePropOrAttr (node, name, value) {
 		if (name in node) {

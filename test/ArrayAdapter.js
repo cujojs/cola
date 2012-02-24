@@ -5,12 +5,6 @@ var assert, refute, undef;
 assert = buster.assert;
 refute = buster.refute;
 
-function idComparator(a, b) {
-	return a.id < b.id ? -1
-		: a.id > b.id ? 1
-			: 0;
-}
-
 buster.testCase('ArrayAdapter', {
 
 	'canHandle': {
@@ -32,7 +26,7 @@ buster.testCase('ArrayAdapter', {
 		'should add new items': function(done) {
 			var pa = new ArrayAdapter([
 				{ id: 1 }
-			], idComparator);
+			]);
 
 			pa.watch(function(item) {
 				assert.equals(item.id, 2);
@@ -45,7 +39,7 @@ buster.testCase('ArrayAdapter', {
 		'should allow adding an item that already exists': function(done) {
 			var pa = new ArrayAdapter([
 				{ id: 1 }
-			], idComparator);
+			]);
 
 			pa.watch(function() {
 				buster.fail();
@@ -63,7 +57,7 @@ buster.testCase('ArrayAdapter', {
 		'should remove items': function(done) {
 			var pa = new ArrayAdapter([
 				{ id: 1 }, { id: 2 }
-			], idComparator);
+			]);
 
 			pa.watch(null, function(item) {
 				assert.equals(item.id, 1);
@@ -74,7 +68,7 @@ buster.testCase('ArrayAdapter', {
 		},
 
 		'should allow removing non-existent items': function(done) {
-			var pa = new ArrayAdapter([], idComparator);
+			var pa = new ArrayAdapter([]);
 
 			pa.watch(null, function() {
 				buster.fail();
@@ -93,7 +87,7 @@ buster.testCase('ArrayAdapter', {
 
 			src = new ArrayAdapter([
 				{ id: 1 }, { id: 2 }
-			], idComparator);
+			]);
 
 			forEachSpy = this.spy();
 

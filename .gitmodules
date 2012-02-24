@@ -4,3 +4,6 @@
 [submodule "test/util"]
 	path = test/util
 	url = https://unscriptable@github.com/cujojs/util.git
+[submodule "support/when"]
+	path = support/when
+	url = https://github.com/cujojs/when.git
