@@ -36,7 +36,7 @@
 			'should return true for a promise': function() {
 				assert(ResultAdapter.canHandle(promiseFor({})));
 			},
-			
+
 			'should return false for anything other than Object or promise': function() {
 				refute(ResultAdapter.canHandle(), 'undefined');
 				refute(ResultAdapter.canHandle(null), 'null');

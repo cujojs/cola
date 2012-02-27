@@ -139,14 +139,14 @@
 		_getNode: function (selector) {
 			// TODO: cache querySelector lookups?
 			var node;
-			if (!selector) {
-				node = guessNode(this._rootNode, selector);
-			}
-			else if (typeof selector == 'string') {
+			if (selector) {
 				node = this._options.querySelector(selector, this._rootNode);
+				if(!node) {
+					node = guessNode(this._rootNode, selector);
+				}
 			}
 			else {
-				node = selector; // is this possible?
+				node = this._rootNode;
 			}
 			return node;
 		}
