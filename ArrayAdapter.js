@@ -25,17 +25,21 @@ define(function (require) {
 		this.comparator = options.comparator;
 		this._keyFunc = this.symbolizer = options.keyFunc || defaultKeyFunc;
 
-		this._data = [];
-		this._index = {};
-
 		this._notifier = new Notifier();
 
-		if(dataArray && dataArray.length) {
-			addAll(this, dataArray);
-		}
+		this._init(dataArray);
 	}
 
 	ArrayAdapter.prototype = {
+
+		_init: function(dataArray) {
+			this._data = [];
+			this._index = {};
+
+			if(dataArray && dataArray.length) {
+				addAll(this, dataArray);
+			}
+		},
 
 		comparator: undef,
 
@@ -77,10 +81,10 @@ define(function (require) {
 			key = this._keyFunc(item);
 			index = this._index;
 
-			if (!(key in index)) {
-				index[key] = this._data.push(item) - 1;
-				return this._notifier.notify('add', item);
-			}
+			if(key in index) return null;
+
+			index[key] = this._data.push(item) - 1;
+			return this._notifier.notify('add', item);
 		},
 
 		remove: function(itemOrId) {
@@ -89,18 +93,18 @@ define(function (require) {
 			key = this._keyFunc(itemOrId);
 			index = this._index;
 
-			if(key in index) {
-				data = this._data;
+			if(!(key in index)) return null;
 
-				at = index[key];
-				item = data[at];
-				data.splice(at, 1);
+			data = this._data;
 
-				// Rebuild index before notifying
-				this._index = buildIndex(data, this._keyFunc);
+			at = index[key];
+			item = data[at];
+			data.splice(at, 1);
 
-				return this._notifier.notify('remove', item);
-			}
+			// Rebuild index before notifying
+			this._index = buildIndex(data, this._keyFunc);
+
+			return this._notifier.notify('remove', item);
 		}
 
 	};

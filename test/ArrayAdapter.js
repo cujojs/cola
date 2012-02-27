@@ -46,7 +46,7 @@ buster.testCase('ArrayAdapter', {
 				done();
 			});
 
-			refute.defined(pa.add({ id: 1 }));
+			refute(pa.add({ id: 1 }));
 			done();
 		}
 
@@ -75,7 +75,7 @@ buster.testCase('ArrayAdapter', {
 				done();
 			});
 
-			refute.defined(pa.remove({ id: 1 }));
+			refute(pa.remove({ id: 1 }));
 			done();
 		}
 	},
