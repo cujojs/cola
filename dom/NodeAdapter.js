@@ -96,7 +96,7 @@
 			node = this._getNode(b.node);
 			if (b && node) {
 				prop = 'prop' in b ? b.prop : guessPropFor(node);
-				current = getNodePropOrAttr(node, name);
+				current = getNodePropOrAttr(node, prop);
 				this._values[name] = current;
 				if (current != value) {
 					setNodePropOrAttr(node, prop, value);
