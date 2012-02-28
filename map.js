@@ -3,6 +3,8 @@
 (function (define) {
 define(function () {
 
+	var undef;
+
 	/**
 	 * A simple hash map that uses a symbolizer to derive a usable key and
 	 * stores its items in a simple Javascript object
@@ -21,14 +23,24 @@ define(function () {
 		},
 
 		set: function(key, item) {
+			var exists = this._index[this._symbolizer(key)];
+
+			if(exists) return;
+
 			this._index[this._symbolizer(key)] = this._items.push(item) - 1;
 			return item;
 		},
 
 		remove: function(key) {
+			var removed;
+
 			key = this._symbolizer(key);
+			removed = this._items[this._index[key]];
+
 			delete this._items[this._index[key]];
 			delete this._index[key];
+
+			return removed;
 		},
 
 		forEach: function(lambda) {
@@ -48,10 +60,10 @@ define(function () {
 
 		this._find = comparator
 			? function(key) {
-				binarySearch(items, key, comparator);
+				return binarySearch(items, key, comparator);
 			}
 			: function(key) {
-				linearScan(items, key);
+				return linearScan(items, key);
 			};
 	}
 
@@ -62,11 +74,24 @@ define(function () {
 		},
 
 		set: function(key, item) {
-			this._items.splice(this._find(key) || this._items.length, 0, { key: key, item: item });
+			var index = this._find(key);
+
+			this._items.splice(index || this._items.length, 0, { key: key, item: item });
+
+			return index === undef;
 		},
 
 		remove: function(key) {
-			this._items.splice(this._find(key) || this._items.length, 1);
+			var index, item;
+
+			index = this._find(key);
+
+			if(index === undef) return undef;
+
+			item = this._items[index];
+			this._items.splice(index || this._items.length, 1);
+
+			return item;
 		},
 
 		forEach: function(lambda) {
