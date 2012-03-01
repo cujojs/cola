@@ -5,8 +5,10 @@
 define(function (require) {
 "use strict";
 
-	var domEvents, fireSimpleEvent, watchNode;
-		domEvents = require('./events');
+	var domEvents, classList, fireSimpleEvent, watchNode;
+
+	domEvents = require('./events');
+	classList = require('./classList');
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
 
@@ -161,13 +163,24 @@ define(function (require) {
 		return obj && obj.tagName && obj.getAttribute && obj.setAttribute;
 	};
 
-	var colaSyntheticEvent, attrToProp;
+	var colaSyntheticEvent, attrToProp, customAccessors;
 
 	colaSyntheticEvent = 'ColaItemPropUpdated';
 
 	attrToProp = {
 		'class': 'className',
 		'for': 'htmlFor'
+	};
+
+	customAccessors = {
+		classList: {
+			get: classList.getClassList,
+			set: classList.setClassList
+		},
+		classSet: {
+			get: classList.getClassSet,
+			set: classList.setClassSet
+		}
 	};
 
 	/**
@@ -177,7 +190,12 @@ define(function (require) {
 	 * @returns the value of the property or attribute
 	 */
 	function getNodePropOrAttr (node, name) {
-		if (name in node) {
+		var accessor;
+		accessor = customAccessors[name];
+		if (accessor) {
+			return accessor.get(node);
+		}
+		else if (name in node) {
 			return node[attrToProp[name] || name];
 		}
 		else {
@@ -193,7 +211,12 @@ define(function (require) {
 	 * @param value
 	 */
 	function setNodePropOrAttr (node, name, value) {
-		if (name in node) {
+		var accessor;
+		accessor = customAccessors[name];
+		if (accessor) {
+			return accessor.set(node, value);
+		}
+		else if (name in node) {
 			node[attrToProp[name] || name] = value;
 		}
 		else {
