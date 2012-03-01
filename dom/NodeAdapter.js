@@ -2,7 +2,7 @@
 
 
 (function (define) {
-	define(function (require) {
+define(function (require) {
 "use strict";
 
 	var domEvents, fireSimpleEvent, watchNode;
@@ -44,7 +44,7 @@
 		watch: function (name, callback) {
 			var b, node, events, prop, currValues;
 			b = this._getBindingsFor(name);
-			node = this._getNode(b.node);
+			node = b && this._getNode(b.node);
 			if (b && node) {
 				events = 'events' in b ? b.events : guessEventsFor(node);
 				prop = 'prop' in b ? b.prop : guessPropFor(node);
@@ -93,7 +93,7 @@
 		set: function (name, value) {
 			var b, node, prop, current;
 			b = this._getBindingsFor(name);
-			node = this._getNode(b.node);
+			node = b && this._getNode(b.node);
 			if (b && node) {
 				prop = 'prop' in b ? b.prop : guessPropFor(node);
 				current = getNodePropOrAttr(node, prop);
@@ -129,9 +129,6 @@
 			bindings = this._options.bindings;
 			if (bindings && name in bindings) {
 				binding = bindings[name];
-			}
-			else {
-				binding = {};
 			}
 			return binding;
 		},
