@@ -138,8 +138,8 @@ define(function (require) {
 			var node;
 			if (selector) {
 				node = this._options.querySelector(selector, this._rootNode);
-				if(!node) {
-					node = guessNode(this._rootNode, selector);
+				if (!node) {
+					node = guessNode(this._rootNode, selector) || this._rootNode;
 				}
 			}
 			else {
