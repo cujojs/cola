@@ -17,12 +17,12 @@ define(function (require) {
 	 * Sets up mediation between two collection adapters
 	 * @param primary {Object} collection adapter
 	 * @param secondary {Object} collection adapter
-	 * @param resolver {Function} function (object, type) { returns Adapter; }
+	 * @param createAdapter {Function} function (object, type, options) { returns adapter; }
 	 * @param options {Object} options
 	 * @param options.bind if truthy, immediately synchronize data primary
 	 *   primary secondary secondary.
 	 */
-	return function syncCollections (primary, secondary, resolver, options) {
+	return function syncCollections (primary, secondary, createAdapter, options) {
 
 		var itemMap1, itemMap2, mediationHandler1, mediationHandler2,
 			watchHandler1, unwatch1, unwatch2;
@@ -43,11 +43,11 @@ define(function (require) {
 		itemMap2 = map.create({ symbolizer: secondary.symbolizer, comparator: secondary.comparator });
 
 		// these functions handle any item-to-item mediation
-		mediationHandler1 = createItemMediatorHandler(primary, itemMap1, resolver);
-		mediationHandler2 = createItemMediatorHandler(secondary, itemMap2, resolver);
+		mediationHandler1 = createItemMediatorHandler(primary, itemMap1, createAdapter, options);
+		mediationHandler2 = createItemMediatorHandler(secondary, itemMap2, createAdapter, options);
 
 		// this function handles property changes that could affect collection order
-		watchHandler1 = createItemWatcherHandler(primary, secondary, resolver);
+		watchHandler1 = createItemWatcherHandler(primary, secondary, createAdapter);
 
 		// TODO: This intitial sync may need to cause other operations to delay
 		// until it is complete (which may happen async if secondary is async)
@@ -83,13 +83,13 @@ define(function (require) {
 		if (data.unmediate) data.unmediate();
 	}
 
-	function createAdapter (object, resolver, type, options) {
-		var Adapter = resolver(object, type);
-		if (!Adapter) throw new Error('syncCollections: could not find Adapter constructor for ' + type);
-		return new Adapter(object, options);
-	}
+//	function createAdapter (object, resolver, type, options) {
+//		var Adapter = resolver(object, type);
+//		if (!Adapter) throw new Error('syncCollections: could not find Adapter constructor for ' + type);
+//		return new Adapter(object, options);
+//	}
 
-	function createItemWatcherHandler (primary, secondary, resolver) {
+	function createItemWatcherHandler (primary, secondary, createAdapter) {
 		if (typeof primary.checkPosition == 'function' || typeof secondary.checkPosition == 'function') {
 			return function watchItem (item, target, itemMap) {
 				var itemData;
@@ -101,7 +101,7 @@ define(function (require) {
 				}
 				else {
 					itemData = itemMap.set(item, {
-						adapter: createAdapter(item, resolver, 'object', target.getOptions())
+						adapter: createAdapter(item, 'object', target.getOptions())
 					});
 				}
 				itemData.unwatch = itemData.adapter.watchAll(function (prop, value) {
@@ -120,7 +120,7 @@ define(function (require) {
 		}
 	}
 
-	function createItemMediatorHandler (sender, itemMap, resolver) {
+	function createItemMediatorHandler (sender, itemMap, createAdapter, options) {
 		return function discoverItem (newItem, refItem, target) {
 			var itemData, newAdapter;
 			itemData = itemMap.get(refItem);
@@ -130,11 +130,11 @@ define(function (require) {
 			}
 			else {
 				itemData = itemMap.set(refItem, {
-					adapter: createAdapter(refItem, resolver, 'object', sender.getOptions())
+					adapter: createAdapter(refItem, 'object', sender.getOptions())
 				});
 			}
-			newAdapter = createAdapter(newItem, resolver, 'object', target.getOptions());
-			itemData.unmediate = syncProperties(itemData.adapter, newAdapter);
+			newAdapter = createAdapter(newItem, 'object', target.getOptions());
+			itemData.unmediate = syncProperties(itemData.adapter, newAdapter, options);
 		}
 	}
 
