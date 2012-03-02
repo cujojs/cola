@@ -120,6 +120,7 @@ define(function () {
 		var min, max, mid, compare;
 		min = 0;
 		max = list.length;
+		if (max == 0) return 0;
 		do {
 			mid = Math.floor((min + max) / 2);
 			compare = comparator(key, list[mid].key);
