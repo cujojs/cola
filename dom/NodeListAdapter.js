@@ -1,35 +1,43 @@
 (function (define) {
-	define(function(require) {
+define(function(require) {
 "use strict";
 
 	var when, domEvents, fireSimpleEvent, watchNode,
-		undef;
+		undef, defaultTemplateSelector, listElementsSelector;
 
 	when = require('when');
 	domEvents = require('./events');
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
 
+	defaultTemplateSelector = '[data-cola-role="item-template"]';
+	listElementsSelector = 'tr,li';
+
 	/**
 	 * Manages a collection of dom trees that are synced with a data
 	 * collection.
 	 * @constructor
-	 * @param templateNode {Node} node to serve as a template for items
+	 * @param rootNode {Node} node to serve as a template for items
 	 * in the collection / list.
 	 * @param options.comparator {Function} comparator function to use for
 	 *  ordering nodes
 	 * @param options.containerNode {Node} optional parent to all itemNodes. If
-	 * omitted, the parent of templateNode is assumed to be containerNode.
+	 * omitted, the parent of rootNode is assumed to be containerNode.
 	 * @param options.querySelector {Function} DOM query function
 	 */
-	function NodeListAdapter (templateNode, options) {
+	function NodeListAdapter (rootNode, options) {
 		var container;
 
 		if(!options) options = {};
 
 		this._options = options;
 
-		container = options.containerNode || templateNode.parentNode;
+		// 1. find templateNode
+		this._templateNode = findTemplateNode(rootNode, options);
+
+		// 2. get containerNode
+		// TODO: should we get the container node just-in-time?
+		container = options.containerNode || this._templateNode.parentNode;
 
 		if (!container) {
 			throw new Error('No container node found for NodeListAdapter.');
@@ -39,7 +47,6 @@
 
 		this._containerNode = container;
 
-		this._templateNode = templateNode;
 		this._initTemplateNode();
 
 		// list of sorted data items, nodes, and unwatch functions
@@ -246,6 +253,30 @@
 		var error = new Error(message);
 		error.data = data;
 		return error;
+	}
+
+	function findTemplateNode (root, options) {
+		var useBestGuess, node;
+
+		// user gave no explicit instructions
+		useBestGuess = !options.itemTemplateSelector;
+
+		if (options.querySelector) {
+			// if no selector, try default selector
+			node = options.querySelector(options.itemTemplateSelector || defaultTemplateSelector, root);
+			// if still not found, search around for a list element
+			if (!node && useBestGuess) {
+				node = options.querySelector(listElementsSelector, root);
+			}
+		}
+		if (!node && useBestGuess) {
+			node = root;
+		}
+		// if still not found, throw
+		if (!node) {
+			throw new Error('NodeListAdapter: could not find itemTemplate node');
+		}
+		return node;
 	}
 
 	function noop () {}
