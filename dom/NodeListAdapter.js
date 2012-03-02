@@ -220,7 +220,7 @@ define(function(require) {
 		// starting bounds are slightly larger than list
 		// so we can detect if the new items will go before the
 		// first item or after the last
-		min = -1;
+		min = 0;
 		max = list.length;
 
 		while ((max - min > 1) && compare != 0) {
