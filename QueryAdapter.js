@@ -44,13 +44,14 @@ define(function (require) {
 
 			var self = this;
 
-			return when(this._datasource.query(query||{}, options),
+			return this._queue(function() {
+				return when(self._datasource.query(query||{}, options),
 				function(results) {
 					self._items = map.createTreeMap(self.comparator);
 					self._initResultSet(results, self._items, self.symbolizer);
 					return results;
-				}
-			);
+				});
+			});
 		},
 
 		_queue: function(op) {
@@ -138,7 +139,7 @@ define(function (require) {
 			id = this.symbolizer(item);
 			removed = items.remove(id);
 
-			if(removed != undef) {
+			if(removed !== undef) {
 				notifier = this._notifier;
 
 				// Similar to add() above, this may be too optimistic.
