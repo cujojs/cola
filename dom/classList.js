@@ -77,8 +77,8 @@ define(function (require, exports) {
 
 	var openRx, closeRx, innerRx;
 
-	openRx = '(\s+|^)';
-	closeRx = '(\s+|$)';
+	openRx = '(\\s+|^)';
+	closeRx = '(\\s+|$)';
 	innerRx = openRx + '|' + closeRx;
 
 	function classListParser (classList) {
