@@ -23,7 +23,6 @@ define(function (require) {
 
 			adapter.set = function transformedSet (name, value) {
 				var transform = transforms[name]
-					&& transforms[name].transform
 					|| passthru;
 				return origSet.call(adapter, name, transform(value));
 			};
@@ -33,7 +32,7 @@ define(function (require) {
 				// transformed lambdas in a hashmap.
 				function transformedLambda (value, name) {
 					var reverse = transforms[name]
-						&& transforms[name].reverse
+						&& transforms[name].inverse
 						|| passthru;
 					return lambda(reverse(value), name);
 				}
@@ -42,7 +41,7 @@ define(function (require) {
 
 			adapter.watch = function transformedWatch (name, callback) {
 				var reverse = transforms[name]
-					&& transforms[name].reverse
+					&& transforms[name].inverse
 					|| passthru;
 				function transformedCallback (name, value) {
 					return callback(name, reverse(value));

@@ -52,32 +52,36 @@ define(function () {
 		emptySet = createEmptySet(unmap);
 		multiValued = options.multi;
 
-		return {
-			transform: function enumTransform (value) {
-				var set, values, i, len;
-				// set multiValues for next reverse call
-				multiValued = isArrayLike(value);
-				set = beget(emptySet);
-				values = [].concat(value);
-				len = values.length;
-				for (i = 0; i < len; i++) {
-					if (values[i] in map) {
-						set[map[values[i]]] = true;
-					}
+		function enumTransform (value) {
+			var set, values, i, len;
+			// set multiValues for next reverse call
+			multiValued = isArrayLike(value);
+			set = beget(emptySet);
+			values = [].concat(value);
+			len = values.length;
+			for (i = 0; i < len; i++) {
+				if (values[i] in map) {
+					set[map[values[i]]] = true;
 				}
-				return set;
-			},
-			reverse: function enumReverse (set) {
-				var values, p, len;
-				values = [];
-				for (p in set) {
-					if (set[p]) {
-						values.push(unmap[p]);
-					}
-				}
-				return multiValued === false ? values[0] : values;
 			}
-		};
+			return set;
+		}
+
+		function enumReverse (set) {
+			var values, p, len;
+			values = [];
+			for (p in set) {
+				if (set[p]) {
+					values.push(unmap[p]);
+				}
+			}
+			return multiValued === false ? values[0] : values;
+		}
+
+		enumTransform.inverse = enumReverse;
+		enumReverse.inverse = enumTransform;
+
+		return enumTransform;
 
 		function createMap (obj) {
 			var map, i, len;
