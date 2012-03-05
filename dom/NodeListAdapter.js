@@ -216,23 +216,18 @@ define(function(require) {
 	 */
 	function findSortedIndex (item, list, comparator) {
 		var min, max, mid, compare;
-
-		// starting bounds are slightly larger than list
-		// so we can detect if the new items will go before the
-		// first item or after the last
 		min = 0;
 		max = list.length;
-
-		while ((max - min > 1) && compare != 0) {
+		if (max == 0) return 0;
+		do {
 			mid = Math.floor((min + max) / 2);
 			compare = comparator(item, list[mid].item);
 			// don't use mid +/- 1 or we may miss in-between
 			if (compare > 0) min = mid;
 			else if (compare < 0) max = mid;
+			else return mid;
 		}
-
-		// compare will be non-zero if we ended up between two existing items
-		return compare == 0 ? mid : max;
+		while (max - min > 1 && !isNaN(compare));
 	}
 
 	/**
