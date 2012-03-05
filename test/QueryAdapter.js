@@ -1,4 +1,4 @@
-(function(buster, promise, QueryAdapter) {
+(function(buster, when, QueryAdapter) {
 
 var assert, refute;
 
@@ -6,9 +6,7 @@ assert = buster.assert;
 refute = buster.refute;
 
 function promiseFor(it) {
-	var p = promise.create();
-	p.resolve(it);
-	return p;
+	return when(it);
 }
 
 function createDatasource() {
@@ -156,6 +154,6 @@ buster.testCase('QueryAdapter', {
 
 })(
     require('buster'),
-    require('buster-promise'),
+    require('when'),
     require('../QueryAdapter.js')
 );
