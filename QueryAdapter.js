@@ -16,10 +16,9 @@ define(function (require) {
 	 * must provide query, add, and remove methods
 	 * @constructor
 	 * @param datasource {Object} queryable data source with query, add, remove methods
-	 * @param [options.symbolizer] {Function} function that returns an identity for
-	 * items in the datasource
-	 * @param options.comparator {Function} comparator function that will
-	 * be propagated to other adapters as needed
+	 * @param [options.comparator] {Function} comparator function that will
+	 * be propagated to other adapters as needed.  Note that QueryAdapter does not
+	 * use this comparator internally.
 	 */
 	function QueryAdapter(datasource, options) {
 
@@ -28,11 +27,14 @@ define(function (require) {
 		this._datasource = datasource;
 		this._options = options || {};
 
-		symbolizer = this.symbolizer = this._options.symbolizer ||
+		// Always use the datasource's identity as the symbolizer
+		symbolizer = this.symbolizer =
 			function(item) {
 				return datasource.getIdentity(item);
 			};
 
+		// If no comparator provided, generate one that uses
+		// the object identity
 		this.comparator = this._options.comparator ||
 			function(a, b) {
 				var aKey, bKey;
@@ -47,7 +49,7 @@ define(function (require) {
 
 		this._notifier = new Notifier();
 
-		this._items = map.createTreeMap(this.comparator);
+		this._items = map.createHashMap(symbolizer);
 	}
 
 	QueryAdapter.prototype = {
@@ -63,8 +65,8 @@ define(function (require) {
 			return this._queue(function() {
 				return when(self._datasource.query(query||{}, options),
 				function(results) {
-					self._items = map.createTreeMap(self.comparator);
-					self._initResultSet(results, self._items, self.symbolizer);
+					self._items = map.createHashMap(self.symbolizer);
+					self._initResultSet(results, self._items);
 					return results;
 				});
 			});
@@ -78,11 +80,11 @@ define(function (require) {
 			return this._inflight;
 		},
 
-		_initResultSet: function(results, map, symbolizer) {
+		_initResultSet: function (results, map) {
 			var notifier = this._notifier;
 
 			return when.reduce(results, function(unused, item) {
-				map.set(symbolizer(item), item);
+				map.set(item, item);
 				return notifier.notify('add', item);
 			}, results);
 		},
