@@ -69,6 +69,7 @@ buster.testCase('QueryAdapter', {
 			var ds, qa, item;
 
 			ds = this.stub(createDatasource());
+			ds.getIdentity.returns(1);
 
 			qa = new QueryAdapter(ds);
 

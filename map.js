@@ -116,11 +116,18 @@ define(function () {
 		}
 	};
 
+	/**
+	 * @param list {Array} sorted array in which to search
+	 * @param key anything comparable via < and >
+	 * @param comparator {Function} comparator function to use in binary search
+	 * @returns {Number|undefined} returns the index of the key, if found, or
+	 *  undefined if the key is not found.
+	 */
 	function binarySearch(list, key, comparator) {
 		var min, max, mid, compare;
 		min = 0;
 		max = list.length;
-		if (max == 0) return 0;
+		if (max == 0) return undef;
 		do {
 			mid = Math.floor((min + max) / 2);
 			compare = comparator(key, list[mid].key);
@@ -133,6 +140,12 @@ define(function () {
 
 	}
 
+	/**
+	 * @param list {Array} array in which to search
+	 * @param key anything comparable via ==
+	 * @returns {Number|undefined} returns the index of the key, if found, or
+	 *  undefined if the key is not found.
+	 */
 	function linearScan(list, key) {
 		var i, entry;
 		i = list.length;

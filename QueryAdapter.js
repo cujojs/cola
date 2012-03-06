@@ -23,11 +23,27 @@ define(function (require) {
 	 */
 	function QueryAdapter(datasource, options) {
 
+		var symbolizer;
+
 		this._datasource = datasource;
 		this._options = options || {};
 
-		this.symbolizer = this._options.symbolizer || function(item) { return datasource.getIdentity(item); }
-		this.comparator = this._options.comparator;
+		symbolizer = this.symbolizer = this._options.symbolizer ||
+			function(item) {
+				return datasource.getIdentity(item);
+			};
+
+		this.comparator = this._options.comparator ||
+			function(a, b) {
+				var aKey, bKey;
+
+				aKey = symbolizer(a);
+				bKey = symbolizer(b);
+
+				return aKey == bKey ? 0
+					: aKey < bKey ? -1
+					: 1;
+			};
 
 		this._notifier = new Notifier();
 
