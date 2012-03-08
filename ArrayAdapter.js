@@ -1,5 +1,8 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
+// TODO: Evaluate whether ArrayAdapter should use SortedMap internally to
+// store items in sorted order based on its comparator
+
 (function(define) {
 define(function (require) {
 

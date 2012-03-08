@@ -3,14 +3,23 @@
 (function (define) {
 define(function () {
 
-	function transformedCollection(adapter, transform) {
-		var inverse;
+	function noop() {}
+
+	/**
+	 * Returns a view of the supplied collection adapter, such that the view
+	 * appears to contain transformed items, and delegates to the supplied
+	 * adapter.  If an inverse transform is supplied, either via the
+	 * inverse param, or via transform.inverse, it will be used when items
+	 * are added or removed
+	 * @param adapter {Object} the adapter for which to create a transformed view
+	 * @param transform {Function} the transform to apply to items
+	 * @param [inverse] {Function}
+	 */
+	function transformCollection(adapter, transform, inverse) {
 
 		if(!transform) throw new Error('No transform supplied');
 
-		inverse = transform.inverse || function() {
-			throw new Error("No inverse transform provided, cannot add or remove");
-		};
+		inverse = inverse || transform.inverse;
 
 		return {
 			comparator: adapter.comparator,
@@ -35,13 +44,19 @@ define(function () {
 				);
 			},
 
-			add: function(item) {
-				return adapter.add(inverse(item));
-			},
+			// If no inverse is supplied, we can't transform the
+			// value back
+			add: inverse
+				? function(item) {
+					return adapter.add(inverse(item));
+				}
+				: noop,
 
-			remove: function(item) {
-				return adapter.remove(inverse(item));
-			},
+			remove: inverse
+				? function(item) {
+					return adapter.remove(inverse(item));
+				}
+				: noop,
 
 			getOptions: function() {
 				return adapter.getOptions();
@@ -50,7 +65,7 @@ define(function () {
 
 	}
 
-	return transformedCollection;
+	return transformCollection;
 
 });
 }(

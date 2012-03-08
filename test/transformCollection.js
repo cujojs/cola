@@ -188,17 +188,6 @@ buster.testCase('transformCollection', {
 	},
 
 	'add': {
-		'should throw if no inverse transform provided': function() {
-			var adapter, transformed;
-
-			adapter = createFakeAdapter();
-			transformed = transformCollection(adapter, addOne);
-
-			assert.exception(function() {
-				transformed.add(1);
-			});
-		},
-
 		'should call original with inverse transformed item': function() {
 			var adapter, transformed;
 
@@ -211,17 +200,6 @@ buster.testCase('transformCollection', {
 	},
 
 	'remove': {
-		'should throw if no inverse transform provided': function() {
-			var adapter, transformed;
-
-			adapter = createFakeAdapter();
-			transformed = transformCollection(adapter, addOne);
-
-			assert.exception(function() {
-				transformed.remove(1);
-			});
-		},
-
 		'should call original with inverse transformed item': function() {
 			var adapter, transformed;
 

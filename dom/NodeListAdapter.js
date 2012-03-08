@@ -2,11 +2,11 @@
 define(function(require) {
 "use strict";
 
-	var when, map, domEvents, fireSimpleEvent, watchNode,
+	var when, SortedMap, domEvents, fireSimpleEvent, watchNode,
 		undef, defaultTemplateSelector, listElementsSelector;
 
 	when = require('when');
-	map = require('map');
+	SortedMap = require('../SortedMap');
 	domEvents = require('./events');
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
@@ -27,7 +27,7 @@ define(function(require) {
 	 * @param options.querySelector {Function} DOM query function
 	 */
 	function NodeListAdapter (rootNode, options) {
-		var container;
+		var container, self;
 
 		if(!options) options = {};
 
@@ -51,9 +51,12 @@ define(function(require) {
 
 		this._initTemplateNode();
 
+		self = this;
 		// list of sorted data items, nodes, and unwatch functions
-		this._itemData = map.createHashMap(options.symbolizer);
-//		this._itemData = [];
+		this._itemData = new SortedMap(
+			function(item) {
+				return self.symbolizer(item);
+			}, options.comparator);
 
 		watchNode(this._containerNode, colaPropUpdatedEvent, function () {
 			// TODO: respond to property changed events in nodes
@@ -83,39 +86,22 @@ define(function(require) {
 		},
 
 		add: function (item) {
-			var itemData, index;
-			if (typeof this.comparator != 'function') {
-				throw createError('NodeListAdapter: Cannot add without a comparator.', item);
-			}
-			itemData = { item: item };
+			var node, index;
+
 			// create node
-			itemData.node = this._templateNode.cloneNode(true);
+			node = this._templateNode.cloneNode(true);
 			// add to map
-			this._itemData.set(item, itemData.node);
+			index = this._itemData.add(item, node);
 			// figure out where to insert into dom
-
-			// insert
-			this._insertNodeAt(itemData.node, index);
-			// notify listeners
-			// return node so mediator can adapt and mediate it
-			return when(this._fireEvent(colaAddedEvent, item),
-				function() { return itemData.node }
-			);
-
-
-
-
-			// find index
-			index = findSortedIndex(item, this._itemData, this.comparator);
-			// save all data
-			this._itemData.splice(index, 0, itemData);
-			// insert into container
-			this._insertNodeAt(itemData.node, index);
-			// notify listeners
-			// return node so mediator can adapt and mediate it
-			return when(this._fireEvent(colaAddedEvent, item),
-				function() { return itemData.node }
-			);
+			if(index >= 0) {
+				// insert
+				this._insertNodeAt(node, index);
+				// notify listeners
+				// return node so mediator can adapt and mediate it
+				return when(this._fireEvent(colaAddedEvent, item),
+					function() { return node; }
+				);
+			}
 		},
 
 		remove: function (item) {

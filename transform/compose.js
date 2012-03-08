@@ -38,7 +38,9 @@ define(function () {
 				}
 
 				return it;
-			}
+			};
+
+			composed.inverse.inverse = composed;
 		}
 
 		return composed;

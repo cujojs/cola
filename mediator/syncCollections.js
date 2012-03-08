@@ -4,11 +4,11 @@
 define(function (require) {
 "use strict";
 
-	var methodsToForward, syncProperties, when, map;
+	var methodsToForward, syncProperties, when, SortedMap;
 
 	when = require('when');
 
-	map = require('../map');
+	SortedMap = require('../SortedMap');
 	syncProperties = require('./syncProperties');
 
 	methodsToForward = ['add', 'remove'];
@@ -39,8 +39,8 @@ define(function (require) {
 		}
 
 		// these maps keep track of items that are being watched
-		itemMap1 = map.create({ symbolizer: primary.symbolizer, comparator: primary.comparator });
-		itemMap2 = map.create({ symbolizer: secondary.symbolizer, comparator: secondary.comparator });
+		itemMap1 = new SortedMap(primary.symbolizer, primary.comparator);
+		itemMap2 = new SortedMap(secondary.symbolizer, secondary.comparator);
 
 		// these functions handle any item-to-item mediation
 		mediationHandler1 = createItemMediatorHandler(primary, itemMap1, createAdapter, options);
@@ -100,9 +100,8 @@ define(function (require) {
 					if (itemData.unwatch) itemData.unwatch();
 				}
 				else {
-					itemData = itemMap.set(item, {
-						adapter: createAdapter(item, 'object', target.getOptions())
-					});
+					itemData = { adapter: createAdapter(item, 'object', target.getOptions()) };
+					itemMap.add(item, itemData);
 				}
 				itemData.unwatch = itemData.adapter.watchAll(function (prop, value) {
 					// if primary requires ordering, tell it that the item may have moved
@@ -129,9 +128,8 @@ define(function (require) {
 				if (itemData.unmediate) itemData.unmediate();
 			}
 			else {
-				itemData = itemMap.set(refItem, {
-					adapter: createAdapter(refItem, 'object', sender.getOptions())
-				});
+				itemData = { adapter: createAdapter(refItem, 'object', sender.getOptions()) };
+				itemMap.add(refItem, itemData);
 			}
 			newAdapter = createAdapter(newItem, 'object', target.getOptions());
 			itemData.unmediate = syncProperties(itemData.adapter, newAdapter, options);
@@ -139,8 +137,8 @@ define(function (require) {
 	}
 
 	function createForwarder (method, discoveryCallback) {
-		return function doForward(target, item, index) {
-			return when(target[method](item, index),
+		return function doForward(target, item) {
+			return when(target[method](item),
 				function(copy) {
 					// if adapter2 returns a copy we need to propagate it
 					if (copy) {
@@ -152,8 +150,8 @@ define(function (require) {
 	}
 
 	function createCallback (forwarder, to) {
-		return function (item, index) {
-			return forwarder(to, item, index);
+		return function (item) {
+			return forwarder(to, item);
 		}
 	}
 

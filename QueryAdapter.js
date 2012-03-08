@@ -5,10 +5,10 @@ define(function (require) {
 
 //	"use strict";
 
-	var when, map, Notifier, undef;
+	var when, SortedMap, Notifier, undef;
 
 	when = require('when');
-	map = require('./map');
+	SortedMap = require('./SortedMap');
 	Notifier = require('./Notifier');
 
 	/**
@@ -49,7 +49,7 @@ define(function (require) {
 
 		this._notifier = new Notifier();
 
-		this._items = map.createHashMap(symbolizer);
+		this._items = new SortedMap(symbolizer, this.comparator);
 	}
 
 	QueryAdapter.prototype = {
@@ -65,7 +65,7 @@ define(function (require) {
 			return this._queue(function() {
 				return when(self._datasource.query(query||{}, options),
 				function(results) {
-					self._items = map.createHashMap(self.symbolizer);
+					self._items = new SortedMap(self.symbolizer, self.comparator);
 					self._initResultSet(results, self._items);
 					return results;
 				});
@@ -84,7 +84,7 @@ define(function (require) {
 			var notifier = this._notifier;
 
 			return when.reduce(results, function(unused, item) {
-				map.set(item, item);
+				map.add(item, item);
 				return notifier.notify('add', item);
 			}, results);
 		},
@@ -116,13 +116,12 @@ define(function (require) {
 		},
 
 		add: function(item) {
-			var id, notifier, items, added;
+			var notifier, items, added;
 
 			items = this._items;
-			id = this.symbolizer(item);
-			added = items.set(id, item);
+			added = items.add(item, item);
 
-			if(added) {
+			if(added >= 0) {
 
 				notifier = this._notifier;
 
@@ -137,7 +136,7 @@ define(function (require) {
 				],
 					null, // If all goes according to plan, great, nothing to do
 					function(err) {
-						items.remove(id);
+						items.remove(item);
 
 						function propagateError() {
 							// Always rethrow here to propagate the failure
@@ -151,13 +150,12 @@ define(function (require) {
 		},
 
 		remove: function(item) {
-			var id, removed, notifier, items;
+			var removed, notifier, items;
 
 			items = this._items;
-			id = this.symbolizer(item);
-			removed = items.remove(id);
+			removed = items.remove(item);
 
-			if(removed !== undef) {
+			if(removed >= 0) {
 				notifier = this._notifier;
 
 				// Similar to add() above, this may be too optimistic.
@@ -167,7 +165,7 @@ define(function (require) {
 				],
 					null, // If all goes according to plan, great, nothing to do
 					function(err) {
-						items.add(id, item);
+						items.add(item, item);
 
 						function propagateError() {
 							// Always rethrow here to propagate the failure
