@@ -2,10 +2,11 @@
 define(function(require) {
 "use strict";
 
-	var when, domEvents, fireSimpleEvent, watchNode,
+	var when, map, domEvents, fireSimpleEvent, watchNode,
 		undef, defaultTemplateSelector, listElementsSelector;
 
 	when = require('when');
+	map = require('map');
 	domEvents = require('./events');
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
@@ -44,13 +45,19 @@ define(function(require) {
 		}
 
 		this.comparator = options.comparator;
+		this.symbolizer = options.symbolizer;
 
 		this._containerNode = container;
 
 		this._initTemplateNode();
 
 		// list of sorted data items, nodes, and unwatch functions
-		this._itemData = [];
+		this._itemData = map.createHashMap(options.symbolizer);
+//		this._itemData = [];
+
+		watchNode(this._containerNode, colaPropUpdatedEvent, function () {
+			// TODO: respond to property changed events in nodes
+		});
 
 	}
 
@@ -83,6 +90,21 @@ define(function(require) {
 			itemData = { item: item };
 			// create node
 			itemData.node = this._templateNode.cloneNode(true);
+			// add to map
+			this._itemData.set(item, itemData.node);
+			// figure out where to insert into dom
+
+			// insert
+			this._insertNodeAt(itemData.node, index);
+			// notify listeners
+			// return node so mediator can adapt and mediate it
+			return when(this._fireEvent(colaAddedEvent, item),
+				function() { return itemData.node }
+			);
+
+
+
+
 			// find index
 			index = findSortedIndex(item, this._itemData, this.comparator);
 			// save all data
@@ -200,10 +222,11 @@ define(function(require) {
 		return obj && obj.tagName && obj.insertBefore && obj.removeChild;
 	};
 
-	var colaAddedEvent, colaRemovedEvent;
+	var colaAddedEvent, colaRemovedEvent, colaPropUpdatedEvent;
 
 	colaAddedEvent = 'ColaItemAdded';
 	colaRemovedEvent = 'ColaItemRemoved';
+	colaPropUpdatedEvent = 'ColaItemPropUpdated';
 
 	/**
 	 * This binary search isn't quite like most because it also
@@ -221,7 +244,7 @@ define(function(require) {
 		if (max == 0) return 0;
 		do {
 			mid = Math.floor((min + max) / 2);
-			compare = comparator(item, list[mid].item);
+			compare = comparator(item, list[mid]);
 			// don't use mid +/- 1 or we may miss in-between
 			if (compare > 0) min = mid;
 			else if (compare < 0) max = mid;
