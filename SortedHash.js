@@ -39,17 +39,27 @@ define(function () {
 		 * comparator.
 		 * @private
 		 * @param keyItem
-		 * @param exact {Boolean} if true, must be an exact match to the key
+		 * @param exactMatch {Boolean} if true, must be an exact match to the key
 		 *   item, not just the correct position for a key item that sorts
 		 *   the same.
 		 * @returns {Number|Undefined}
 		 */
-		this._pos = function (keyItem) {
-			function getKey (pos) { return this._sorted[pos][0].key; }
-			return binarySearch(0, this._sorted.length, keyItem, getKey, comparator);
+		this._pos = function (keyItem, exactMatch) {
+			var pos, sorted;
+			sorted = this._sorted;
+			function getKey (pos) { return sorted[pos] ? sorted[pos][0].key : {}; }
+			pos = binarySearch(0, sorted.length, keyItem, getKey, comparator);
+			if (exactMatch) {
+				if (symbolizer(keyItem) != symbolizer(sorted[pos][0].key)) {
+					pos = -1;
+				}
+			}
+			return pos;
 		};
 		if (!comparator) {
-			this._pos = function () { return -1; };
+			this._pos = function (keyItem, exact) {
+				return exact ? -1 : this._sorted.length;
+			};
 		}
 
 		/**
@@ -79,7 +89,7 @@ define(function () {
 					this._sorted[pos] = [pair];
 				}
 				// are there already items of the same sort position here?
-				else if (comparator(entry.value, valueItem) == 0) {
+				else if (comparator(entry.key, keyItem) == 0) {
 					this._sorted[pos].push(pair);
 				}
 				// or do we need to insert a new row?
@@ -110,20 +120,18 @@ define(function () {
 			delete this._index[symbol];
 
 			// delete from sorted table
-			if (pos >= 0) {
-				entries = this._sorted[pos] || [];
-				i = entries.length;
-				// find it and remove it
-				while ((entry == entries[--i])) {
-					if (symbolizer(entry.key)) {
-						entries.splice(i, 1);
-						break;
-					}
+			entries = this._sorted[pos] || [];
+			i = entries.length;
+			// find it and remove it
+			while ((entry = entries[--i])) {
+				if (symbolizer(entry.key)) {
+					entries.splice(i, 1);
+					break;
 				}
-				// if we removed all pairs at this position
-				if (entries.length == 0) {
-					this._sorted.splice(pos, 1);
-				}
+			}
+			// if we removed all pairs at this position
+			if (entries.length == 0) {
+				this._sorted.splice(pos, 1);
 			}
 
 			return pos;
@@ -139,7 +147,7 @@ define(function () {
 			return valueItem == missing ? undef : valueItem;
 		},
 
-		set: function (keyItem, valueItem) {
+		add: function (keyItem, valueItem) {
 			var pos;
 
 			// don't insert twice. bail if we already have it
@@ -161,7 +169,7 @@ define(function () {
 
 			// find positions and delete
 			pos = this._pos(keyItem, true);
-			this._remove(pos, keyItem);
+			this._remove(keyItem, pos);
 
 			return pos;
 		},
@@ -172,7 +180,7 @@ define(function () {
 			for (i = 0, len = this._sorted.length; i < len; i++) {
 				entries = this._sorted[i];
 				for (j = 0, len2 = entries.length; j < len2; j++) {
-					lambda(entries[j].value, entries[i].key);
+					lambda(entries[j].value, entries[j].key);
 				}
 			}
 		}
@@ -183,26 +191,35 @@ define(function () {
 	return SortedHash;
 
 	/**
-	 * @param list {Array} sorted array in which to search
-	 * @param key anything comparable via < and >
-	 * @param comparator {Function} comparator function to use in binary search
-	 * @returns {Number|Undefined} returns the index of the key, if found, or
-	 *  undefined if the key is not found.
+	 * Searches through a list of items, looking for the correct slot
+	 * for a new item to be added.
+	 * @param min {Number} points at the first possible slot
+	 * @param max {Number} points at the slot after the last possible slot
+	 * @param item anything comparable via < and >
+	 * @param getter {Function} a function to retrieve a item at a specific
+	 * 	 slot: function (pos) { return items[pos]; }
+	 * @param comparator {Function} function to compare to items. must return
+	 *   a number.
+	 * @returns {Number} returns the slot where the item should be placed
+	 *   into the list.
 	 */
-	function binarySearch (min, max, key, getter, comparator) {
+	function binarySearch (min, max, item, getter, comparator) {
 		var mid, compare;
-		if (max > 0) {
-			do {
-				mid = Math.floor((min + max) / 2);
-				compare = comparator(key, getter(mid));
-				// don't use mid +/- 1 or we may miss in-between
-				if (compare > 0) min = mid;
-				else if (compare < 0) max = mid;
-				else return mid;
+		if (max <= min) return min;
+		do {
+			mid = Math.floor((min + max) / 2);
+			compare = comparator(item, getter(mid));
+			if (isNaN(compare)) throw new Error('SortedHash: invalid comparator result ' + compare);
+			// if we've narrowed down to a choice of just two slots
+			if (max - min <= 1) {
+				return compare == 0 ? mid : compare > 0 ? max : min;
 			}
-			while (max - min > 1 && !isNaN(compare));
+			// don't use mid +/- 1 or we may miss in-between values
+			if (compare > 0) min = mid;
+			else if (compare < 0) max = mid;
+			else return mid;
 		}
-		return -1;
+ 		while (true);
 	}
 
 });
