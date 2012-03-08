@@ -13,6 +13,9 @@ define(function () {
 		};
 
 		return {
+			comparator: adapter.comparator,
+			symbolizer: adapter.symbolizer,
+
 			forEach: function(lambda) {
 				function transformedLambda(item) {
 					return lambda(transform(item));
@@ -38,6 +41,10 @@ define(function () {
 
 			remove: function(item) {
 				return adapter.remove(inverse(item));
+			},
+
+			getOptions: function() {
+				return adapter.getOptions();
 			}
 		}
 

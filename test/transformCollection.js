@@ -23,7 +23,8 @@ function createFakeAdapter(data) {
 			for(var i = 0, len = data.length; i < len; i++) {
 				f(data[i]);
 			}
-		}
+		},
+		getOptions: function() {}
 	}
 }
 
@@ -59,6 +60,43 @@ buster.testCase('transformCollection', {
 		transformCollection(adapter, addOneWithInverse);
 		for(p in adapter) {
 			assert.equals(adapter[p], originals[p]);
+		}
+	},
+
+	'should preserve original comparator': function() {
+		var adapter, transformed;
+
+		function comparator(){}
+
+		adapter = createFakeAdapter();
+		adapter.comparator = comparator;
+		transformed = transformCollection(adapter, addOneWithInverse);
+
+		assert.same(transformed.comparator, comparator);
+	},
+
+	'should preserve original symbolizer': function() {
+		var adapter, transformed;
+
+		function symbolizer(){}
+
+		adapter = createFakeAdapter();
+		adapter.symbolizer = symbolizer;
+		transformed = transformCollection(adapter, addOneWithInverse);
+
+		assert.same(transformed.symbolizer, symbolizer);
+	},
+
+	'getOptions': {
+		'should return original adapter options': function() {
+			var adapter, transformed, options;
+
+			options = {};
+			adapter = this.stub(createFakeAdapter());
+			transformed = transformCollection(adapter, addOneWithInverse);
+
+			adapter.getOptions.returns(options);
+			assert.same(transformed.getOptions(), options);
 		}
 	},
 

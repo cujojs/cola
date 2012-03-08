@@ -22,6 +22,8 @@ define(function (require) {
 
 		if(!options) options = {};
 
+		this._options = options;
+
 		this.comparator = options.comparator;
 		this._keyFunc = this.symbolizer = options.keyFunc || defaultKeyFunc;
 
@@ -46,7 +48,9 @@ define(function (require) {
 		symbolizer: undef,
 
 		// just stubs for now
-		getOptions: function () {},
+		getOptions: function () {
+			return this._options;
+		},
 
 		watch: function(itemAdded, itemRemoved) {
 			var unlistenAdd, unlistenRemove, notifier;
