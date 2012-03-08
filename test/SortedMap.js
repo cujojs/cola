@@ -1,4 +1,4 @@
-(function(buster, SortedHash) {
+(function(buster, SortedMap) {
 
 var assert, refute, undef;
 
@@ -13,12 +13,12 @@ function symbolizeItem (it) {
 	return it.id;
 }
 
-buster.testCase('SortedHash', {
+buster.testCase('SortedMap', {
 
 	'add': {
 
 		'should add new items': function () {
-			var hash = new SortedHash(symbolizeItem, compareItems);
+			var hash = new SortedMap(symbolizeItem, compareItems);
 
 			assert.equals(hash.add({ id: 1 }), 0);
 			assert.equals(hash.add({ id: 2 }), 1);
@@ -30,7 +30,7 @@ buster.testCase('SortedHash', {
 		},
 
 		'should add very large item into last slot': function () {
-			var hash = new SortedHash(symbolizeItem, compareItems);
+			var hash = new SortedMap(symbolizeItem, compareItems);
 
 			assert.equals(hash.add({ id: 1 }), 0);
 			assert.equals(hash.add({ id: 9 }), 1);
@@ -40,7 +40,7 @@ buster.testCase('SortedHash', {
 		},
 
 		'should fail silently when adding an item that already exists': function () {
-			var hash = new SortedHash(symbolizeItem, compareItems);
+			var hash = new SortedMap(symbolizeItem, compareItems);
 
 			hash.add({ id: 1 });
 			refute.defined(hash.add({ id: 1 }));
@@ -51,7 +51,7 @@ buster.testCase('SortedHash', {
 	'remove': {
 
 		'should remove items': function () {
-			var hash = new SortedHash(symbolizeItem, compareItems);
+			var hash = new SortedMap(symbolizeItem, compareItems);
 
 			var items = [
 				{ id: 1 },
@@ -77,7 +77,7 @@ buster.testCase('SortedHash', {
 		},
 
 		'should silently fail when removing non-existent items': function () {
-			var hash = new SortedHash(symbolizeItem, compareItems);
+			var hash = new SortedMap(symbolizeItem, compareItems);
 
 			hash.add({ id: 1 });
 			refute.defined(hash.remove({ id: 2 }));
@@ -88,7 +88,7 @@ buster.testCase('SortedHash', {
 	'forEach': {
 
 		'should iterate over all items in order': function () {
-			var hash = new SortedHash(symbolizeItem, compareItems);
+			var hash = new SortedMap(symbolizeItem, compareItems);
 
 			hash.add({ id: 1 });
 			hash.add({ id: 3 });
@@ -111,5 +111,5 @@ buster.testCase('SortedHash', {
 });
 })(
 	require('buster'),
-	require('../SortedHash')
+	require('../SortedMap')
 );

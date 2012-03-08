@@ -10,7 +10,7 @@ define(function () {
 	 * @param symbolizer {Function}
 	 * @param comparator {Function}
 	 */
-	function SortedHash (symbolizer, comparator) {
+	function SortedMap (symbolizer, comparator) {
 
 		// symbolizer is required, comparator is optional
 
@@ -139,7 +139,7 @@ define(function () {
 
 	}
 
-	SortedHash.prototype = {
+	SortedMap.prototype = {
 
 		get: function (keyItem) {
 			var valueItem;
@@ -188,7 +188,7 @@ define(function () {
 	};
 
 
-	return SortedHash;
+	return SortedMap;
 
 	/**
 	 * Searches through a list of items, looking for the correct slot
@@ -209,7 +209,7 @@ define(function () {
 		do {
 			mid = Math.floor((min + max) / 2);
 			compare = comparator(item, getter(mid));
-			if (isNaN(compare)) throw new Error('SortedHash: invalid comparator result ' + compare);
+			if (isNaN(compare)) throw new Error('SortedMap: invalid comparator result ' + compare);
 			// if we've narrowed down to a choice of just two slots
 			if (max - min <= 1) {
 				return compare == 0 ? mid : compare > 0 ? max : min;
