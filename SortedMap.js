@@ -142,9 +142,9 @@ define(function () {
 	SortedMap.prototype = {
 
 		get: function (keyItem) {
-			var valueItem;
-			valueItem = this._fetch(keyItem);
-			return valueItem == missing ? undef : valueItem;
+			var pair;
+			pair = this._fetch(keyItem);
+			return pair == missing ? undef : pair.value;
 		},
 
 		add: function (keyItem, valueItem) {
