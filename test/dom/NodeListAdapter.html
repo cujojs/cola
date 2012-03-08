@@ -10,8 +10,8 @@
 <script type="text/javascript">
 require(['cola/dom/NodeListAdapter', 'cola/ObjectAdapter', 'domReady!'], function(NodeListAdapter, ObjectAdapter) {
 
-	var itemNode, bindings;
-	
+	var rootNode, itemNode;
+
 	function getNode (id) {
 		return document.getElementById(id);
 	}
@@ -29,22 +29,15 @@ require(['cola/dom/NodeListAdapter', 'cola/ObjectAdapter', 'domReady!'], functio
 	}
 
 	function compareById (a, b) { return a.id - b.id; }
+	function symbolizeById (a) { return a.id; }
+	function querySelector (selector, node) { return node.querySelector(selector); }
 
 
 	function init () {
 		// this function has to run to ensure that the browser hasn't
 		// attempted to preserve form values across a browser reload
-		var node, first, last;
-		node = getNode('test');
-		first = node.elements.first;
-		last = node.elements.last;
-		first.value = 'Fred';
-		last.value = 'Flintstone';
-		itemNode = document.getElementsByTagName('fieldset')[0];
-		bindings = {
-			first: { node: first, prop: 'value' },
-			last: { node: last, prop: 'value' }
-		};
+		rootNode = getNode('test');
+		itemNode = 'fieldset';
 	}
 
 	doh.register('the basics', [
@@ -57,15 +50,37 @@ require(['cola/dom/NodeListAdapter', 'cola/ObjectAdapter', 'domReady!'], functio
 			doh.assertTrue(NodeListAdapter.canHandle(getNode('test')), 'DOMNode');
 		}
 	]);
+	doh.register('add', [
+		function add (doh) {
+			var item, adapted, options;
+			init();
+			options = {
+				querySelector: querySelector,
+				itemTemplateSelector: itemNode,
+				comparator: compareById,
+				symbolizer: symbolizeById
+			};
+			adapted = new NodeListAdapter(rootNode, options);
+			item = { id: 1 };
+			adapted.add(item);
+			adapted.add({ id: 9 });
+			adapted.add({ id: 3 });
+			doh.assertEqual(3, rootNode.querySelectorAll('fieldset').length);
+		}
+	]);
 	doh.register('events', [
 		function add (doh) {
-			var node, item, adapted, dfd;
+			var item, adapted, dfd, options;
 			init();
-			node = itemNode;
-			adapted = new NodeListAdapter(node);
-			adapted.comparator = compareById;
+			options = {
+				querySelector: querySelector,
+				itemTemplateSelector: itemNode,
+				comparator: compareById,
+				symbolizer: symbolizeById
+			};
+			adapted = new NodeListAdapter(rootNode, options);
 			dfd = new doh.Deferred();
-			item = new ObjectAdapter({ id: 1 });
+			item = { id: 1 };
 			adapted.watch(
 				function (addedItem) {
 					dfd.callback(addedItem == item);
@@ -75,13 +90,17 @@ require(['cola/dom/NodeListAdapter', 'cola/ObjectAdapter', 'domReady!'], functio
 			return dfd;
 		},
 		function remove (doh) {
-			var node, item, adapted, dfd;
+			var item, adapted, dfd;
 			init();
-			node = itemNode;
-			adapted = new NodeListAdapter(node);
-			adapted.comparator = compareById;
+			options = {
+				querySelector: querySelector,
+				itemTemplateSelector: itemNode,
+				comparator: compareById,
+				symbolizer: symbolizeById
+			};
+			adapted = new NodeListAdapter(rootNode, options);
 			dfd = new doh.Deferred();
-			item = new ObjectAdapter({ id: 1 });
+			item = { id: 1 };
 			adapted.add(item);
 			adapted.watch(
 				null,
@@ -89,7 +108,7 @@ require(['cola/dom/NodeListAdapter', 'cola/ObjectAdapter', 'domReady!'], functio
 					dfd.callback(removedItem == item);
 				}
 			);
-			adapted.remove(item)
+			adapted.remove(item);
 			return dfd;
 		}
 	]);
@@ -102,9 +121,9 @@ require(['cola/dom/NodeListAdapter', 'cola/ObjectAdapter', 'domReady!'], functio
 <body>
 
 <form id="test">
-	<fieldset>
-		<input name="first" value="Fred"/>
-		<input name="last" value="Flinstone"/>
+	<fieldset style="display:none">
+		<input name="first" value=""/>
+		<input name="last" value=""/>
 	</fieldset>
 </form>
 

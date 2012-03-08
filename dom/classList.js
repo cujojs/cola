@@ -19,6 +19,7 @@ define(function (require, exports) {
 		node.className.replace(splitClassNameRx, function (name) {
 			set[name] = true;
 		});
+		return set;
 	}
 
 	/**

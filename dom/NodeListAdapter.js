@@ -2,17 +2,31 @@
 define(function(require) {
 "use strict";
 
-	var when, SortedMap, domEvents, fireSimpleEvent, watchNode,
-		undef, defaultTemplateSelector, listElementsSelector;
+	var when, SortedMap, classList, domEvents, fireSimpleEvent, watchNode,
+		colaAddedEvent, colaRemovedEvent, colaPropUpdatedEvent,
+		undef, defaultTemplateSelector, listElementsSelector,
+		colaListBindingStates;
 
 	when = require('when');
 	SortedMap = require('../SortedMap');
+	classList = require('./classList');
 	domEvents = require('./events');
+
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
 
+	colaAddedEvent = 'ColaItemAdded';
+	colaRemovedEvent = 'ColaItemRemoved';
+	colaPropUpdatedEvent = 'ColaItemPropUpdated';
+
 	defaultTemplateSelector = '[data-cola-role="item-template"]';
 	listElementsSelector = 'tr,li';
+
+	colaListBindingStates = {
+		empty: 'cola-list-empty',
+		bound: 'cola-list-bound',
+		unbound: 'cola-list-unbound'
+	};
 
 	/**
 	 * Manages a collection of dom trees that are synced with a data
@@ -33,6 +47,11 @@ define(function(require) {
 
 		this._options = options;
 
+		this.comparator = options.comparator;
+		this.symbolizer = options.symbolizer;
+
+		this._rootNode = rootNode;
+
 		// 1. find templateNode
 		this._templateNode = findTemplateNode(rootNode, options);
 
@@ -44,12 +63,14 @@ define(function(require) {
 			throw new Error('No container node found for NodeListAdapter.');
 		}
 
-		this.comparator = options.comparator;
-		this.symbolizer = options.symbolizer;
-
 		this._containerNode = container;
 
 		this._initTemplateNode();
+
+		// keep track of how many watchers. we assume that if number
+		// of watchers is greater than zero, we're "data bound"
+		this._watchCount = 0;
+		this._checkBoundState();
 
 		self = this;
 		// list of sorted data items, nodes, and unwatch functions
@@ -67,7 +88,7 @@ define(function(require) {
 	NodeListAdapter.prototype = {
 
 		watch: function (add, remove) {
-			var unwatchAdd, unwatchRemove;
+			var unwatchAdd, unwatchRemove, self;
 
 			unwatchAdd = add ?
 				watchNode(this._containerNode, colaAddedEvent, function (evt) {
@@ -79,7 +100,13 @@ define(function(require) {
 					return remove(evt.data.item);
 				}) : noop;
 
+			this._watchCount++;
+			this._checkBoundState();
+
+			self = this;
 			return function () {
+				self._watchCount--;
+				self._checkBoundState();
 				unwatchAdd();
 				unwatchRemove();
 			};
@@ -90,34 +117,37 @@ define(function(require) {
 
 			// create node
 			node = this._templateNode.cloneNode(true);
+
 			// add to map
 			index = this._itemData.add(item, node);
+
 			// figure out where to insert into dom
-			if(index >= 0) {
+			if (index >= 0) {
 				// insert
 				this._insertNodeAt(node, index);
 				// notify listeners
 				// return node so mediator can adapt and mediate it
 				return when(this._fireEvent(colaAddedEvent, item),
-					function() { return node; }
+					function () { return node; }
 				);
 			}
 		},
 
 		remove: function (item) {
-			var itemData, index = -1;
-			if (typeof this.comparator != 'function') {
-				throw createError('NodeListAdapter: Cannot remove without a comparator.', item);
-			}
-			index = findSortedIndex(item, this._itemData, this.comparator);
-			if (index < 0 || index > this._itemData.length) {
-				throw createError('NodeListAdapter: Cannot remove item.', item);
-			}
-			itemData = this._itemData[index];
-			// remove node
-			this._removeNode(itemData.node);
-			// remove itemData
-			this._itemData.splice(index, 1);
+			var node, index;
+
+			// grab node we're about to remove
+			node = this._itemData.get(item);
+
+			// remove item
+			index = this._itemData.remove(item);
+
+			// remove from dom
+			// hm. we could trust that the index returned is still correct (it
+			// should be!), or we could trust the node the map gave us.
+			// going with the node since it seems wee bit safer.
+			node.parentNode.removeChild(node);
+
 			// notify listeners
 			return this._fireEvent(colaRemovedEvent, item);
 		},
@@ -129,23 +159,20 @@ define(function(require) {
 		},
 
 		checkPosition: function (item) {
-			var itemData, oldIndex, newIndex;
-			if (typeof this.comparator != 'function') {
-				throw createError('NodeListAdapter: Cannot move without a comparator.', item);
-			}
-			// first check in the already sorted place (optimization)
-			oldIndex = findSortedIndex(item, this._itemData, this.comparator);
-			if (item != this._itemData[oldIndex]) {
-				// apparently, it did move!
-				newIndex = findIndex(item, this._itemData, this.comparator);
-				if (newIndex < 0 || newIndex > this._itemData.length) {
-					throw createError('NodeListAdapter: Cannot move item.', item);
-				}
-				itemData = this._itemData[newIndex];
-				// move item and node
-				this._itemData.splice(newIndex, 0, this._itemData.splice(oldIndex, 1));
-				this._insertNodeAt(itemData.node, newIndex);
-			}
+//			var itemData, oldIndex, newIndex;
+//			// first check in the already sorted place (optimization)
+//			oldIndex = findSortedIndex(item, this._itemData, this.comparator);
+//			if (item != this._itemData[oldIndex]) {
+//				// apparently, it did move!
+//				newIndex = findIndex(item, this._itemData, this.comparator);
+//				if (newIndex < 0 || newIndex > this._itemData.length) {
+//					throw createError('NodeListAdapter: Cannot move item.', item);
+//				}
+//				itemData = this._itemData[newIndex];
+//				// move item and node
+//				this._itemData.splice(newIndex, 0, this._itemData.splice(oldIndex, 1));
+//				this._insertNodeAt(itemData.node, newIndex);
+//			}
 		},
 
 		getOptions: function () {
@@ -165,14 +192,19 @@ define(function(require) {
 		 */
 		comparator: undef,
 
-		// TODO: enable this by incorporating a decent map:
-//		symbolizer: undef,
+		symbolizer: undef,
 
 		_initTemplateNode: function () {
 			var templateNode = this._templateNode;
 			// remove from document
 			if (templateNode.parentNode) {
 				templateNode.parentNode.removeChild(templateNode);
+			}
+			// remove any styling to hide template node (ideally, devs
+			// would use a css class for this, but whatevs)
+			// css class: .cola-list-unbound .my-template-node { display: none }
+			if (templateNode.style.display) {
+				templateNode.style.display = '';
 			}
 			// remove id because we're going to duplicate
 			if (templateNode.id) {
@@ -195,10 +227,14 @@ define(function(require) {
 			}
 		},
 
-		_removeNode: function (node) {
-			var parent;
-			parent = this._containerNode;
-			parent.removeChild(node);
+		_checkBoundState: function () {
+			var container, state;
+			container = this._containerNode;
+			state = {};
+			state[colaListBindingStates.unbound] = this._watchCount == 0;
+			state[colaListBindingStates.empty] = container.childNodes.length == 0;
+			state[colaListBindingStates.bound] = !state[colaListBindingStates.empty];
+			classList.setClassSet(this._rootNode, state);
 		}
 
 	};
@@ -207,57 +243,6 @@ define(function(require) {
 		// crude test if an object is a node.
 		return obj && obj.tagName && obj.insertBefore && obj.removeChild;
 	};
-
-	var colaAddedEvent, colaRemovedEvent, colaPropUpdatedEvent;
-
-	colaAddedEvent = 'ColaItemAdded';
-	colaRemovedEvent = 'ColaItemRemoved';
-	colaPropUpdatedEvent = 'ColaItemPropUpdated';
-
-	/**
-	 * This binary search isn't quite like most because it also
-	 * determines where to insert an item that falls between two
-	 * others in the list.
-	 * @param item {Object}
-	 * @param list {Array} of objects
-	 * @param comparator {Function} function sort (a, b) { return a - b; }
-	 * @returns {Number} the number at which to insert into the list
-	 */
-	function findSortedIndex (item, list, comparator) {
-		var min, max, mid, compare;
-		min = 0;
-		max = list.length;
-		if (max == 0) return 0;
-		do {
-			mid = Math.floor((min + max) / 2);
-			compare = comparator(item, list[mid]);
-			// don't use mid +/- 1 or we may miss in-between
-			if (compare > 0) min = mid;
-			else if (compare < 0) max = mid;
-			else return mid;
-		}
-		while (max - min > 1 && !isNaN(compare));
-	}
-
-	/**
-	 * This straight scan uses the comparator to test each item in
-	 * the list for equality and returns the first it finds or -1.
-	 * @param item {Object}
-	 * @param list {Array} of objects
-	 * @param comparator {Function} function sort (a, b) { return a - b; }
-	 */
-	function findIndex (item, list, comparator) {
-		var i;
-		i = list.length;
-		while (--i >= 0 && comparator(item, list[i].item) != 0) {}
-		return i;
-	}
-
-	function createError(message, data) {
-		var error = new Error(message);
-		error.data = data;
-		return error;
-	}
 
 	function findTemplateNode (root, options) {
 		var useBestGuess, node;
@@ -274,7 +259,7 @@ define(function(require) {
 			}
 		}
 		if (!node && useBestGuess) {
-			node = root;
+			node = root.firstChild;
 		}
 		// if still not found, throw
 		if (!node) {
