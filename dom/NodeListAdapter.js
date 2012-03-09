@@ -213,7 +213,7 @@ define(function(require) {
 		},
 
 		_fireEvent: function (type, item) {
-			return fireSimpleEvent(this._containerNode, type, { item: item });
+			return fireSimpleEvent(this._containerNode, type, false, { item: item });
 		},
 
 		_insertNodeAt: function (node, index) {

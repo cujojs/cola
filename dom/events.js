@@ -106,12 +106,12 @@ define(function (require) {
 	}
 
 	if(has('dom-createevent')) {
-		fireSimpleEvent = function (node, type, data) {
+		fireSimpleEvent = function (node, type, bubbles, data) {
 			// don't bubble since most form events don't anyways
 			var promise, evt;
 
 			evt = document.createEvent('HTMLEvents');
-			evt.initEvent(type, false, true);
+			evt.initEvent(type, bubbles, true);
 			evt.data = data;
 
 			promise = initEventPromise(node, type, evt);
@@ -129,7 +129,7 @@ define(function (require) {
 		}
 	}
 	else {
-		fireSimpleEvent = function (node, type, data) {
+		fireSimpleEvent = function (node, type, bubbles, data) {
 			var promise, evt;
 
 			evt = document.createEventObject();
