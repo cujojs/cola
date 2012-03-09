@@ -14,22 +14,22 @@ curl({
 	},
 	packages: {
 		cola: { location: '.', main: 'cola' },
-		when: { location: 'support/when', main: 'when' }
+		when: { location: 'test/when', main: 'when' }
 	}
 });
 curl(
 	[
 		'cola/mediator/syncCollections',
-		'cola/ArrayAdapter', 
+		'cola/ArrayAdapter',
 		'cola/dom/NodeListAdapter',
 		'cola/dom/NodeAdapter',
 		'cola/ObjectAdapter',
 		'cola/AdapterResolver',
 		'when'
-	], 
+	],
 	function (syncCollections, ArrayAdapter, NodeListAdapter, NodeAdapter, ObjectAdapter, AdapterResolver, when) {
 	"use strict";
-		
+
 		var itemNode, data;
 
 		window.names = data = [
@@ -43,15 +43,34 @@ curl(
 		function getNode (id) {
 			return document.getElementById(id);
 		}
-	
-		function compareById (a, b) { return a.id - b.id; }
 
-		function symbolizer (o) { return o && o.id; }
+		function compareByLast (a, b) {
+			return a.last < b.last ? -1 : a.last > b.last ? 1 : 0;
+		}
+
+		function symbolizeById (o) { return o && o.id; }
 
 		function querySelector (selector, node) {
 			return node.querySelector(selector);
 		}
-	
+
+		function createAdapter(obj, type, options) {
+			// FIXME: This is just for initial testing
+			var Adapter, adapter, propertyTransforms;
+			Adapter = AdapterResolver(obj, type);
+			// if (!Adapter) throw new Error('wire/cola: could not find Adapter constructor for ' + type);
+
+			adapter = Adapter ? new Adapter(obj, options) : obj;
+
+//			if (options.bindings && type == 'object') {
+//				propertyTransforms = createTransformers(options.bindings);
+//				if (propertyTransforms) {
+//					adapter = addPropertyTransforms(adapter, propertyTransforms);
+//				}
+//			}
+			return adapter;
+		}
+
 		function init () {
 			var source, dest;
 
@@ -62,9 +81,13 @@ curl(
 			AdapterResolver.register(ObjectAdapter, 'object');
 
 			// create adapters
-			source = new ArrayAdapter(data, compareById, symbolizer);
-			dest = new NodeListAdapter(getNode('itemNode'), {
-				comparator: compareById,
+			source = new ArrayAdapter(data, {
+				comparator: compareByLast,
+				symbolizer: symbolizeById
+			});
+			dest = new NodeListAdapter(getNode('test'), {
+				comparator: compareByLast,
+				symbolizer: symbolizeById,
 				querySelector: querySelector,
 				bindings: {
 					first: { node: '[name=first]', prop: 'value' },
@@ -75,21 +98,20 @@ curl(
 
 			console.log("START");
 
-			syncCollections(source, dest, AdapterResolver, { sync: true });
+			syncCollections(source, dest, createAdapter, { sync: true });
 
 			console.log("BEFORE");
 
-			when(dest.add({ id: 6, first: 'bob', last: 'smith' }), function() {
-				console.log(arguments);
-				source.forEach(function(item) {
+			when(source.add({ id: 6, first: 'bob', last: 'smith' }), function() {
+				dest.forEach(function(node, item) {
 					console.log(item.first);
 				});
 			});
 			console.log("AFTER");
 
-			document.getElementById('print').onclick = function(e) {
-				dest.forEach(function(item) {
-					console.log(item);
+			window.printNames = function(e) {
+				dest.forEach(function(node, item) {
+					console.log(node, item);
 				});
 			};
 
@@ -100,21 +122,29 @@ curl(
 	}
 );
 </script>
+<style>
+	#test fieldset {
+		display: none;
+	}
+	#test.cola-list-bound fieldset {
+		display: block;
+	}
+</style>
 </head>
 <body>
 
 <form id="test">
 	<div>
-		This is not repeated.
+		Form header
 	</div>
 	<div>
-		<fieldset id="itemNode">
+		<fieldset data-cola-role="item-template">
 			<label></label>
-			<input name="first" value="Fred"/>
-			<input name="last" value="Flinstone"/>
+			<input name="first"/>
+			<input name="last"/>
 		</fieldset>
 	</div>
-	<button type="button" id="print">print</button>
+	<button type="button" onclick="printNames();">print</button>
 </form>
 
 </body>
