@@ -168,9 +168,7 @@ define(function(require) {
 		},
 
 		forEach: function (lambda) {
-			for (var i = 0, len = this._itemData.length; i < len; i++) {
-				lambda(this._itemData[i].item);
-			}
+			this._itemData.forEach(lambda);
 		},
 
 		getOptions: function () {
