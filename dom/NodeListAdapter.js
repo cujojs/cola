@@ -139,18 +139,18 @@ define(function(require) {
 		},
 
 		remove: function (item) {
-			var node, index;
+			var node;
 
 			// grab node we're about to remove
 			node = this._itemData.get(item);
 
 			// remove item
-			index = this._itemData.remove(item);
+			this._itemData.remove(item);
 
 			// remove from dom
-			// hm. we could trust that the index returned is still correct (it
-			// should be!), or we could trust the node the map gave us.
-			// going with the node since it seems wee bit safer.
+			// don't trust the index returned from the remove()
+			// call! if the user didn't specify a comparator / sort, then
+			// it will always return -1. use the node the map gave us instead.
 			node.parentNode.removeChild(node);
 
 			// notify listeners

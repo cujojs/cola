@@ -34,7 +34,7 @@ define(function () {
 		};
 
 		/**
-		 * Performs a binary search to find the insertion position of a
+		 * Performs a binary search to find the bucket position of a
 		 * key item within the key items list.  Only used if we have a
 		 * comparator.
 		 * @private
@@ -45,17 +45,28 @@ define(function () {
 		 * @returns {Number|Undefined}
 		 */
 		this._pos = function (keyItem, exactMatch) {
-			var pos, sorted;
+			var pos, sorted, symbol;
 			sorted = this._sorted;
+			symbol = symbolizer(keyItem);
 			function getKey (pos) { return sorted[pos] ? sorted[pos][0].key : {}; }
 			pos = binarySearch(0, sorted.length, keyItem, getKey, comparator);
 			if (exactMatch) {
-				if (symbolizer(keyItem) != symbolizer(sorted[pos][0].key)) {
+				if (symbol != symbolizer(sorted[pos][0].key)) {
 					pos = -1;
 				}
 			}
+console.log(keyItem, pos);
 			return pos;
 		};
+		this._bucketOffset = function (bucketPos) {
+			var total, i;
+			total = 0;
+			for (i = 0; i < bucketPos; i++) {
+				total += this._sorted[i].length;
+			}
+			return total;
+		};
+
 		if (!comparator) {
 			this._pos = function (keyItem, exact) {
 				return exact ? -1 : this._sorted.length;
@@ -63,18 +74,19 @@ define(function () {
 		}
 
 		/**
-		 * Given a keyItem and its position in the list of key items,
-		 * inserts an value item into the list of value items.
+		 * Given a keyItem and its bucket position in the list of key items,
+		 * inserts an value item into the bucket of value items.
 		 * This method can be overridden by other objects that need to
 		 * have objects in the same order as the key values.
 		 * @private
 		 * @param valueItem
 		 * @param keyItem
 		 * @param pos
-		 * @returns {Number} the position in the sorted list.
+		 * @returns {Number} the absolute position of this item amongst
+		 *   all items in all buckets.
 		 */
 		this._insert = function (keyItem, pos, valueItem) {
-			var pair, symbol, entry;
+			var pair, symbol, entry, absPos;
 
 			// insert into index
 			pair = { key: keyItem, value: valueItem };
@@ -83,6 +95,7 @@ define(function () {
 
 			// insert into sorted table
 			if (pos >= 0) {
+				absPos = this._bucketOffset(pos);
 				entry = this._sorted[pos] && this._sorted[pos][0];
 				// is this a new row (at end of array)?
 				if (!entry) {
@@ -90,29 +103,33 @@ define(function () {
 				}
 				// are there already items of the same sort position here?
 				else if (comparator(entry.key, keyItem) == 0) {
-					this._sorted[pos].push(pair);
+					absPos += this._sorted[pos].push(pair) - 1;
 				}
 				// or do we need to insert a new row?
 				else {
 					this._sorted.splice(pos, 0, [pair]);
 				}
 			}
+			else {
+				absPos = -1;
+			}
 
-			return pos;
+			return absPos;
 		};
 
 		/**
-		 * Given a key item and its position in the list of key items,
-		 * removes a value item from the list of value items.
+		 * Given a key item and its bucket position in the list of key items,
+		 * removes a value item from the bucket of value items.
 		 * This method can be overridden by other objects that need to
 		 * have objects in the same order as the key values.
 		 * @private
 		 * @param keyItem
 		 * @param pos
-		 * @returns {Number} the position in the sorted list.
+		 * @returns {Number} the absolute position of this item amongst
+		 *   all items in all buckets.
 		 */
 		this._remove = function remove (keyItem, pos) {
-			var symbol, entries, i, entry;
+			var symbol, entries, i, entry, absPos;
 
 			symbol = symbolizer(keyItem);
 
@@ -120,21 +137,28 @@ define(function () {
 			delete this._index[symbol];
 
 			// delete from sorted table
-			entries = this._sorted[pos] || [];
-			i = entries.length;
-			// find it and remove it
-			while ((entry = entries[--i])) {
-				if (symbolizer(entry.key)) {
-					entries.splice(i, 1);
-					break;
+			if (pos >= 0) {
+				absPos = this._bucketOffset(pos);
+				entries = this._sorted[pos] || [];
+				i = entries.length;
+				// find it and remove it
+				while ((entry = entries[--i])) {
+					if (symbol == symbolizer(entry.key)) {
+						entries.splice(i, 1);
+						break;
+					}
+				}
+				absPos += i;
+				// if we removed all pairs at this position
+				if (entries.length == 0) {
+					this._sorted.splice(pos, 1);
 				}
 			}
-			// if we removed all pairs at this position
-			if (entries.length == 0) {
-				this._sorted.splice(pos, 1);
+			else {
+				absPos = -1;
 			}
 
-			return pos;
+			return absPos;
 		};
 
 	}
@@ -148,20 +172,20 @@ define(function () {
 		},
 
 		add: function (keyItem, valueItem) {
-			var pos;
+			var pos, absPos;
 
 			// don't insert twice. bail if we already have it
 			if (this._fetch(keyItem) != missing) return;
 
 			// find pos and insert
 			pos = this._pos(keyItem);
-			this._insert(keyItem, pos, valueItem);
+			absPos = this._insert(keyItem, pos, valueItem);
 
-			return pos;
+			return absPos;
 		},
 
 		remove: function (keyItem) {
-			var valueItem, pos;
+			var valueItem, pos, absPos;
 
 			// don't remove if we don't already have it
 			valueItem = this._fetch(keyItem);
@@ -169,9 +193,9 @@ define(function () {
 
 			// find positions and delete
 			pos = this._pos(keyItem, true);
-			this._remove(keyItem, pos);
+			absPos = this._remove(keyItem, pos);
 
-			return pos;
+			return absPos;
 		},
 
 		forEach: function (lambda) {

@@ -9,6 +9,10 @@ function compareItems (a, b) {
 	return a.id - b.id;
 }
 
+function compareByLast (a, b) {
+	return a.last < b.last ? -1 : a.last > b.last ? 1 : 0;
+}
+
 function symbolizeItem (it) {
 	return it.id;
 }
@@ -88,20 +92,20 @@ buster.testCase('SortedMap', {
 	'forEach': {
 
 		'should iterate over all items in order': function () {
-			var hash = new SortedMap(symbolizeItem, compareItems);
+			var hash = new SortedMap(symbolizeItem, compareByLast);
 
-			hash.add({ id: 1 });
-			hash.add({ id: 3 });
-			hash.add({ id: 4 });
-			hash.add({ id: 2 });
+			hash.add({ id: 1, last: 'Attercop', expected: 2 });
+			hash.add({ id: 3, last: 'TomNoddy', expected: 4 });
+			hash.add({ id: 4, last: 'Aardvark', expected: 1 });
+			hash.add({ id: 2, last: 'Bojangle', expected: 3 });
 
 			var count = 0, prev = 0;
 
 			hash.forEach(function (value, key) {
 				count++;
 				// cheap test to see if they're in order
-				assert.equals(symbolizeItem(key) - prev, 1);
-				prev = symbolizeItem(key);
+				assert.equals(key.expected - prev, 1);
+				prev = key.expected;
 			});
 
 			assert(count == 4);
