@@ -55,7 +55,6 @@ define(function () {
 					pos = -1;
 				}
 			}
-console.log(keyItem, pos);
 			return pos;
 		};
 		this._bucketOffset = function (bucketPos) {
