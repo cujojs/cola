@@ -83,8 +83,9 @@ define(function(require) {
 			}, options.comparator);
 
 		watchNode(this._containerNode, colaEvents.propUpdated, function (e) {
-			var item = e.data && e.data.item;
-			// TODO: respond to property changed events in nodes
+			var event = e || window.event;
+			e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
+			// TODO: send update event to watchers
 		});
 
 	}
