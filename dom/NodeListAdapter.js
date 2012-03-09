@@ -3,7 +3,7 @@ define(function(require) {
 "use strict";
 
 	var when, SortedMap, classList, domEvents, fireSimpleEvent, watchNode,
-		colaAddedEvent, colaRemovedEvent, colaPropUpdatedEvent,
+		colaEvents,
 		undef, defaultTemplateSelector, listElementsSelector,
 		colaListBindingStates;
 
@@ -15,9 +15,12 @@ define(function(require) {
 	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
 
-	colaAddedEvent = 'ColaItemAdded';
-	colaRemovedEvent = 'ColaItemRemoved';
-	colaPropUpdatedEvent = 'ColaItemPropUpdated';
+	colaEvents = {
+		added: 'ColaItemAdded',
+		removed: 'ColaItemRemoved',
+		propUpdated: 'ColaItemPropUpdated'
+	};
+
 
 	defaultTemplateSelector = '[data-cola-role="item-template"]';
 	listElementsSelector = 'tr,li';
@@ -79,7 +82,8 @@ define(function(require) {
 				return self.symbolizer(item);
 			}, options.comparator);
 
-		watchNode(this._containerNode, colaPropUpdatedEvent, function () {
+		watchNode(this._containerNode, colaEvents.propUpdated, function (e) {
+			var item = e.data && e.data.item;
 			// TODO: respond to property changed events in nodes
 		});
 
@@ -91,12 +95,12 @@ define(function(require) {
 			var unwatchAdd, unwatchRemove, self;
 
 			unwatchAdd = add ?
-				watchNode(this._containerNode, colaAddedEvent, function (evt) {
+				watchNode(this._containerNode, colaEvents.added, function (evt) {
 					return add(evt.data.item);
 				}) : noop;
 
 			unwatchRemove = remove ?
-				watchNode(this._containerNode, colaRemovedEvent, function (evt) {
+				watchNode(this._containerNode, colaEvents.removed, function (evt) {
 					return remove(evt.data.item);
 				}) : noop;
 
@@ -127,7 +131,7 @@ define(function(require) {
 				this._insertNodeAt(node, index);
 				// notify listeners
 				// return node so mediator can adapt and mediate it
-				return when(this._fireEvent(colaAddedEvent, item),
+				return when(this._fireEvent(colaEvents.added, item),
 					function () { return node; }
 				);
 			}
@@ -149,30 +153,24 @@ define(function(require) {
 			node.parentNode.removeChild(node);
 
 			// notify listeners
-			return this._fireEvent(colaRemovedEvent, item);
+			return this._fireEvent(colaEvents.removed, item);
+		},
+
+		update: function (item) {
+			var node, index;
+
+			node = this._itemData.get(item);
+
+			this._itemData.remove(item);
+			index = this._itemData.add(item);
+
+			this._insertNodeAt(node, index);
 		},
 
 		forEach: function (lambda) {
 			for (var i = 0, len = this._itemData.length; i < len; i++) {
 				lambda(this._itemData[i].item);
 			}
-		},
-
-		checkPosition: function (item) {
-//			var itemData, oldIndex, newIndex;
-//			// first check in the already sorted place (optimization)
-//			oldIndex = findSortedIndex(item, this._itemData, this.comparator);
-//			if (item != this._itemData[oldIndex]) {
-//				// apparently, it did move!
-//				newIndex = findIndex(item, this._itemData, this.comparator);
-//				if (newIndex < 0 || newIndex > this._itemData.length) {
-//					throw createError('NodeListAdapter: Cannot move item.', item);
-//				}
-//				itemData = this._itemData[newIndex];
-//				// move item and node
-//				this._itemData.splice(newIndex, 0, this._itemData.splice(oldIndex, 1));
-//				this._insertNodeAt(itemData.node, newIndex);
-//			}
 		},
 
 		getOptions: function () {

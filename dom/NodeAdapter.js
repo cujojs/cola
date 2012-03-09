@@ -103,7 +103,7 @@ define(function (require) {
 				if (current != value) {
 					setNodePropOrAttr(node, prop, value);
 					// notify watchers
-					return fireSimpleEvent(node, colaSyntheticEvent, true);
+					return fireSimpleEvent(node, propUpdatedEvent, true);
 				}
 			}
 		},
@@ -163,9 +163,9 @@ define(function (require) {
 		return obj && obj.tagName && obj.getAttribute && obj.setAttribute;
 	};
 
-	var colaSyntheticEvent, attrToProp, customAccessors;
+	var propUpdatedEvent, attrToProp, customAccessors;
 
-	colaSyntheticEvent = 'ColaItemPropUpdated';
+	propUpdatedEvent = 'ColaItemPropUpdated';
 
 	attrToProp = {
 		'class': 'className',
@@ -237,7 +237,7 @@ define(function (require) {
 		}
 
 		// add an event for notifying from the set() method
-		events.push(colaSyntheticEvent);
+		events.push(propUpdatedEvent);
 
 		// create unwatchers
 		unwatchers = [];

@@ -106,10 +106,10 @@ define(function (require) {
 				itemData.unwatch = itemData.adapter.watchAll(function (prop, value) {
 					// if primary requires ordering, tell it that the item may have moved
 					// TODO: if adapter returned another copy, lose previous copy, adapt this one, and start watching it
-					if (typeof primary.checkPosition == 'function') primary.checkPosition(item);
+					if (typeof primary.update == 'function') primary.update(item);
 					// if secondary requires ordering, tell it that the item may have moved
 					// TODO: if adapter returned another copy, lose previous copy, adapt this one, and start watching it
-					if (typeof secondary.checkPosition == 'function') secondary.checkPosition(item);
+					if (typeof secondary.update == 'function') secondary.update(item);
 				});
 				return itemData;
 			}
