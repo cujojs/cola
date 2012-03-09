@@ -48,6 +48,10 @@ curl(
 			return a.last < b.last ? -1 : a.last > b.last ? 1 : 0;
 		}
 
+		function compareByFirst (a, b) {
+			return a.first < b.first ? -1 : a.first > b.first ? 1 : 0;
+		}
+
 		function symbolizeById (o) { return o && o.id; }
 
 		function querySelector (selector, node) {
@@ -86,7 +90,7 @@ curl(
 				symbolizer: symbolizeById
 			});
 			dest = new NodeListAdapter(getNode('test'), {
-				comparator: compareByLast,
+				comparator: compareByFirst,
 				symbolizer: symbolizeById,
 				querySelector: querySelector,
 				bindings: {
