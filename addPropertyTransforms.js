@@ -1,7 +1,7 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
 (function (define) {
-define(function (require) {
+define(function () {
 "use strict";
 
 	/**
@@ -23,7 +23,7 @@ define(function (require) {
 
 			adapter.set = function transformedSet (name, value) {
 				var transform = transforms[name]
-					|| passthru;
+					|| identity;
 				return origSet.call(adapter, name, transform(value));
 			};
 
@@ -33,16 +33,17 @@ define(function (require) {
 				function transformedLambda (value, name) {
 					var reverse = transforms[name]
 						&& transforms[name].inverse
-						|| passthru;
+						|| identity;
 					return lambda(reverse(value), name);
 				}
+
 				return origForEach.call(adapter, transformedLambda);
 			};
 
 			adapter.watch = function transformedWatch (name, callback) {
 				var reverse = transforms[name]
 					&& transforms[name].inverse
-					|| passthru;
+					|| identity;
 				function transformedCallback (name, value) {
 					return callback(name, reverse(value));
 				}
@@ -56,7 +57,7 @@ define(function (require) {
 
 	return addPropertyTransforms;
 
-	function passthru (val) { return val; }
+	function identity (val) { return val; }
 
 	function hasProperties (obj) {
 		for (var p in obj) return true;
@@ -66,5 +67,5 @@ define(function (require) {
 }(
 	typeof define == 'function'
 		? define
-		: function (factory) { module.exports = factory(require); }
+		: function (factory) { module.exports = factory(); }
 ));
