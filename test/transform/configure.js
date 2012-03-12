@@ -7,7 +7,7 @@ assert = buster.assert;
 refute = buster.refute;
 
 buster.testCase('transform/configure', {
-	
+
 	'should return a function': function() {
 		assert.typeOf(configure(function() {}), 'function');
 	},

@@ -11,9 +11,9 @@ define(function () {
 	 * @returns {Function} function (value, item) {}
 	 * @description
 	 */
-	return function expressionTransform (value, propName, item, expression) {
+	return function expressionTransform (value, propName, expression) {
 		try {
-			return globalEval.call(expression, value, propName, item);
+			return globalEval.call(expression, value, propName);
 		}
 		catch (ex) {
 			return ex.message;
