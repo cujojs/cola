@@ -160,6 +160,17 @@ define(function () {
 			return absPos;
 		};
 
+		this._setComparator = function (newComparator) {
+			var p, pair, pos;
+			comparator = newComparator;
+			this._sorted = [];
+			for (p in this._index) {
+				pair = this._index[p];
+				pos = this._pos(pair.key);
+				this._insert(pair.key, pos, pair.value);
+			}
+		};
+
 	}
 
 	SortedMap.prototype = {
@@ -206,6 +217,10 @@ define(function () {
 					lambda(entries[j].value, entries[j].key);
 				}
 			}
+		},
+
+		setComparator: function (comparator) {
+			this._setComparator(comparator);
 		}
 
 	};

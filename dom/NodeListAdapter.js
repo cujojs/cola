@@ -80,12 +80,16 @@ define(function(require) {
 		this._itemData = new SortedMap(
 			function(item) {
 				return self.symbolizer(item);
-			}, options.comparator);
+			},
+			function (a, b) {
+				return options.comparator(a, b)
+			}
+		);
 
 		watchNode(this._containerNode, colaEvents.propUpdated, function (e) {
 			var event = e || window.event;
 			e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
-			// TODO: send update event to watchers
+			// TODO: send update event to watchers?
 		});
 
 	}
@@ -170,6 +174,16 @@ define(function(require) {
 
 		forEach: function (lambda) {
 			this._itemData.forEach(lambda);
+		},
+
+		setComparator: function (comparator) {
+			var i = 0, self = this;
+			this.comparator = comparator;
+			this._itemData.setComparator(comparator);
+			this._itemData.forEach(function (node, item) {
+				self._insertNodeAt(node, i);
+				i++;
+			});
 		},
 
 		getOptions: function () {

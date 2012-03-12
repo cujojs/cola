@@ -30,12 +30,14 @@ curl(
 	function (syncCollections, ArrayAdapter, NodeListAdapter, NodeAdapter, ObjectAdapter, AdapterResolver, when) {
 	"use strict";
 
-		var itemNode, data;
+		var itemNode, data, sortDirection;
+
+		sortDirection = 1;
 
 		window.names = data = [
+			{ id: 3, first: 'Ian', last: 'Cavalier' },
 			{ id: 1, first: 'Brian', last: 'Cavalier' },
 			{ id: 2, first: 'John', last: 'Hann' },
-			{ id: 3, first: 'Ian', last: 'Cavalier' },
 			{ id: 4, first: 'Scott', last: 'Andrews' },
 			{ id: 5, first: 'Ilia', last: 'Gilderman' }
 		];
@@ -45,11 +47,16 @@ curl(
 		}
 
 		function compareByLast (a, b) {
-			return a.last < b.last ? -1 : a.last > b.last ? 1 : 0;
+			return a.last < b.last ? -sortDirection : a.last > b.last ? sortDirection : 0;
 		}
 
 		function compareByFirst (a, b) {
-			return a.first < b.first ? -1 : a.first > b.first ? 1 : 0;
+			return a.first < b.first ? -sortDirection : a.first > b.first ? sortDirection : 0;
+		}
+
+		function compareByLastThenFirst (a, b) {
+			var byLast = compareByLast(a, b);
+			return byLast == 0 ? compareByFirst(a, b) : byLast;
 		}
 
 		function symbolizeById (o) { return o && o.id; }
@@ -90,13 +97,13 @@ curl(
 				symbolizer: symbolizeById
 			});
 			dest = new NodeListAdapter(getNode('test'), {
-				comparator: compareByFirst,
+				comparator: compareByLastThenFirst,
 				symbolizer: symbolizeById,
 				querySelector: querySelector,
 				bindings: {
 					first: { node: '[name=first]', prop: 'value' },
 					last: { node: '[name=last]', prop: 'value' },
-					id: { node: 'label' }
+					id: { node: 'label', events: 'click' }
 				}
 			});
 
@@ -117,6 +124,11 @@ curl(
 				dest.forEach(function(node, item) {
 					console.log(node, item);
 				});
+			};
+
+			window.reverseSort = function () {
+				sortDirection = -sortDirection;
+				dest.setComparator(dest.comparator);
 			};
 
 		}
@@ -148,7 +160,7 @@ curl(
 			<input name="last"/>
 		</fieldset>
 	</div>
-	<button type="button" onclick="printNames();">print</button>
+	<button type="button" onclick="reverseSort();">Reverse</button>
 </form>
 
 </body>
