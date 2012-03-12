@@ -24,7 +24,7 @@ define(function () {
 			adapter.set = function transformedSet (name, value) {
 				var transform = transforms[name]
 					|| identity;
-				return origSet.call(adapter, name, transform(value));
+				return origSet.call(adapter, name, transform(value, name));
 			};
 
 			adapter.forEach = function transformedForEach (lambda) {
@@ -34,7 +34,7 @@ define(function () {
 					var reverse = transforms[name]
 						&& transforms[name].inverse
 						|| identity;
-					return lambda(reverse(value), name);
+					return lambda(reverse(value, name), name);
 				}
 
 				return origForEach.call(adapter, transformedLambda);
@@ -45,7 +45,7 @@ define(function () {
 					&& transforms[name].inverse
 					|| identity;
 				function transformedCallback (name, value) {
-					return callback(name, reverse(value));
+					return callback(name, reverse(value, name));
 				}
 				return origWatch.call(adapter, name, transformedCallback);
 			};

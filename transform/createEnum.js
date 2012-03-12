@@ -43,14 +43,14 @@ define(function () {
 	 *  	}
 	 *  reverse({ "can-add-data": true }) ==> ['create']
 	 */
-	return function createEnumTransform (options) {
-		var map, unmap, emptySet, multiValued;
+	return function createEnumTransform (map, options) {
+		var unmap, emptySet, multiValued;
 
 		// TODO: don't waste cpu using maps if the dev gave an array
-		map = createMap(options.enumSet);
+		map = createMap(map);
 		unmap = createReverseMap(map);
 		emptySet = createEmptySet(unmap);
-		multiValued = options.multi;
+		multiValued = options && options.multi;
 
 		function enumTransform (value) {
 			var set, values, i, len;

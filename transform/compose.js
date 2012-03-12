@@ -4,27 +4,46 @@
 define(function () {
 "use strict";
 
-	var concat, slice;
+	var concat, slice, undef;
 
 	concat = Array.prototype.concat;
 	slice  = Array.prototype.slice;
 
+	function identity(it) {
+		return it;
+	}
+
 	identity.inverse = identity;
 	identity.inverse.inverse = identity;
 
+	/**
+	 * Creates a transform function by composing the supplied transform
+	 * functions.  If all the supplied transform functions have an inverse,
+	 * the returned function will also have an inverse created by composing
+	 * the inverses.
+	 *
+	 * @param transforms... {Array|Function} Array of functions, or varargs
+	 * list of functions.
+	 *
+	 * @returns {Function} composed function, with composed inverse if
+	 * all supplied transforms also have an inverse
+	 */
 	return function(transforms) {
 		var composed, txList, inverses;
 
 		if(arguments.length == 0) return identity;
 
+		// Flatten arguments list to a single dimensional array
 		txList = concat.apply([], slice.call(arguments));
 
-		composed = function(it) {
+		composed = function() {
+			var args = slice.call(arguments);
+
 			for(var i = 0, len = txList.length; i < len; i++) {
-				it = txList[i](it);
+				args[0] = txList[i].apply(undef, args);
 			}
 
-			return it;
+			return args[0];
 		};
 
 		// If all transforms have inverses, we can also compose
@@ -32,12 +51,14 @@ define(function () {
 		inverses = collectInverses(txList);
 
 		if(inverses.length) {
-			composed.inverse = function(it) {
+			composed.inverse = function() {
+				var args = slice.call(arguments);
+
 				for(var i = inverses.length - 1; i >= 0; --i) {
-					it = inverses[i](it);
+					args[0] = inverses[i].apply(undef, args);
 				}
 
-				return it;
+				return args[0];
 			};
 
 			composed.inverse.inverse = composed;
@@ -66,10 +87,6 @@ define(function () {
 		}
 
 		return inverses;
-	}
-
-	function identity(it) {
-		return it;
 	}
 
 });

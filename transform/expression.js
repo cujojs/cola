@@ -11,14 +11,12 @@ define(function () {
 	 * @returns {Function} function (value, item) {}
 	 * @description
 	 */
-	return function createExpressionTransform (options) {
-		return function expressionTransform (value, item) {
-			try {
-				return globalEval.call(options.expression, value, item);
-			}
-			catch (ex) {
-				return ex.message;
-			}
+	return function expressionTransform (value, propName, item, expression) {
+		try {
+			return globalEval.call(expression, value, propName, item);
+		}
+		catch (ex) {
+			return ex.message;
 		}
 	};
 
@@ -27,7 +25,7 @@ define(function () {
 	typeof define == 'function'
 		? define
 		: function (factory) { module.exports = factory(); },
-	function (value, item) {
+	function (value, propName, item) {
 		var window, document;
 		// the only variables in scope are value, item, and any globals
 		// not listed in the var statement above. we have to cast to string

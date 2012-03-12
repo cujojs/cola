@@ -65,6 +65,25 @@ buster.testCase('transform/compose', {
 		var c = compose(addOneWithInverse, [addOneWithInverse, addOneWithInverse], addOneWithInverse);
 
 		assert.equals(0, c.inverse(4));
+	},
+
+	'should compose varargs functions': function() {
+		var c = compose(function(a) { return a; }, function(a, b, c) { return c; });
+
+		assert.equals(3, c(1, 2, 3));
+	},
+
+	'should compose varargs inverse functions': function() {
+		var f1, f2;
+		f1 = function(a) { return a; };
+		f1.inverse = function(a, b, c) { return c; };
+
+		f2 = function(a, b, c) { return c; };
+		f2.inverse = function(a) { return a; };
+
+		var c = compose(f1, f2);
+
+		assert.equals(3, c.inverse(1, 2, 3));
 	}
 
 });
