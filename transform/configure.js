@@ -24,6 +24,8 @@ define(function () {
 
 			configured.inverse.inverse = configured;
 		}
+
+		return configured;
 	}
 
 });
