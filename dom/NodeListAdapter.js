@@ -82,7 +82,7 @@ define(function(require) {
 				return self.symbolizer(item);
 			},
 			function (a, b) {
-				return options.comparator(a, b)
+				return self.comparator(a, b)
 			}
 		);
 
