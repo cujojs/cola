@@ -58,7 +58,7 @@ define(function (require, exports) {
 			}
 		}
 
-		newList = [ node.className.replace(classListParser(removes), '') ];
+		newList = [ node.className.replace(classListParser(removes), ' ') ];
 		newList = newList.concat(adds);
 
 		return node.className = newList.join(' ');
