@@ -103,7 +103,7 @@ define(function (require) {
 				if (current != value) {
 					setNodePropOrAttr(node, prop, value);
 					// notify watchers
-					return fireSimpleEvent(node, propUpdatedEvent, true);
+					return fireSimpleEvent(node, propUpdatedEvent, false);
 				}
 			}
 		},

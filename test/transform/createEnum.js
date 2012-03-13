@@ -43,12 +43,14 @@ buster.testCase('transform/createEnum', {
 		'should return corresponding set values when multi-value': function() {
 			var e = createEnum({
 				a: 'a1',
-				b: 'b1'
+				b: 'b1',
+				c: 'c1'
 			}, { multi: true });
 
 			var result = e(['a', 'b']);
 			assert(result.a1);
 			assert(result.b1);
+			refute(result.c1);
 		}
 	},
 

@@ -74,9 +74,7 @@ define(function () {
 					values.push(unmap[p]);
 				}
 			}
-			return multiValued === false
-				? values.length && values[0]
-				: values;
+			return multiValued === false ? values[0] : values;
 		}
 
 		enumTransform.inverse = enumReverse;
