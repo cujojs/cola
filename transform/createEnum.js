@@ -4,8 +4,7 @@
 define(function () {
 "use strict";
 
-	var cleanPrototype = {}, undef;
-
+	var cleanPrototype = {};
 	/**
 	 * Creates a set of functions that will use the supplied options to
 	 * transform (and reverse-transform) a string or array of strings into
@@ -43,11 +42,11 @@ define(function () {
 	 *  	}
 	 *  reverse({ "can-add-data": true }) ==> ['create']
 	 */
-	return function createEnumTransform (map, options) {
-		var unmap, emptySet, multiValued;
+	return function createEnumTransform (enumSet, options) {
+		var map, unmap, emptySet, multiValued;
 
 		// TODO: don't waste cpu using maps if the dev gave an array
-		map = createMap(map);
+		map = createMap(enumSet);
 		unmap = createReverseMap(map);
 		emptySet = createEmptySet(unmap);
 		multiValued = options && options.multi;
@@ -68,14 +67,16 @@ define(function () {
 		}
 
 		function enumReverse (set) {
-			var values, p, len;
+			var values, p;
 			values = [];
 			for (p in set) {
-				if (set[p]) {
+				if (set[p] && p in unmap) {
 					values.push(unmap[p]);
 				}
 			}
-			return multiValued === false ? values[0] : values;
+			return multiValued === false
+				? values.length && values[0]
+				: values;
 		}
 
 		enumTransform.inverse = enumReverse;
@@ -108,7 +109,7 @@ define(function () {
 		}
 
 		function createEmptySet (map) {
-			var set, len, p;
+			var set, p;
 			set = {};
 			for (p in map) {
 				set[p] = false;
