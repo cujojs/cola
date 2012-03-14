@@ -58,34 +58,27 @@ define(function (require, exports) {
 			}
 		}
 
-		newList = [ node.className.replace(classListParser(removes), ' ') ];
-		newList = newList.concat(adds);
-
-		return node.className = newList.join(' ');
+		return node.className = spliceClassNames(node.className, removes, adds);
 	}
 
-	function toString (o) { return Object.prototype.toString.apply(o); };
-
-	function isArray (obj) {
-		return toString(obj) == '[object Array]';
-	}
-
-	function isString (obj) {
-		return toString(obj) == '[object String]';
-	}
+	function toString (o) { return Object.prototype.toString.apply(o); }
 
 	// class parsing
 
-	var openRx, closeRx, innerRx;
+	var openRx, closeRx, innerRx, trimLeadingRx;
 
-	openRx = '(\\s+|^)';
-	closeRx = '(\\s+|$)';
-	innerRx = openRx + '|' + closeRx;
+	openRx = '(\\s+|^)(';
+	closeRx = ')(\\b(?![\\-_])|$)';
+	innerRx = '|';
+	trimLeadingRx = /^\s+/;
 
-	function classListParser (classList) {
-		return new RegExp(openRx
-			+ classList.join(innerRx)
-			+ closeRx);
+	function spliceClassNames (className, removes, adds) {
+		var rx, leftovers;
+		rx = new RegExp(openRx
+			+ removes.join(innerRx)
+			+ closeRx, 'g');
+		leftovers = className.replace(rx, '').replace(trimLeadingRx, '');
+		return (leftovers ? [leftovers].concat(adds) : adds).join(' ');
 	}
 
 	return {
