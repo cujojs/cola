@@ -14,18 +14,17 @@ define(function (require, exports) {
 	}
 
 	function getClassSet (node) {
-		var set, i;
+		var set, classNames, className;
 		set = {};
-		node.className.replace(splitClassNameRx, function (name) {
-			set[name] = true;
-		});
+		classNames = node.className.split(splitClassNameRx);
+		while ((className = classNames.pop())) set[className] = true;
 		return set;
 	}
 
 	/**
 	 *
 	 * @param node
-	 * @param set {Object}
+	 * @param classSet {Object}
 	 * @description
 	 * Example bindings:
 	 * stepsCompleted: {
@@ -43,14 +42,14 @@ define(function (require, exports) {
 	 * 		}
 	 *  }
 	 */
-	function setClassSet (node, set) {
+	function setClassSet (node, classSet) {
 		var removes, adds, p, newList;
 
 		removes = [];
 		adds = [];
 
-		for (p in set) {
-			if (set[p]) {
+		for (p in classSet) {
+			if (classSet[p]) {
 				adds.push(p);
 			}
 			else {
