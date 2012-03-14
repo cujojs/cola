@@ -46,7 +46,7 @@ define(function (require) {
 		watch: function (name, callback) {
 			var b, node, events, prop, currValues;
 			b = this._getBindingsFor(name);
-			node = b && this._getNode(b.node);
+			node = b && this._getNode(b.node, name);
 			if (b && node) {
 				events = 'events' in b ? b.events : guessEventsFor(node);
 				prop = 'prop' in b ? b.prop : guessPropFor(node);
@@ -95,7 +95,7 @@ define(function (require) {
 		set: function (name, value) {
 			var b, node, prop, current;
 			b = this._getBindingsFor(name);
-			node = b && this._getNode(b.node);
+			node = b && this._getNode(b.node, name);
 			if (b && node) {
 				prop = 'prop' in b ? b.prop : guessPropFor(node);
 				current = getNodePropOrAttr(node, prop);
@@ -112,7 +112,7 @@ define(function (require) {
 			var p, b, node;
 			for (p in this._options.bindings) {
 				b = this._options.bindings[p];
-				node = this._getNode(b.node);
+				node = this._getNode(b.node, p);
 				lambda(getNodePropOrAttr(node, b.prop), p);
 			}
 		},
@@ -135,17 +135,17 @@ define(function (require) {
 			return binding;
 		},
 
-		_getNode: function (selector) {
+		_getNode: function (selector, name) {
 			// TODO: cache querySelector lookups?
 			var node;
-			if (selector) {
-				node = this._options.querySelector(selector, this._rootNode);
-				if (!node) {
-					node = guessNode(this._rootNode, selector) || this._rootNode;
-				}
+			if (isDomNode(selector)) {
+				node = selector;
 			}
-			else {
-				node = this._rootNode;
+			else if (selector) {
+				node = this._options.querySelector(selector, this._rootNode);
+			}
+			if (!node) {
+				node = guessNode(this._rootNode, name) || this._rootNode;
 			}
 			return node;
 		}
@@ -292,6 +292,11 @@ define(function (require) {
 		else {
 			return 'innerHTML';
 		}
+	}
+
+	function isDomNode (obj) {
+		return (typeof HTMLElement != 'undefined' && obj instanceof HTMLElement)
+			|| (obj && obj.tagName && obj.getAttribute);
 	}
 
 	function noop () {}

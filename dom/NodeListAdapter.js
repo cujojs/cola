@@ -73,6 +73,8 @@ define(function(require) {
 		// keep track of how many watchers. we assume that if number
 		// of watchers is greater than zero, we're "data bound"
 		this._watchCount = 0;
+		// keep track of item, too, so we can set the cola-list-XXX state
+		this._itemCount = 0;
 		this._checkBoundState();
 
 		self = this;
@@ -132,6 +134,7 @@ define(function(require) {
 
 			// figure out where to insert into dom
 			if (index >= 0) {
+				this._itemCount++;
 				// insert
 				this._insertNodeAt(node, index);
 				// notify listeners
@@ -151,11 +154,14 @@ define(function(require) {
 			// remove item
 			this._itemData.remove(item);
 
-			// remove from dom
-			// don't trust the index returned from the remove()
-			// call! if the user didn't specify a comparator / sort, then
-			// it will always return -1. use the node the map gave us instead.
-			node.parentNode.removeChild(node);
+			if (node) {
+				this._itemCount--;
+				// remove from dom
+				// don't trust the index returned from the remove()
+				// call! if the user didn't specify a comparator / sort, then
+				// it will always return -1. use the node the map gave us instead.
+				node.parentNode.removeChild(node);
+			}
 
 			// notify listeners
 			return this._fireEvent(colaEvents.removed, item);
@@ -239,12 +245,14 @@ define(function(require) {
 		},
 
 		_checkBoundState: function () {
-			var container, state;
+			var container, state, isBound, isEmpty;
 			container = this._containerNode;
 			state = {};
-			state[colaListBindingStates.unbound] = this._watchCount == 0;
-			state[colaListBindingStates.empty] = container.childNodes.length == 0;
-			state[colaListBindingStates.bound] = !state[colaListBindingStates.empty];
+			isBound = this._watchCount > 0;
+			isEmpty = this._itemCount == 0;
+			state[colaListBindingStates.unbound] = !isBound;
+			state[colaListBindingStates.empty] = isBound && isEmpty;
+			state[colaListBindingStates.bound] = isBound && !isEmpty;
 			classList.setClassSet(this._rootNode, state);
 		}
 
