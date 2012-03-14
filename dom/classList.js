@@ -61,8 +61,6 @@ define(function (require, exports) {
 		return node.className = spliceClassNames(node.className, removes, adds);
 	}
 
-	function toString (o) { return Object.prototype.toString.apply(o); }
-
 	// class parsing
 
 	var openRx, closeRx, innerRx, trimLeadingRx;
