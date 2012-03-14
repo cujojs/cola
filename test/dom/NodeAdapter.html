@@ -14,6 +14,10 @@ require(['cola/dom/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 		return document.getElementById(id);
 	}
 
+	function querySelector (node, selector) {
+		return node.querySelector(selector);
+	}
+
 	function simulateEvent (node, type) {
 		if (document.createEvent) {
 			var evt = document.createEvent('HTMLEvents');
@@ -40,7 +44,10 @@ require(['cola/dom/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 	doh.register('the basics', [
 		function getOptions (doh) {
 			var bindings = { cake: 'yes' }, adaptedObject;
-			adaptedObject = new NodeAdapter({}, { bindings: bindings });
+			adaptedObject = new NodeAdapter({}, {
+				bindings: bindings,
+				querySelector: querySelector
+			});
 			doh.assertEqual(bindings.cake, adaptedObject.getOptions().bindings.cake);
 		},
 		function canHandle (doh) {
@@ -64,7 +71,8 @@ require(['cola/dom/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 					first: { events: 'click', prop: 'value', node: first },
 					// test auto-resolved form node (guessNode)
 					last: { events: 'click', prop: 'value' }
-				}
+				},
+				querySelector: querySelector
 			});
 			dfd = new doh.Deferred();
 			adapted.watch('first', function (name, value) {
@@ -85,13 +93,37 @@ require(['cola/dom/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 					first: { events: 'click', prop: 'value', node: first },
 					// test auto-resolved form node (guessNode)
 					last: { events: 'click', prop: 'value' }
-				}
+				},
+				querySelector: querySelector
 			});
 			dfd = new doh.Deferred();
 			adapted.watchAll(function (name, value) {
 				dfd.callback(node.elements.last.value == 'Astaire');
 			});
 			adapted.set('last', 'Astaire');
+			return dfd;
+		},
+		function classSet (doh) {
+			var node, first, adapted, dfd;
+			node = getNode('test');
+			init();
+			first = node.elements.first;
+			adapted = new NodeAdapter(node, {
+				bindings: {
+					// test classSet
+					state: { prop: 'classSet' }
+				},
+				querySelector: querySelector
+			});
+			dfd = new doh.Deferred();
+			adapted.watchAll(function (name, value) {
+				dfd.callback(node.className.test(/foo bar/));
+			});
+			adapted.set('state', {
+				'foo bar': true,
+				'baz bap': true,
+				'elmer fudd': false
+			});
 			return dfd;
 		}
 	]);
