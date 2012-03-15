@@ -28,7 +28,7 @@ define(function (require) {
 		this._options = options;
 
 		this.comparator = options.comparator;
-		this._keyFunc = this.symbolizer = options.keyFunc || defaultKeyFunc;
+		this._keyFunc = this.symbolizer = options.symbolizer || defaultKeyFunc;
 
 		this._notifier = new Notifier();
 
