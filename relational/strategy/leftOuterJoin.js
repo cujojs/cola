@@ -5,10 +5,11 @@ define(function (require) {
 
 	"use strict";
 
-	var hashJoin, property;
+	var hashJoin, property, defaultProjection;
 
-	hashJoin = require('./hashJoin');
-	property = require('../transform/property');
+	hashJoin = require('../hashJoin.js');
+	property = require('../../transform/property.js');
+	defaultProjection = require('../../projection/inherit.js');
 
 	/**
 	 * Creates a join strategy that will perform a left outer hash join
@@ -24,20 +25,20 @@ define(function (require) {
 	 * act on the complete set of correlated right-hand items, rather than on each
 	 * distinct left-right pair.
 	 */
-	return function createOuterJoinStrategy(options) {
+	return function createLeftOuterJoinStrategy(options) {
 
 		var leftKeyFunc, rightKeyFunc, projection, multiValue;
 
-		if(!(options && options.leftKeyFunc)) {
+		if(!(options && options.leftKey)) {
 			throw new Error('options.leftKeyFunc must be provided')
 		}
 
-		leftKeyFunc  = options.leftKeyFunc;
+		leftKeyFunc  = options.leftKey;
 		if(typeof leftKeyFunc != 'function') {
 			leftKeyFunc = property(leftKeyFunc);
 		}
 
-		rightKeyFunc = options.rightKeyFunc || leftKeyFunc;
+		rightKeyFunc = options.rightKey || leftKeyFunc;
 		if(typeof rightKeyFunc != 'function') {
 			rightKeyFunc = property(rightKeyFunc);
 		}
@@ -56,14 +57,6 @@ define(function (require) {
 
 		}
 	};
-
-	function defaultProjection(left, right, key) {
-		return {
-			key: key,
-			left: left,
-			right: right
-		};
-	}
 
 });
 })(
