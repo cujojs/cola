@@ -8,6 +8,22 @@ define(function (require) {
 
 	when = require('when');
 
+	/**
+	 * Perform a left outer join on the supplied left and right iterables, returning
+	 * a promise, which will resolve to an Array for the joined result.
+	 *
+	 * @param left {Iterable} anything with forEach. May be asynchronous
+	 * @param leftKeyFunc {Function} function to generate a hash join key for left items
+	 * @param right {Iterable} anything with forEach. May be asynchronous
+	 * @param rightKeyFunc {Function} function to generate a hash join key for right items
+	 * @param projectionFunc {Function} function to create a projected result from two joined items
+	 * @param multiProjection {Boolean} by default (multiProjection is falsey), each left-right join pair will be passed
+	 * to projectionFunc.  Thus, the projectionFunc may be invoked with the same left item
+	 * many times.  if truthy, however, the left item and *all* its matching right items, as
+	 * an Array, will be passed to projectionFunc.  Thus, the projectionFunc will be invoked
+	 * only once per left item.
+	 * @return {Promise} promise for the Array of joined results.
+	 */
 	function leftOuterJoin(left, leftKeyFunc, right, rightKeyFunc, projectionFunc, multiProjection) {
 
 		var projectJoinResults = multiProjection ? projectMulti : projectEach;
