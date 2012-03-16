@@ -4,7 +4,9 @@
 define(function () {
 	"use strict";
 
-	var undef;
+	var defaultSeparator, undef;
+
+	defaultSeparator = '|';
 
 	/**
 	 * Creates a transform whose input is an object and whose output
@@ -14,23 +16,30 @@ define(function () {
 	 * @param propName {String|Array} name(s) of the property(ies) on the input object to return
 	 * @return {Function} transform function(object) returns any
 	 */
-	return function(propName) {
-		return typeof propName == 'string'
-			? function (object) {
+	return function(propName, separator) {
+
+		if (typeof propName == 'string') {
+			return function (object) {
 				return object && object[propName];
-			}
-			: function (object) {
+			};
+
+		} else {
+			if (arguments.length === 1) separator = defaultSeparator;
+
+			return function (object) {
 				if (!object) return undef;
 
-				var values, i, len;
+				var values, i, len, val;
 
 				values = [];
 				for (i = 0, len = propName.length; i < len; i++) {
-					values.push(object[propName[i]]);
+					val = object[propName[i]];
+					if (val != null) values.push(val);
 				}
 
-				return values.join('');
+				return values.join( separator);
 			};
+		}
 	};
 
 });

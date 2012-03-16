@@ -5,11 +5,11 @@ define(function (require) {
 
 	"use strict";
 
-	var hashJoin, property, defaultProjection;
+	var hashJoin, createPropertiesKey, defaultProjection;
 
-	hashJoin = require('../hashJoin.js');
-	property = require('../../transform/property.js');
-	defaultProjection = require('../../projection/inherit.js');
+	hashJoin = require('../hashJoin');
+	createPropertiesKey = require('../propertiesKey');
+	defaultProjection = require('../../projection/inherit');
 
 	/**
 	 * Creates a join strategy that will perform a left outer hash join
@@ -35,12 +35,12 @@ define(function (require) {
 
 		leftKeyFunc  = options.leftKey;
 		if(typeof leftKeyFunc != 'function') {
-			leftKeyFunc = property(leftKeyFunc);
+			leftKeyFunc = createPropertiesKey(leftKeyFunc);
 		}
 
 		rightKeyFunc = options.rightKey || leftKeyFunc;
 		if(typeof rightKeyFunc != 'function') {
-			rightKeyFunc = property(rightKeyFunc);
+			rightKeyFunc = createPropertiesKey(rightKeyFunc);
 		}
 
 		projection   = options.projection || defaultProjection;
