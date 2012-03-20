@@ -90,7 +90,7 @@ define(function (require) {
 //	}
 
 	function createItemWatcherHandler (primary, secondary, createAdapter) {
-		if (typeof primary.checkPosition == 'function' || typeof secondary.checkPosition == 'function') {
+		if (typeof primary.update == 'function' || typeof secondary.update == 'function') {
 			return function watchItem (item, target, itemMap) {
 				var itemData;
 				itemData = itemMap.get(item);
