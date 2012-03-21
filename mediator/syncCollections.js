@@ -67,10 +67,12 @@ define(function (require) {
 			});
 		}
 
-		unwatch1 = initForwarding(primary, secondary, mediationHandler1);
-		unwatch2 = initForwarding(secondary, primary, mediationHandler2);
+		var adapters = [];
+		unwatch1 = initAdapter(adapters, primary, mediationHandler1);
+		unwatch2 = initAdapter(adapters, secondary, mediationHandler2);
 
 		return function () {
+			adapters = null;
 			itemMap1.forEach(unwatchItemData);
 			itemMap2.forEach(unwatchItemData);
 			unwatch1();
@@ -136,35 +138,60 @@ define(function (require) {
 		}
 	}
 
-	function createForwarder (method, discoveryCallback) {
-		return function doForward(target, item) {
-			return when(target[method](item),
-				function(copy) {
-					// if adapter2 returns a copy we need to propagate it
-					if (copy) {
-						return discoveryCallback(copy, item, target);
-					}
-				}
-			);
+	function initAdapter(adapters, adapter, discoverCallback) {
+		var i, len, method;
+
+		var adapterMetadata = {
+			adapter: adapter
+		};
+
+		for (i = 0, len = methodsToForward.length; i < len; i++) {
+			method = methodsToForward[i];
+			adapterMetadata[method] = replaceAdapterMethod(adapters, adapter, method, discoverCallback);
+		}
+
+		adapters.push(adapterMetadata);
+
+		return function() {
+			var i, len;
+
+			for (i = 0, len = methodsToForward.length; i < len; i++) {
+				method = methodsToForward[i];
+				adapter[method] = adapterMetadata[method];
+			}
 		};
 	}
 
-	function createCallback (forwarder, to) {
-		return function (item) {
-			return forwarder(to, item);
-		}
+	function replaceAdapterMethod(adapters, adapter, method, discoveryCallback) {
+		var orig = adapter[method];
+
+		adapter[method] = function(item) {
+			var copy;
+
+			copy = orig.call(adapter, item);
+			if (copy) {
+				copy = discoveryCallback(copy, item, adapter);
+			}
+
+			handleAdapterEvent(adapters, adapter, method, item);
+
+			return copy
+		};
+
+		return orig;
 	}
 
-	function initForwarding (from, to, discoveryCallback) {
-		var forwarder, callbacks, i, len;
+	function handleAdapterEvent(meta, adapter, method, item) {
+		var i, len;
 
-		callbacks = [];
-		for (i = 0, len = methodsToForward.length; i < len; i++) {
-			forwarder = createForwarder(methodsToForward[i], discoveryCallback);
-			callbacks.push(createCallback(forwarder, to));
+		i = 0;
+		len = meta.length;
+
+		for(; i < len; i++) {
+			if(meta[i].adapter !== adapter) {
+				meta[i][method].call(adapter, item);
+			}
 		}
-
-		return from.watch.apply(from, callbacks);
 	}
 
 	function noop () {}

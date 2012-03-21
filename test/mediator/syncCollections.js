@@ -11,6 +11,9 @@ refute = buster.refute;
  */
 function mockAdapter() {
 	return {
+		id: 123,
+		add: function() {},
+		remove: function() {},
 		forEach: function() {},
 		watch: function(add, remove) {
 			this.add = add;
@@ -28,6 +31,7 @@ buster.testCase('syncCollections', {
 		setUp: function() {
 			function setupMockAdapter(spies) {
 				var ma = {
+					id: 456,
 					watch: function() {}
 				};
 				ma.forEach = spies.spy();
@@ -48,36 +52,46 @@ buster.testCase('syncCollections', {
 		},
 
 		'should forward itemAdded from sender to receiver': function() {
-			syncCollections(this.sendingAdapter, this.receivingAdapter);
+			var unmediate = syncCollections(this.sendingAdapter, this.receivingAdapter);
 
 			this.sendingAdapter.add(item);
 
+			unmediate();
+
 			assert.calledOnceWith(this.receivingAdapter.add, item);
+			refute.calledTwice(this.receivingAdapter.add);
 			refute.called(this.receivingAdapter.remove);
 		},
 
 		'should forward itemAdded from sender to receiver reversed': function() {
-			syncCollections(this.receivingAdapter, this.sendingAdapter);
+			var unmediate = syncCollections(this.receivingAdapter, this.sendingAdapter);
 
 			this.sendingAdapter.add(item);
 
+			unmediate();
+
 			assert.calledOnceWith(this.receivingAdapter.add, item);
+			refute.calledTwice(this.receivingAdapter.add);
 			refute.called(this.receivingAdapter.remove);
 		},
 
 		'should forward itemRemoved from sender to receiver': function() {
-			syncCollections(this.sendingAdapter, this.receivingAdapter);
+			var unmediate = syncCollections(this.sendingAdapter, this.receivingAdapter);
 
 			this.sendingAdapter.remove(item);
+
+			unmediate();
 
 			assert.calledOnceWith(this.receivingAdapter.remove, item);
 			refute.called(this.receivingAdapter.add);
 		},
 
 		'should forward itemRemoved from sender to receiver reversed': function() {
-			syncCollections(this.receivingAdapter, this.sendingAdapter);
+			var unmediate = syncCollections(this.receivingAdapter, this.sendingAdapter);
 
 			this.sendingAdapter.remove(item);
+
+			unmediate();
 
 			assert.calledOnceWith(this.receivingAdapter.remove, item);
 			refute.called(this.receivingAdapter.add);
