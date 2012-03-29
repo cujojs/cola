@@ -6,35 +6,35 @@ define(function () {
 	var undef;
 
 	/**
-	 * A simple hash map that uses a symbolizer to derive a usable key and
+	 * A simple hash map that uses a identifier to derive a usable key and
 	 * stores its items in a simple Javascript object
-	 * @param symbolizer {Function} function(anything) must return a key usable as
+	 * @param identifier {Function} function(anything) must return a key usable as
 	 * a Javascript object property key
 	 */
-	function HashMap(symbolizer) {
-		this._symbolizer = symbolizer;
+	function HashMap(identifier) {
+		this._identifier = identifier;
 		this._index = {};
 		this._items = [];
 	}
 
 	HashMap.prototype = {
 		get: function(key) {
-			return this._items[this._index[this._symbolizer(key)]];
+			return this._items[this._index[this._identifier(key)]];
 		},
 
 		set: function(key, item) {
-			var exists = this._index[this._symbolizer(key)];
+			var exists = this._index[this._identifier(key)];
 
 			if(exists) return;
 
-			this._index[this._symbolizer(key)] = this._items.push(item) - 1;
+			this._index[this._identifier(key)] = this._items.push(item) - 1;
 			return item;
 		},
 
 		remove: function(key) {
 			var removed;
 
-			key = this._symbolizer(key);
+			key = this._identifier(key);
 			removed = this._items[this._index[key]];
 
 			delete this._items[this._index[key]];
@@ -104,12 +104,12 @@ define(function () {
 
 	return {
 		create: function(options) {
-			return options.symbolizer
-				? new HashMap(options.symbolizer)
+			return options.identifier
+				? new HashMap(options.identifier)
 				: new TreeMap(options.comparator);
 		},
-		createHashMap: function(symbolizer) {
-			return new HashMap(symbolizer);
+		createHashMap: function(identifier) {
+			return new HashMap(identifier);
 		},
 		createTreeMap: function(comparator) {
 			return new TreeMap(comparator);

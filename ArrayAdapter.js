@@ -16,7 +16,7 @@ define(function (require) {
 	 * Manages a collection of objects taken from the supplied dataArray
 	 * @param dataArray {Array} array of data objects to use as the initial
 	 * population
-	 * @param options.symbolizer {Function} function that returns a key/id for
+	 * @param options.identifier {Function} function that returns a key/id for
 	 * a data item.
 	 * @param options.comparator {Function} comparator function that will
 	 * be propagated to other adapters as needed
@@ -33,7 +33,7 @@ define(function (require) {
 		// adapter's comparator
 		this.comparator = options.comparator || this._defaultComparator;
 
-		this._keyFunc = this.symbolizer = options.symbolizer || defaultKeyFunc;
+		this.identifier = options.identifier || defaultKeyFunc;
 
 		this._notifier = new Notifier();
 
@@ -60,20 +60,20 @@ define(function (require) {
 		 * @param b
 		 * @return {Number} -1 if a is before b in the input array
 		 *  1 if a is after b in the input array
-		 *  0 iff a and b have the same symbol as returned by the configured symbolizer
+		 *  0 iff a and b have the same symbol as returned by the configured identifier
 		 */
 		_defaultComparator: function(a, b) {
 			var aIndex, bIndex;
 
-			aIndex = this._index(this.symbolizer(a));
-			bIndex = this._index(this.symbolizer(b));
+			aIndex = this._index(this.identifier(a));
+			bIndex = this._index(this.identifier(b));
 
 			return aIndex - bIndex;
 		},
 
 		comparator: undef,
 
-		symbolizer: undef,
+		identifier: undef,
 
 		// just stubs for now
 		getOptions: function () {
@@ -110,7 +110,7 @@ define(function (require) {
 		add: function(item) {
 			var key, index;
 
-			key = this._keyFunc(item);
+			key = this.identifier(item);
 			index = this._index;
 
 			if(key in index) return null;
@@ -122,7 +122,7 @@ define(function (require) {
 		remove: function(itemOrId) {
 			var key, at, item, index, data;
 
-			key = this._keyFunc(itemOrId);
+			key = this.identifier(itemOrId);
 			index = this._index;
 
 			if(!(key in index)) return null;
@@ -134,7 +134,7 @@ define(function (require) {
 			data.splice(at, 1);
 
 			// Rebuild index before notifying
-			this._index = buildIndex(data, this._keyFunc);
+			this._index = buildIndex(data, this.identifier);
 
 			return this._notifier.notify('remove', item);
 		}

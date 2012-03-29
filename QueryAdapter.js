@@ -22,13 +22,13 @@ define(function (require) {
 	 */
 	function QueryAdapter(datasource, options) {
 
-		var symbolizer;
+		var identifier;
 
 		this._datasource = datasource;
 		this._options = options || {};
 
-		// Always use the datasource's identity as the symbolizer
-		symbolizer = this.symbolizer =
+		// Always use the datasource's identity as the identifier
+		identifier = this.identifier =
 			function(item) {
 				return datasource.getIdentity(item);
 			};
@@ -39,8 +39,8 @@ define(function (require) {
 			function(a, b) {
 				var aKey, bKey;
 
-				aKey = symbolizer(a);
-				bKey = symbolizer(b);
+				aKey = identifier(a);
+				bKey = identifier(b);
 
 				return aKey == bKey ? 0
 					: aKey < bKey ? -1
@@ -49,14 +49,14 @@ define(function (require) {
 
 		this._notifier = new Notifier();
 
-		this._items = new SortedMap(symbolizer, this.comparator);
+		this._items = new SortedMap(identifier, this.comparator);
 	}
 
 	QueryAdapter.prototype = {
 
 		comparator: undef,
 
-		symbolizer: undef,
+		identifier: undef,
 
 		query: function(query, options) {
 
@@ -65,7 +65,7 @@ define(function (require) {
 			return this._queue(function() {
 				return when(self._datasource.query(query||{}, options),
 				function(results) {
-					self._items = new SortedMap(self.symbolizer, self.comparator);
+					self._items = new SortedMap(self.identifier, self.comparator);
 					self._initResultSet(results, self._items);
 					return results;
 				});

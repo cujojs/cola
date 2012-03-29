@@ -30,8 +30,8 @@ define(function (require) {
 		if (!options) options = {};
 
 		// if adapter2 wants a identifier and doesn't have one, copy it from adapter1
-		if ('symbolizer' in secondary && !secondary.symbolizer && primary.symbolizer) {
-			secondary.symbolizer = primary.symbolizer;
+		if ('identifier' in secondary && !secondary.identifier && primary.identifier) {
+			secondary.identifier = primary.identifier;
 		}
 		// if adapter2 wants a comparator and doesn't have one, copy it from adapter1
 		if ('comparator' in secondary && !secondary.comparator && primary.comparator) {
@@ -39,8 +39,8 @@ define(function (require) {
 		}
 
 		// these maps keep track of items that are being watched
-		itemMap1 = new SortedMap(primary.symbolizer, primary.comparator);
-		itemMap2 = new SortedMap(secondary.symbolizer, secondary.comparator);
+		itemMap1 = new SortedMap(primary.identifier, primary.comparator);
+		itemMap2 = new SortedMap(secondary.identifier, secondary.comparator);
 
 		// these functions handle any item-to-item mediation
 		mediationHandler1 = createItemMediatorHandler(primary, itemMap1, createAdapter, options);

@@ -75,16 +75,16 @@ buster.testCase('transformCollection', {
 		assert.same(transformed.comparator, comparator);
 	},
 
-	'should preserve original symbolizer': function() {
+	'should preserve original identifier': function() {
 		var adapter, transformed;
 
-		function symbolizer(){}
+		function identifier(){}
 
 		adapter = createFakeAdapter();
-		adapter.symbolizer = symbolizer;
+		adapter.identifier = identifier;
 		transformed = transformCollection(adapter, addOneWithInverse);
 
-		assert.same(transformed.symbolizer, symbolizer);
+		assert.same(transformed.identifier, identifier);
 	},
 
 	'getOptions': {

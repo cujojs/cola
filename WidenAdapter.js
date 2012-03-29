@@ -19,7 +19,7 @@ define(function (require) {
 	 * options.transform
 	 * @constructor
 	 * @param object {Object|Promise} Object or Promise for an Object
-	 * @param options.symbolizer {Function} function that returns a key/id for
+	 * @param options.identifier {Function} function that returns a key/id for
 	 * a data item.
 	 * @param options.comparator {Function} comparator function that will
 	 * be propagated to other adapters as needed
@@ -39,7 +39,7 @@ define(function (require) {
 		this._transform = options.transform;
 		delete options.transform;
 
-		this.symbolizer = options.symbolizer;
+		this.identifier = options.identifier;
 		this.comparator = options.comparator;
 
 		self = this;
@@ -64,7 +64,7 @@ define(function (require) {
 
 		comparator: undef,
 
-		symbolizer: undef,
+		identifier: undef,
 
 		// just stubs for now
 		getOptions: ArrayAdapter.prototype.getOptions,

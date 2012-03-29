@@ -23,7 +23,7 @@ define(function () {
 
 		return {
 			comparator: adapter.comparator,
-			symbolizer: adapter.symbolizer,
+			identifier: adapter.identifier,
 
 			forEach: function(lambda) {
 				function transformedLambda(item) {

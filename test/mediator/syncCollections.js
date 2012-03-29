@@ -12,7 +12,7 @@ refute = buster.refute;
 function mockAdapter() {
 	return {
 		comparator: null,
-		symbolizer: null,
+		identifier: null,
 		forEach: function() {},
 		watch: function(add, remove) {
 			this.add = add;
@@ -31,7 +31,7 @@ buster.testCase('syncCollections', {
 			function setupMockAdapter(spies) {
 				var ma = {
 					comparator: null,
-					symbolizer: null,
+					identifier: null,
 					watch: function() {}
 				};
 				ma.forEach = spies.spy();
@@ -100,11 +100,11 @@ buster.testCase('syncCollections', {
 		'should propagate identifier from primary to secondary adapter': function() {
 			function f() {}
 
-			this.sendingAdapter.symbolizer = f;
+			this.sendingAdapter.identifier = f;
 
 			syncCollections(this.sendingAdapter, this.receivingAdapter);
 
-			assert.same(this.receivingAdapter.symbolizer, f);
+			assert.same(this.receivingAdapter.identifier, f);
 
 		}
 	},

@@ -49,7 +49,7 @@ define(function (require) {
 
 		comparator: undef,
 
-		symbolizer: undef,
+		identifier: undef,
 
 		// just stubs for now
 		getOptions: ArrayAdapter.prototype.getOptions,
