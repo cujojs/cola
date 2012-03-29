@@ -27,7 +27,12 @@ define(function (require) {
 
 		this._options = options;
 
-		this.comparator = options.comparator;
+		// Use the default comparator if none provided.
+		// The consequences of this are that the default comparator will
+		// be propagated to downstream adapters *instead of* an upstream
+		// adapter's comparator
+		this.comparator = options.comparator || this._defaultComparator;
+
 		this._keyFunc = this.symbolizer = options.symbolizer || defaultKeyFunc;
 
 		this._notifier = new Notifier();
@@ -44,6 +49,26 @@ define(function (require) {
 			if(dataArray && dataArray.length) {
 				addAll(this, dataArray);
 			}
+		},
+
+		/**
+		 * Default comparator that uses an item's position in the array
+		 * to order the items.  This is important when an input array is already
+		 * in sorted order, so the user doesn't have to specify a comparator,
+		 * and so the order can be propagated to other adapters.
+		 * @param a
+		 * @param b
+		 * @return {Number} -1 if a is before b in the input array
+		 *  1 if a is after b in the input array
+		 *  0 iff a and b have the same symbol as returned by the configured symbolizer
+		 */
+		_defaultComparator: function(a, b) {
+			var aIndex, bIndex;
+
+			aIndex = this._index(this.symbolizer(a));
+			bIndex = this._index(this.symbolizer(b));
+
+			return aIndex - bIndex;
 		},
 
 		comparator: undef,

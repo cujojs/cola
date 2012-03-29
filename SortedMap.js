@@ -184,6 +184,8 @@ define(function () {
 		add: function (keyItem, valueItem) {
 			var pos, absPos;
 
+			if (arguments.length < 2) throw new Error('SortedMap.add: must supply keyItem and valueItem args');
+
 			// don't insert twice. bail if we already have it
 			if (this._fetch(keyItem) != missing) return;
 

@@ -29,7 +29,7 @@ define(function (require) {
 
 		if (!options) options = {};
 
-		// if adapter2 wants a keyFunc and doesn't have one, copy it from adapter1
+		// if adapter2 wants a identifier and doesn't have one, copy it from adapter1
 		if ('symbolizer' in secondary && !secondary.symbolizer && primary.symbolizer) {
 			secondary.symbolizer = primary.symbolizer;
 		}

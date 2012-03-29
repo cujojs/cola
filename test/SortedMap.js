@@ -21,11 +21,19 @@ buster.testCase('SortedMap', {
 
 	'add': {
 
+		'should throw if key and value not provided': function() {
+			var map = new SortedMap(symbolizeItem, compareItems);
+
+			assert.exception(function() {
+				map.add({ id: 1});
+			});
+		},
+
 		'should add new items': function () {
 			var hash = new SortedMap(symbolizeItem, compareItems);
 
-			assert.equals(hash.add({ id: 1 }), 0);
-			assert.equals(hash.add({ id: 2 }), 1);
+			assert.equals(hash.add({ id: 1 }, 1), 0);
+			assert.equals(hash.add({ id: 2 }, 2), 1);
 
 			var spy = this.spy();
 			hash.forEach(spy);
@@ -36,18 +44,58 @@ buster.testCase('SortedMap', {
 		'should add very large item into last slot': function () {
 			var hash = new SortedMap(symbolizeItem, compareItems);
 
-			assert.equals(hash.add({ id: 1 }), 0);
-			assert.equals(hash.add({ id: 9 }), 1);
-			assert.equals(hash.add({ id: 99 }), 2);
-			assert.equals(hash.add({ id: 999 }), 3);
+			assert.equals(hash.add({ id: 1 }, 1), 0);
+			assert.equals(hash.add({ id: 9 }, 9), 1);
+			assert.equals(hash.add({ id: 99 }, 99), 2);
+			assert.equals(hash.add({ id: 999 }, 999), 3);
 
 		},
 
 		'should fail silently when adding an item that already exists': function () {
 			var hash = new SortedMap(symbolizeItem, compareItems);
 
-			hash.add({ id: 1 });
-			refute.defined(hash.add({ id: 1 }));
+			hash.add({ id: 1 }, 1);
+			refute.defined(hash.add({ id: 1 }, 1));
+		},
+
+		'should add all items even when no comparator supplied': function() {
+			var map, count, result;
+
+			map = new SortedMap(symbolizeItem);
+
+			assert.equals(map.add({ id: 0 }, 0), 0);
+			assert.equals(map.add({ id: 1 }, 1), 1);
+			assert.equals(map.add({ id: 2 }, 2), 2);
+
+			count = 0;
+			result = 0;
+			map.forEach(function(item) {
+				count++;
+				result += item;
+			});
+
+			assert.equals(count, 3);
+			assert.equals(result, 3);
+		},
+
+		'should add all items even when comparator says all items are equivalent': function() {
+			var map, count, result;
+
+			map = new SortedMap(symbolizeItem, function() { return 0; });
+
+			assert.equals(map.add({ id: 0 }, 0), 0);
+			assert.equals(map.add({ id: 1 }, 1), 1);
+			assert.equals(map.add({ id: 2 }, 2), 2);
+
+			count = 0;
+			result = 0;
+			map.forEach(function(item) {
+				count++;
+				result += item;
+			});
+
+			assert.equals(count, 3);
+			assert.equals(result, 3);
 		}
 
 	},
@@ -83,7 +131,7 @@ buster.testCase('SortedMap', {
 		'should silently fail when removing non-existent items': function () {
 			var hash = new SortedMap(symbolizeItem, compareItems);
 
-			hash.add({ id: 1 });
+			hash.add({ id: 1 }, 1);
 			refute.defined(hash.remove({ id: 2 }));
 
 		}
@@ -94,10 +142,10 @@ buster.testCase('SortedMap', {
 		'should iterate over all items in order': function () {
 			var hash = new SortedMap(symbolizeItem, compareByLast);
 
-			hash.add({ id: 1, last: 'Attercop', expected: 2 });
-			hash.add({ id: 3, last: 'TomNoddy', expected: 4 });
-			hash.add({ id: 4, last: 'Aardvark', expected: 1 });
-			hash.add({ id: 2, last: 'Bojangle', expected: 3 });
+			hash.add({ id: 1, last: 'Attercop', expected: 2 }, 1);
+			hash.add({ id: 3, last: 'TomNoddy', expected: 4 }, 2);
+			hash.add({ id: 4, last: 'Aardvark', expected: 1 }, 3);
+			hash.add({ id: 2, last: 'Bojangle', expected: 3 }, 4);
 
 			var count = 0, prev = 0;
 
