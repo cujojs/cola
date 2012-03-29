@@ -16,7 +16,7 @@ define(function (require) {
 	 * Manages a collection of objects taken from the supplied dataArray
 	 * @param dataArray {Array} array of data objects to use as the initial
 	 * population
-	 * @param options.keyFunc {Function} function that returns a key/id for
+	 * @param options.symbolizer {Function} function that returns a key/id for
 	 * a data item.
 	 * @param options.comparator {Function} comparator function that will
 	 * be propagated to other adapters as needed

@@ -14,15 +14,17 @@ define(function (require) {
 	when = require('when');
 
 	/**
-	 * Manages a collection of objects taken from the resolution of the
-	 * supplied resultSet, since resultSet may be a promise.
+	 * Manages a collection of objects created by transforming the input Object
+	 * (or Promise for an Object) into a collection using the supplied
+	 * options.transform
 	 * @constructor
-	 * @param object {Array|Promise} array of data objects, or a promise for
-	 * an array of data objects
+	 * @param object {Object|Promise} Object or Promise for an Object
 	 * @param options.symbolizer {Function} function that returns a key/id for
 	 * a data item.
 	 * @param options.comparator {Function} comparator function that will
 	 * be propagated to other adapters as needed
+	 * @param options.transform {Function} transform function that will
+	 * transform the input object into a collection
 	 */
 	function WidenAdapter(object, options) {
 
