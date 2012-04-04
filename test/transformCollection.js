@@ -1,19 +1,20 @@
-(function(buster, transformCollection) {
+(function(buster, when, delay, transformCollection) {
 "use strict";
 
-var assert, refute;
+var assert, refute, fail;
 
 assert = buster.assert;
 refute = buster.refute;
+fail = buster.assertions.fail;
 
 function createFakeAdapter(data) {
 	data = data || [];
 	return {
 		add: function(item) {
-			this.added(item);
+			return this.added(item);
 		},
 		remove: function(item) {
-			this.removed(item);
+			return this.removed(item);
 		},
 		watch: function(added, removed) {
 			this.added = added;
@@ -26,6 +27,24 @@ function createFakeAdapter(data) {
 		},
 		getOptions: function() {}
 	}
+}
+
+function resolved(val) {
+	return delay(val, 0);
+}
+
+function makePromised(f) {
+	function promised(x) {
+		return resolved(f(x));
+	}
+
+	if(f.inverse) {
+		promised.inverse = function(x) {
+			return resolved(f.inverse(x));
+		}
+	}
+
+	return promised;
 }
 
 function addOne(x) {
@@ -59,7 +78,7 @@ buster.testCase('transformCollection', {
 
 		transformCollection(adapter, addOneWithInverse);
 		for(p in adapter) {
-			assert.equals(adapter[p], originals[p]);
+			assert.same(adapter[p], originals[p]);
 		}
 	},
 
@@ -112,6 +131,25 @@ buster.testCase('transformCollection', {
 			transformed.forEach(lambda);
 
 			assert.calledOnceWith(lambda, 2);
+		},
+
+		'should allow promised transforms': function(done) {
+			var adapter, transformed, lambda, results;
+
+			adapter = createFakeAdapter([1, 2, 3]);
+			transformed = transformCollection(adapter, makePromised(addOne));
+
+			results = [];
+			lambda = function(val) {
+				results.push(val);
+			};
+
+			when(transformed.forEach(lambda),
+				function() {
+					assert.equals(results, [2,3,4]);
+				},
+				fail
+			).then(done, done);
 		}
 	},
 
@@ -142,6 +180,24 @@ buster.testCase('transformCollection', {
 			assert.calledOnceWith(addedSpy, 2);
 		},
 
+		'should watch transformed added items for promised transform': function(done) {
+			var adapter, transformed, addedSpy;
+
+			adapter = createFakeAdapter();
+			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
+
+			addedSpy = this.spy();
+
+			transformed.watch(addedSpy, function(){});
+			when(transformed.add(2),
+				function() {
+					assert.calledOnceWith(addedSpy, 2);
+				},
+				fail
+			).then(done, done);
+
+		},
+
 		'should notify with transformed item when item added to original adapter': function() {
 			var adapter, transformed, addedSpy;
 
@@ -155,6 +211,23 @@ buster.testCase('transformCollection', {
 
 			assert.calledOnceWith(addedSpy, 2);
 
+		},
+
+		'should notify with transformed item when item added to original adapter for promised transform': function(done) {
+			var adapter, transformed, addedSpy;
+
+			adapter = createFakeAdapter();
+			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
+
+			addedSpy = this.spy();
+
+			transformed.watch(addedSpy, function(){});
+			when(adapter.add(1),
+				function() {
+					assert.calledOnceWith(addedSpy, 2);
+				},
+				fail
+			).then(done, done);
 		},
 
 		'should watch transformed removed items': function() {
@@ -171,6 +244,24 @@ buster.testCase('transformCollection', {
 			assert.calledOnceWith(removedSpy, 2);
 		},
 
+		'should watch transformed removed items for promised transform': function(done) {
+			var adapter, transformed, removedSpy;
+
+			adapter = createFakeAdapter();
+			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
+
+			removedSpy = this.spy();
+
+			transformed.watch(function(){}, removedSpy);
+			when(transformed.remove(2),
+				function() {
+					assert.calledOnceWith(removedSpy, 2);
+				},
+				fail
+			).then(done, done);
+		},
+
+
 		'should notify with transformed item when item removed from original adapter': function() {
 			var adapter, transformed, removedSpy;
 
@@ -183,8 +274,24 @@ buster.testCase('transformCollection', {
 			adapter.remove(1);
 
 			assert.calledOnceWith(removedSpy, 2);
-		}
+		},
 
+		'should notify with transformed item when item removed from original adapter for promised transform': function(done) {
+			var adapter, transformed, removedSpy;
+
+			adapter = createFakeAdapter();
+			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
+
+			removedSpy = this.spy();
+
+			transformed.watch(function(){}, removedSpy);
+			when(adapter.remove(1),
+				function() {
+					assert.calledOnceWith(removedSpy, 2);
+				},
+				fail
+			).then(done, done);
+		}
 	},
 
 	'add': {
@@ -196,6 +303,20 @@ buster.testCase('transformCollection', {
 
 			transformed.add(1);
 			assert.calledOnceWith(adapter.add, 0);
+		},
+
+		'should allow promised transforms': function(done) {
+			var adapter, transformed;
+
+			adapter = this.stub(createFakeAdapter());
+			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
+
+			when(transformed.add(1),
+				function() {
+					assert.calledOnceWith(adapter.add, 0);
+				},
+				fail
+			).then(done, done);
 		}
 	},
 
@@ -208,6 +329,20 @@ buster.testCase('transformCollection', {
 
 			transformed.remove(1);
 			assert.calledOnceWith(adapter.remove, 0);
+		},
+
+		'should allow promised transforms': function(done) {
+			var adapter, transformed;
+
+			adapter = this.stub(createFakeAdapter());
+			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
+
+			when(transformed.remove(1),
+				function() {
+					assert.calledOnceWith(adapter.remove, 0);
+				},
+				fail
+			).then(done, done);
 		}
 	}
 
@@ -215,5 +350,7 @@ buster.testCase('transformCollection', {
 
 })(
 	require('buster'),
+	require('when'),
+	require('when/delay'),
 	require('../transformCollection')
 );

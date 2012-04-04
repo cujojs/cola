@@ -1,9 +1,11 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
 (function (define) {
-define(function () {
+define(function (require) {
 
-	function noop() {}
+	var when;
+
+	when = require('when');
 
 	/**
 	 * Returns a view of the supplied collection adapter, such that the view
@@ -12,8 +14,11 @@ define(function () {
 	 * inverse param, or via transform.inverse, it will be used when items
 	 * are added or removed
 	 * @param adapter {Object} the adapter for which to create a transformed view
-	 * @param transform {Function} the transform to apply to items
-	 * @param [inverse] {Function}
+	 * @param transform {Function} the transform to apply to items. It may return
+	 *  a promise
+	 * @param [inverse] {Function} inverse transform, can be provided explicitly
+	 *  if transform doesn't have an inverse property (transform.inverse). It may
+	 *  return a promise
 	 */
 	function transformCollection(adapter, transform, inverse) {
 
@@ -26,20 +31,29 @@ define(function () {
 			identifier: adapter.identifier,
 
 			forEach: function(lambda) {
+				var inflight;
+
 				function transformedLambda(item) {
-					return lambda(transform(item));
+
+					inflight = when(inflight, function() {
+						return when(transform(item), lambda);
+					});
+
+					return inflight;
 				}
 
-				return adapter.forEach(transformedLambda);
+				return when(adapter.forEach(transformedLambda), function() {
+					return inflight;
+				});
 			},
 
 			watch: function(added, removed) {
 				return adapter.watch(
 					function(item) {
-						return added(transform(item));
+						return when(transform(item), added);
 					},
 					function(item) {
-						return removed(transform(item));
+						return when(transform(item), removed);
 					}
 				);
 			},
@@ -48,13 +62,17 @@ define(function () {
 			// value back
 			add: inverse
 				? function(item) {
-					return adapter.add(inverse(item));
+					return when(inverse(item), function(transformed) {
+						return adapter.add(transformed);
+					});
 				}
 				: noop,
 
 			remove: inverse
 				? function(item) {
-					return adapter.remove(inverse(item));
+					return when(inverse(item), function(transformed) {
+						return adapter.remove(transformed);
+					});
 				}
 				: noop,
 
@@ -67,9 +85,11 @@ define(function () {
 
 	return transformCollection;
 
+	function noop() {}
+
 });
 }(
 	typeof define == 'function'
 		? define
-		: function (factory) { module.exports = factory(); }
+		: function (factory) { module.exports = factory(require); }
 ));
