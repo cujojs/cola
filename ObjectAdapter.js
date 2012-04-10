@@ -1,13 +1,8 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
 (function (define) {
-define(function (require) {
+define(function () {
 "use strict";
-
-	var Notifier, stopIteration;
-
-	Notifier = require('./Notifier');
-	stopIteration = {};
 
 	/**
 	 * @constructor
@@ -18,33 +13,14 @@ define(function (require) {
 
 		this._obj = obj;
 		this._options = options;
-		this._notifier = new Notifier();
 
 	}
 
 	ObjectAdapter.prototype = {
 
-		watch: function (name, callback) {
-			return this._notifier.listen(name, callback);
-		},
+		update: updateObject,
 
-		watchAll: function (callback) {
-			return this._notifier.listen('*', callback);
-		},
-
-		set: function (name, value) {
-			var obj = this._obj;
-			if (obj[name] != value) {
-				obj[name] = value;
-				return notify(this._notifier, value, [name, '*'], name);
-			}
-		},
-
-		forEach: function (lambda) {
-			for (var p in this._obj) {
-				lambda(this._obj[p], p);
-			}
-		},
+		partial: updateObject,
 
 		getOptions: function () {
 			return this._options;
@@ -67,17 +43,12 @@ define(function (require) {
 
 	return ObjectAdapter;
 
-	/**
-	 * Calls all listener functions with the details of a modified
-	 * property.
-	 * @private
-	 * @param notifier {Notifier} notifier whose listeners will be notified
-	 * @param value the new value of the property that changed
-	 * @param signals {String} the listener signals to notify
-	 * @param [name] {String} name of the property that changed.  If not supplied, key will be used
-	 */
-	function notify (notifier, value, signals, name) {
-		return notifier.notifyAll(signals, name, value);
+	function updateObject (item) {
+		var p, obj;
+		obj = this._obj;
+		for (var p in item) {
+			obj[name] = value;
+		}
 	}
 
 });

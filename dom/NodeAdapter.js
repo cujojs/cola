@@ -24,10 +24,18 @@ define(function (require) {
 		this._rootNode = rootNode;
 
 		// set options
-		this._options = options;
+		this._options = options || {};
 
 		// keep data values
 		this._values = {};
+
+		// flag to avoid circles when updating from an event
+		this._updating = false;
+
+		// event unwatchers to be called to prevent memory leaks in IE
+		this._unwatches = [];
+
+		this._watchAllEvents();
 
 	}
 
@@ -37,54 +45,17 @@ define(function (require) {
 			return this._options;
 		},
 
-		/**
-		 * Watches a specific property and calls back when it changes.
-		 * @param name {String} the name of the property to watch.
-		 * @param callback {Function} function (propValue, propName) {}
-		 * @returns {Function} a function to call when done watching.
-		 */
-		watch: function (name, callback) {
-			var b, node, events, prop, currValues;
-			b = this._getBindingsFor(name);
-			node = b && this._getNode(b.node, name);
-			if (b && node) {
-				events = 'events' in b ? b.events : guessEventsFor(node);
-				prop = 'prop' in b ? b.prop : guessPropFor(node);
-				currValues = this._values;
-				return listenToNode(node, events, function() {
-					var prev, curr;
-					// ensure value has changed
-					prev = currValues[name];
-					curr = getNodePropOrAttr(node, prop);
-					if (curr != prev) {
-						currValues[name] = curr;
-						callback(name, curr);
-					}
-				});
-			}
-			else {
-				return noop;
+		update: function (item) {
+			var p;
+			if (this._updating) return;
+			for (p in item) {
+				this._setProperty(p, item[p]);
 			}
 		},
 
-		/**
-		 * Watches all nodes that have explicit bindings.
-		 * Due to lack of bubbling support for many events, we can't
-		 * just listen at the root node. Instead, we have to just
-		 * listen to all the nodes that are explicitly bound.
-		 * @param callback {Function} function (propValue, propName) {}
-		 * @returns {Function} a function to call when done watching.
-		 */
-		watchAll: function (callback) {
-			var unwatchers;
-			unwatchers = [];
-			for (var p in this._options.bindings) {
-				unwatchers.push(this.watch(p, callback));
-			}
-			return function () {
-				var unwatcher;
-				while ((unwatcher = unwatchers.pop())) unwatcher();
-			}
+		destroy: function () {
+			var unwatches = this._unwatches;
+			while (unwatches.length) unwatches.pop()();
 		},
 
 		/**
@@ -92,7 +63,7 @@ define(function (require) {
 		 * @param name {String} the name of the changed property
 		 * @param value the value of the changed property
 		 */
-		set: function (name, value) {
+		_setProperty: function (name, value) {
 			var b, node, prop, current;
 			b = this._getBindingsFor(name);
 			node = b && this._getNode(b.node, name);
@@ -102,18 +73,7 @@ define(function (require) {
 				this._values[name] = current;
 				if (current != value) {
 					setNodePropOrAttr(node, prop, value);
-					// notify watchers
-					return fireSimpleEvent(node, propUpdatedEvent, false);
 				}
-			}
-		},
-
-		forEach: function (lambda) {
-			var p, b, node;
-			for (p in this._options.bindings) {
-				b = this._options.bindings[p];
-				node = this._getNode(b.node, p);
-				lambda(getNodePropOrAttr(node, b.prop), p);
 			}
 		},
 
@@ -148,6 +108,41 @@ define(function (require) {
 				node = guessNode(this._rootNode, name) || this._rootNode;
 			}
 			return node;
+		},
+
+		_watchAllEvents: function () {
+			var name, binding, events, node, prop;
+			for (name in this._options.bindings) {
+				binding = this._options.bindings[name];
+				events = binding.event || binding.events;
+				node = this._getNode(binding.node, name);
+				prop = 'prop' in binding ? binding.prop : guessPropFor(node);
+				if (events && node && prop) {
+					this._watchEvents(node, events, name, prop);
+				}
+			}
+		},
+
+		_watchEvents: function (node, events, name, prop) {
+			var self, currValues;
+			self = this;
+			currValues = this._values;
+			this._unwatches.push(listenToNode(node, events, function (e) {
+				var prev, curr, partial;
+				prev = currValues[name];
+				curr = getNodePropOrAttr(node, prop);
+				if (prev != curr) {
+					partial = {};
+					partial[name] = curr;
+					this._updating = true;
+					try {
+						self.update(partial);
+					}
+					finally {
+						this._updating = false;
+					}
+				}
+			}));
 		}
 
 	};
@@ -235,9 +230,6 @@ define(function (require) {
 		else if (!events) {
 			events = [];
 		}
-
-		// add an event for notifying from the set() method
-		events.push(propUpdatedEvent);
 
 		// create unwatchers
 		unwatchers = [];

@@ -4,13 +4,11 @@
 // store items in sorted order based on its comparator
 
 (function(define) {
-define(function (require) {
+define(function () {
 
 	"use strict";
 
-	var Notifier, undef;
-
-	Notifier = require('./Notifier');
+	var undef;
 
 	/**
 	 * Manages a collection of objects taken from the supplied dataArray
@@ -34,8 +32,6 @@ define(function (require) {
 		this.comparator = options.comparator || this._defaultComparator;
 
 		this.identifier = options.identifier || defaultKeyFunc;
-
-		this._notifier = new Notifier();
 
 		this._init(dataArray);
 	}
@@ -80,20 +76,6 @@ define(function (require) {
 			return this._options;
 		},
 
-		watch: function(itemAdded, itemRemoved) {
-			var unlistenAdd, unlistenRemove, notifier;
-
-			notifier = this._notifier;
-
-			unlistenAdd = notifier.listen('add', itemAdded);
-			unlistenRemove = notifier.listen('remove', itemRemoved);
-
-			return function() {
-				unlistenAdd();
-				unlistenRemove();
-			}
-		},
-
 		forEach: function(lambda) {
 			var i, data, len;
 
@@ -116,11 +98,12 @@ define(function (require) {
 			if(key in index) return null;
 
 			index[key] = this._data.push(item) - 1;
-			return this._notifier.notify('add', item);
+
+			return index;
 		},
 
 		remove: function(itemOrId) {
-			var key, at, item, index, data;
+			var key, at, index, data;
 
 			key = this.identifier(itemOrId);
 			index = this._index;
@@ -130,13 +113,21 @@ define(function (require) {
 			data = this._data;
 
 			at = index[key];
-			item = data[at];
 			data.splice(at, 1);
 
+<<<<<<< HEAD
 			// Rebuild index before notifying
 			this._index = buildIndex(data, this.identifier);
+=======
+			// Rebuild index
+			this._index = buildIndex(data, this._keyFunc);
+>>>>>>> rough draft of eventhub-based cola
 
-			return this._notifier.notify('remove', item);
+			return at;
+		},
+
+		update: function (item) {
+			return this.add(item);
 		}
 
 	};
@@ -179,5 +170,5 @@ define(function (require) {
 })(
 	typeof define == 'function'
 		? define
-		: function(factory) { module.exports = factory(require); }
+		: function(factory) { module.exports = factory(); }
 );

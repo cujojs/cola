@@ -2,25 +2,13 @@
 define(function(require) {
 "use strict";
 
-	var when, SortedMap, classList, domEvents, fireSimpleEvent, watchNode,
-		colaEvents,
+	var when, SortedMap, classList, NodeAdapter,
 		undef, defaultTemplateSelector, listElementsSelector,
 		colaListBindingStates;
 
-	when = require('when');
 	SortedMap = require('../SortedMap');
 	classList = require('./classList');
-	domEvents = require('./events');
-
-	fireSimpleEvent = domEvents.fireSimpleEvent;
-	watchNode = domEvents.watchNode;
-
-	colaEvents = {
-		added: 'ColaItemAdded',
-		removed: 'ColaItemRemoved',
-		propUpdated: 'ColaItemPropUpdated'
-	};
-
+	NodeAdapter = require('./NodeAdapter');
 
 	defaultTemplateSelector = '[data-cola-role="item-template"]';
 	listElementsSelector = 'tr,li';
@@ -70,11 +58,8 @@ define(function(require) {
 
 		this._initTemplateNode();
 
-		// keep track of how many watchers. we assume that if number
-		// of watchers is greater than zero, we're "data bound"
-		this._watchCount = 0;
-		// keep track of item, too, so we can set the cola-list-XXX state
-		this._itemCount = 0;
+		// keep track of itemCount, so we can set the cola-list-XXX state
+		this._itemCount = undef;
 		this._checkBoundState();
 
 		self = this;
@@ -88,94 +73,68 @@ define(function(require) {
 			}
 		);
 
-		watchNode(this._containerNode, colaEvents.propUpdated, function (e) {
-			var event = e || window.event;
-			e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
-			// TODO: send update event to watchers?
-		});
-
 	}
 
 	NodeListAdapter.prototype = {
 
-		watch: function (add, remove) {
-			var unwatchAdd, unwatchRemove, self;
-
-			unwatchAdd = add ?
-				watchNode(this._containerNode, colaEvents.added, function (evt) {
-					return add(evt.data.item);
-				}) : noop;
-
-			unwatchRemove = remove ?
-				watchNode(this._containerNode, colaEvents.removed, function (evt) {
-					return remove(evt.data.item);
-				}) : noop;
-
-			this._watchCount++;
-			this._checkBoundState();
-
-			self = this;
-			return function () {
-				self._watchCount--;
-				self._checkBoundState();
-				unwatchAdd();
-				unwatchRemove();
-			};
-		},
-
 		add: function (item) {
-			var node, index;
+			var adapter, index;
 
-			// create node
-			node = this._templateNode.cloneNode(true);
+			// create adapter
+			adapter = this._createNodeAdapter(item);
 
 			// add to map
-			index = this._itemData.add(item, node);
+			index = this._itemData.add(item, adapter);
 
 			// figure out where to insert into dom
 			if (index >= 0) {
 				this._itemCount++;
 				// insert
-				this._insertNodeAt(node, index);
-				// notify listeners
-				// return node so mediator can adapt and mediate it
-				return when(this._fireEvent(colaEvents.added, item),
-					function () { return node; }
-				);
+				this._insertNodeAt(adapter._rootNode, index);
 			}
 		},
 
 		remove: function (item) {
-			var node;
+			var adapter, node;
 
 			// grab node we're about to remove
-			node = this._itemData.get(item);
+			adapter = this._itemData.get(item);
 
 			// remove item
 			this._itemData.remove(item);
 
-			if (node) {
+			if (adapter) {
 				this._itemCount--;
+				node = adapter._rootNode;
+				adapter.destroy();
 				// remove from dom
-				// don't trust the index returned from the remove()
-				// call! if the user didn't specify a comparator / sort, then
-				// it will always return -1. use the node the map gave us instead.
 				node.parentNode.removeChild(node);
 			}
-
-			// notify listeners
-			return this._fireEvent(colaEvents.removed, item);
 		},
 
 		update: function (item) {
-			var node, index;
+			var adapter, index;
 
-			node = this._itemData.get(item);
+			adapter = this._itemData.get(item);
+
+			if (!adapter) {
+				// create adapter
+				adapter = this._createNodeAdapter(item);
+			}
+			else {
+				this._updating = adapter;
+				try {
+					adapter.update(item);
+				}
+				finally {
+					delete this._updating;
+				}
+			}
 
 			this._itemData.remove(item);
-			index = this._itemData.add(item);
+			index = this._itemData.add(item, adapter);
 
-			this._insertNodeAt(node, index);
+			this._insertNodeAt(adapter._rootNode, index);
 		},
 
 		forEach: function (lambda) {
@@ -186,9 +145,8 @@ define(function(require) {
 			var i = 0, self = this;
 			this.comparator = comparator;
 			this._itemData.setComparator(comparator);
-			this._itemData.forEach(function (node, item) {
-				self._insertNodeAt(node, i);
-				i++;
+			this._itemData.forEach(function (adapter, item) {
+				self._insertNodeAt(adapter._rootNode, i++);
 			});
 		},
 
@@ -211,6 +169,12 @@ define(function(require) {
 
 		identifier: undef,
 
+		destroy: function () {
+			this._itemData.forEach(function (adapter) {
+				adapter.destroy();
+			});
+		},
+
 		_initTemplateNode: function () {
 			var templateNode = this._templateNode;
 			// remove from document
@@ -229,8 +193,27 @@ define(function(require) {
 			}
 		},
 
-		_fireEvent: function (type, item) {
-			return fireSimpleEvent(this._containerNode, type, false, { item: item });
+		_createNodeAdapter: function (item) {
+			var node, adapter, origUpdate, self;
+
+			// create NodeAdapter
+			node = this._templateNode.cloneNode(true);
+			adapter = new NodeAdapter(node, this._options);
+			adapter.update(item);
+
+			// override update() method to call back
+			origUpdate = adapter.update;
+			self = this;
+			adapter.update = function (item) {
+				// update node(s) in NodeAdapter
+				origUpdate.call(adapter, item);
+				// cascade to us if we didn't initiate update()
+				if (self._updating != adapter) {
+					self.update(item);
+				}
+			};
+
+			return adapter;
 		},
 
 		_insertNodeAt: function (node, index) {
@@ -245,13 +228,12 @@ define(function(require) {
 		},
 
 		_checkBoundState: function () {
-			var container, state, isBound, isEmpty;
-			container = this._containerNode;
+			var state, isBound, isEmpty;
 			state = {};
-			isBound = this._watchCount > 0;
+			isBound = this._itemCount != null;
 			isEmpty = this._itemCount == 0;
 			state[colaListBindingStates.unbound] = !isBound;
-			state[colaListBindingStates.empty] = isBound && isEmpty;
+			state[colaListBindingStates.empty] = isEmpty;
 			state[colaListBindingStates.bound] = isBound && !isEmpty;
 			classList.setClassSet(this._rootNode, state);
 		}
