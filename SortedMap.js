@@ -7,12 +7,12 @@ define(function () {
 
 	/**
 	 * @constructor
-	 * @param symbolizer {Function}
+	 * @param identifier {Function}
 	 * @param comparator {Function}
 	 */
-	function SortedMap (symbolizer, comparator) {
+	function SortedMap (identifier, comparator) {
 
-		// symbolizer is required, comparator is optional
+		// identifier is required, comparator is optional
 
 		// hashmap of object-object pairs
 		this._index = {};
@@ -29,7 +29,7 @@ define(function () {
 		 * key item or the special object, missing, if it was not found.
 		 */
 		this._fetch = function (keyItem) {
-			var symbol = symbolizer(keyItem);
+			var symbol = identifier(keyItem);
 			return symbol in this._index ? this._index[symbol] : missing;
 		};
 
@@ -47,11 +47,11 @@ define(function () {
 		this._pos = function (keyItem, exactMatch) {
 			var pos, sorted, symbol;
 			sorted = this._sorted;
-			symbol = symbolizer(keyItem);
+			symbol = identifier(keyItem);
 			function getKey (pos) { return sorted[pos] ? sorted[pos][0].key : {}; }
 			pos = binarySearch(0, sorted.length, keyItem, getKey, comparator);
 			if (exactMatch) {
-				if (symbol != symbolizer(sorted[pos][0].key)) {
+				if (symbol != identifier(sorted[pos][0].key)) {
 					pos = -1;
 				}
 			}
@@ -89,7 +89,7 @@ define(function () {
 
 			// insert into index
 			pair = { key: keyItem, value: valueItem };
-			symbol = symbolizer(keyItem);
+			symbol = identifier(keyItem);
 			this._index[symbol] = pair;
 
 			// insert into sorted table
@@ -130,7 +130,7 @@ define(function () {
 		this._remove = function remove (keyItem, pos) {
 			var symbol, entries, i, entry, absPos;
 
-			symbol = symbolizer(keyItem);
+			symbol = identifier(keyItem);
 
 			// delete from index
 			delete this._index[symbol];
@@ -142,7 +142,7 @@ define(function () {
 				i = entries.length;
 				// find it and remove it
 				while ((entry = entries[--i])) {
-					if (symbol == symbolizer(entry.key)) {
+					if (symbol == identifier(entry.key)) {
 						entries.splice(i, 1);
 						break;
 					}
@@ -183,6 +183,8 @@ define(function () {
 
 		add: function (keyItem, valueItem) {
 			var pos, absPos;
+
+			if (arguments.length < 2) throw new Error('SortedMap.add: must supply keyItem and valueItem args');
 
 			// don't insert twice. bail if we already have it
 			if (this._fetch(keyItem) != missing) return;

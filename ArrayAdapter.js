@@ -16,7 +16,7 @@ define(function (require) {
 	 * Manages a collection of objects taken from the supplied dataArray
 	 * @param dataArray {Array} array of data objects to use as the initial
 	 * population
-	 * @param options.keyFunc {Function} function that returns a key/id for
+	 * @param options.identifier {Function} function that returns a key/id for
 	 * a data item.
 	 * @param options.comparator {Function} comparator function that will
 	 * be propagated to other adapters as needed
@@ -27,8 +27,13 @@ define(function (require) {
 
 		this._options = options;
 
-		this.comparator = options.comparator;
-		this._keyFunc = this.symbolizer = options.symbolizer || defaultKeyFunc;
+		// Use the default comparator if none provided.
+		// The consequences of this are that the default comparator will
+		// be propagated to downstream adapters *instead of* an upstream
+		// adapter's comparator
+		this.comparator = options.comparator || this._defaultComparator;
+
+		this.identifier = options.identifier || defaultKeyFunc;
 
 		this._notifier = new Notifier();
 
@@ -46,9 +51,29 @@ define(function (require) {
 			}
 		},
 
+		/**
+		 * Default comparator that uses an item's position in the array
+		 * to order the items.  This is important when an input array is already
+		 * in sorted order, so the user doesn't have to specify a comparator,
+		 * and so the order can be propagated to other adapters.
+		 * @param a
+		 * @param b
+		 * @return {Number} -1 if a is before b in the input array
+		 *  1 if a is after b in the input array
+		 *  0 iff a and b have the same symbol as returned by the configured identifier
+		 */
+		_defaultComparator: function(a, b) {
+			var aIndex, bIndex;
+
+			aIndex = this._index(this.identifier(a));
+			bIndex = this._index(this.identifier(b));
+
+			return aIndex - bIndex;
+		},
+
 		comparator: undef,
 
-		symbolizer: undef,
+		identifier: undef,
 
 		// just stubs for now
 		getOptions: function () {
@@ -85,7 +110,7 @@ define(function (require) {
 		add: function(item) {
 			var key, index;
 
-			key = this._keyFunc(item);
+			key = this.identifier(item);
 			index = this._index;
 
 			if(key in index) return null;
@@ -97,7 +122,7 @@ define(function (require) {
 		remove: function(itemOrId) {
 			var key, at, item, index, data;
 
-			key = this._keyFunc(itemOrId);
+			key = this.identifier(itemOrId);
 			index = this._index;
 
 			if(!(key in index)) return null;
@@ -109,7 +134,7 @@ define(function (require) {
 			data.splice(at, 1);
 
 			// Rebuild index before notifying
-			this._index = buildIndex(data, this._keyFunc);
+			this._index = buildIndex(data, this.identifier);
 
 			return this._notifier.notify('remove', item);
 		}

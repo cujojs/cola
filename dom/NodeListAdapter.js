@@ -51,7 +51,7 @@ define(function(require) {
 		this._options = options;
 
 		this.comparator = options.comparator;
-		this.symbolizer = options.symbolizer;
+		this.identifier = options.identifier;
 
 		this._rootNode = rootNode;
 
@@ -81,7 +81,7 @@ define(function(require) {
 		// list of sorted data items, nodes, and unwatch functions
 		this._itemData = new SortedMap(
 			function(item) {
-				return self.symbolizer(item);
+				return self.identifier(item);
 			},
 			function (a, b) {
 				return self.comparator(a, b)
@@ -209,7 +209,7 @@ define(function(require) {
 		 */
 		comparator: undef,
 
-		symbolizer: undef,
+		identifier: undef,
 
 		_initTemplateNode: function () {
 			var templateNode = this._templateNode;

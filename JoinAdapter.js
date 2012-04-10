@@ -19,7 +19,7 @@ define(function (require) {
 			throw new Error('options.joinWith and options.strategy are required');
 		}
 
-		this.symbolizer = primary.symbolizer;
+		this.identifier = primary.identifier;
 		this.comparator = primary.comparator;
 
 		this._primary = primary;

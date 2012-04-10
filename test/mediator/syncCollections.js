@@ -11,6 +11,8 @@ refute = buster.refute;
  */
 function mockAdapter() {
 	return {
+		comparator: null,
+		identifier: null,
 		forEach: function() {},
 		watch: function(add, remove) {
 			this.add = add;
@@ -28,6 +30,8 @@ buster.testCase('syncCollections', {
 		setUp: function() {
 			function setupMockAdapter(spies) {
 				var ma = {
+					comparator: null,
+					identifier: null,
 					watch: function() {}
 				};
 				ma.forEach = spies.spy();
@@ -81,6 +85,27 @@ buster.testCase('syncCollections', {
 
 			assert.calledOnceWith(this.receivingAdapter.remove, item);
 			refute.called(this.receivingAdapter.add);
+		},
+
+		'should propagate comparator from primary to secondary adapter': function() {
+			function f() {}
+
+			this.sendingAdapter.comparator = f;
+
+			syncCollections(this.sendingAdapter, this.receivingAdapter);
+
+			assert.same(this.receivingAdapter.comparator, f);
+		},
+
+		'should propagate identifier from primary to secondary adapter': function() {
+			function f() {}
+
+			this.sendingAdapter.identifier = f;
+
+			syncCollections(this.sendingAdapter, this.receivingAdapter);
+
+			assert.same(this.receivingAdapter.identifier, f);
+
 		}
 	},
 

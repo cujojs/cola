@@ -5,39 +5,54 @@ define(function (require) {
 
 	"use strict";
 
-	var ArrayAdapter, when, undef;
+	var ArrayAdapter, ObjectAdapter, propertiesKey, byProperty, when, undef;
 
 	ArrayAdapter = require('./ArrayAdapter');
+	ObjectAdapter = require('./ObjectAdapter');
+	propertiesKey = require('./relational/propertiesKey');
+	byProperty = require('./comparator/byProperty');
 	when = require('when');
 
 	/**
-	 * Manages a collection of objects taken from the resolution of the
-	 * supplied resultSet, since resultSet may be a promise.
+	 * Manages a collection of objects created by transforming the input Object
+	 * (or Promise for an Object) into a collection using the supplied
+	 * options.transform
 	 * @constructor
-	 * @param resultSet {Array|Promise} array of data objects, or a promise for
-	 * an array of data objects
-	 * @param options.keyFunc {Function} function that returns a key/id for
+	 * @param object {Object|Promise} Object or Promise for an Object
+	 * @param options.identifier {Function} function that returns a key/id for
 	 * a data item.
 	 * @param options.comparator {Function} comparator function that will
 	 * be propagated to other adapters as needed
+	 * @param options.transform {Function} transform function that will
+	 * transform the input object into a collection
 	 */
-	function ResultSetAdapter(resultSet, options) {
+	function WidenAdapter(object, options) {
 
 		var self, init;
 
-		this._resultSetPromise = resultSet;
+		this._resultSetPromise = object;
+
+		if (!(options && options.transform)) {
+			throw new Error("options.transform must be provided");
+		}
+
+		this._transform = options.transform;
+		delete options.transform;
+
+		this.identifier = options.identifier;
+		this.comparator = options.comparator;
 
 		self = this;
 		init = ArrayAdapter.prototype._init;
 
 		ArrayAdapter.call(self, [], options);
 
-		when(resultSet, function(results) {
-			init.call(self, results);
+		when(object, function (result) {
+			init.call(self, self._transform(result));
 		});
 	}
 
-	ResultSetAdapter.prototype = {
+	WidenAdapter.prototype = {
 
 		/**
 		 * ResultSetAdapter needs to delay running ArrayAdapter._init, so provides
@@ -74,8 +89,8 @@ define(function (require) {
 	 * @param it
 	 * @return {Boolean}
 	 */
-	ResultSetAdapter.canHandle = function(it) {
-		return when.isPromise(it) || ArrayAdapter.canHandle(it);
+	WidenAdapter.canHandle = function(it) {
+		return when.isPromise(it) || ObjectAdapter.canHandle(it);
 	};
 
 	/**
@@ -98,7 +113,7 @@ define(function (require) {
 		}
 	}
 
-	return ResultSetAdapter;
+	return WidenAdapter;
 });
 
 })(
