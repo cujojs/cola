@@ -21,32 +21,36 @@ define(function () {
 			origUpdate = adapter.update;
 			origForEach = adapter.forEach;
 
-			adapter.get = function transformedGet (id) {
+			if (origGet) {
+				adapter.get = function transformedGet (id) {
+					return transformItem(origGet.call(adapter, id), transforms, true);
+				};
+			}
 
-			};
+			if (origAdd) {
+				adapter.add = function transformedAdd (item) {
+					return origAdd.call(adapter, transformItem(item, transforms, true));
+				};
+			}
 
-			adapter.add = function transformedAdd (item) {
+			if (origUpdate) {
+				adapter.update = function transformedUpdate (item) {
+					return origUpdate.call(adapter, transformItem(item, transforms, true));
+				};
+			}
 
-			};
+			if (origForEach) {
+				adapter.forEach = function transformedForEach (lambda) {
+					// Note: potential performance improvement if we cache the
+					// transformed lambdas in a hashmap.
+					function transformedLambda (item, key) {
+						var inverted = transformItem(item, transforms, true);
+						return lambda(inverted, key);
+					}
 
-			adapter.update = function transformedUpdate (item) {
-				var transform = transforms[name]
-					|| identity;
-				return origSet.call(adapter, name, transform(value, name));
-			};
-
-			adapter.forEach = function transformedForEach (lambda) {
-				// Note: potential performance improvement if we cache the
-				// transformed lambdas in a hashmap.
-				function transformedLambda (value, name) {
-					var reverse = transforms[name]
-						&& transforms[name].inverse
-						|| identity;
-					return lambda(reverse(value, name), name);
-				}
-
-				return origForEach.call(adapter, transformedLambda);
-			};
+					return origForEach.call(adapter, transformedLambda);
+				};
+			}
 
 		}
 
@@ -61,22 +65,23 @@ define(function () {
 		for (var p in obj) return true;
 	}
 
-	function transformItem (item, transforms) {
+	function transformItem (item, transforms, inverse) {
 		var transformed, transform;
 
-		transformed = {};
+		// only create an object if one was found
+		transformed = item && {};
+
+		// loop through properties. should we use hasOwnProperty()?
 		for (var name in item) {
 			if (name in transforms) {
-				transform  = transforms[name] || identity;
+				transform = (inverse
+					? transforms[name] && transforms[name].inverse
+					: transforms[name]) || identity;
 				transformed[name] = transform(item[name], name);
 			}
 		}
 
 		return transformed;
-	}
-
-	function reverseItem (item, transforms) {
-
 	}
 
 });
