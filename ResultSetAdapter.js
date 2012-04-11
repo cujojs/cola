@@ -54,13 +54,15 @@ define(function (require) {
 		// just stubs for now
 		getOptions: ArrayAdapter.prototype.getOptions,
 
-		watch: makePromiseAware(ArrayAdapter.prototype.watch),
-
 		forEach: makePromiseAware(ArrayAdapter.prototype.forEach),
 
 		add: makePromiseAware(ArrayAdapter.prototype.add),
 
-		remove: makePromiseAware(ArrayAdapter.prototype.remove)
+		remove: makePromiseAware(ArrayAdapter.prototype.remove),
+
+		update: makePromiseAware(ArrayAdapter.prototype.update),
+
+		clear: makePromiseAware(ArrayAdapter.prototype.clear)
 	};
 
 	/**

@@ -47,8 +47,6 @@ define(function (require) {
 					: 1;
 			};
 
-		this._notifier = new Notifier();
-
 		this._items = new SortedMap(identifier, this.comparator);
 	}
 
@@ -66,12 +64,20 @@ define(function (require) {
 				return when(self._datasource.query(query||{}, options),
 				function(results) {
 					self._items = new SortedMap(self.identifier, self.comparator);
-					self._initResultSet(results, self._items);
+					self._initResultSet(results);
 					return results;
 				});
 			});
 		},
 
+		/**
+		 * Adds op to the internal queue of async tasks to ensure that
+		 * it will run in the order added and not overlap with other async tasks
+		 * @param op {Function} async task (function that returns a promise) to add
+		 *  to the internal queue
+		 * @return {Promise} promise that will resolver/reject when op has completed
+		 * @private
+		 */
 		_queue: function(op) {
 			this._inflight = when(this._inflight, function() {
 				return op();
@@ -80,32 +86,25 @@ define(function (require) {
 			return this._inflight;
 		},
 
-		_initResultSet: function (results, map) {
-			var notifier = this._notifier;
+		/**
+		 * Initialized the internal map of items
+		 * @param results {Array} array of result items
+		 * @private
+		 */
+		_initResultSet: function (results) {
+			var map, i, len, item;
 
-			return when.reduce(results, function(unused, item) {
+			map = this._items;
+			map.clear();
+
+			for(i = 0, len = results.length; i < len; i++) {
+				item = results[i];
 				map.add(item, item);
-				return notifier.notify('add', item);
-			}, results);
+			}
 		},
 
-		// just stubs for now
 		getOptions: function() {
 			return this._options;
-		},
-
-		watch: function(itemAdded, itemRemoved) {
-			var unlistenAdd, unlistenRemove, notifier;
-
-			notifier = this._notifier;
-
-			unlistenAdd = notifier.listen('add', itemAdded);
-			unlistenRemove = notifier.listen('remove', itemRemoved);
-
-			return function() {
-				unlistenAdd();
-				unlistenRemove();
-			}
 		},
 
 		forEach: function(lambda) {
@@ -116,67 +115,79 @@ define(function (require) {
 		},
 
 		add: function(item) {
-			var notifier, items, added;
+			var items, added;
 
 			items = this._items;
 			added = items.add(item, item);
 
 			if(added >= 0) {
 
-				notifier = this._notifier;
-
 				// This is optimistic, maybe overly so.  It notifies listeners
 				// that the item is added, even though there may be an inflight
 				// async store.add().  If the add fails, it tries to revert
 				// by removing the item from the local map, notifying listeners
 				// that it is removed, and "rethrowing" the failure.
-				return when.all([
-					this._datasource.add(item),
-					this._notifier.notify('add', item)
-				],
+				return when(this._datasource.add(item),
 					null, // If all goes according to plan, great, nothing to do
 					function(err) {
 						items.remove(item);
-
-						function propagateError() {
-							// Always rethrow here to propagate the failure
-							throw err;
-						}
-
-						return when(notifier.notify('remove', item), propagateError, propagateError);
+						throw err;
 					}
 				);
 			}
 		},
 
 		remove: function(item) {
-			var removed, notifier, items;
+			var removed, items;
 
 			items = this._items;
 			removed = items.remove(item);
 
 			if(removed >= 0) {
-				notifier = this._notifier;
 
 				// Similar to add() above, this may be too optimistic.
-				return when.all([
-					this._datasource.remove(item),
-					this._notifier.notify('remove', item)
-				],
+				return when(this._datasource.remove(item),
 					null, // If all goes according to plan, great, nothing to do
 					function(err) {
 						items.add(item, item);
-
-						function propagateError() {
-							// Always rethrow here to propagate the failure
-							throw err;
-						}
-
-						return when(notifier.notify('add', item), propagateError, propagateError);
+						throw err;
 					}
 				);
 			}
+		},
 
+		update: function(item) {
+			var orig, items, self;
+
+			items = this._items;
+			orig = items.get(item);
+
+			if(orig) {
+				this._replace(orig, item);
+
+				self = this;
+
+				// Similar to add() above, this may be too optimistic.
+				return when(this._datasource.put(item),
+					null, // If all goes according to plan, great, nothing to do
+					function(err) {
+						self._replace(item, orig);
+
+						items.remove(item);
+						items.add(orig, orig);
+						throw err;
+					}
+				)
+			}
+		},
+
+		_replace: function(oldItem, newItem) {
+			this._items.remove(oldItem);
+			this._items.add(newItem, newItem);
+		},
+
+		clear: function() {
+			this._initResultSet([]);
 		}
 	};
 

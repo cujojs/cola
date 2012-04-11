@@ -103,7 +103,7 @@ buster.testCase('SortedMap', {
 	'remove': {
 
 		'should remove items': function () {
-			var hash = new SortedMap(symbolizeItem, compareItems);
+			var map = new SortedMap(symbolizeItem, compareItems);
 
 			var items = [
 				{ id: 1 },
@@ -111,15 +111,15 @@ buster.testCase('SortedMap', {
 				{ id: 4 },
 				{ id: 2 }
 			];
-			hash.add(items[0], 'foo'); // id: 1
-			hash.add(items[1], 'bar'); // id: 3
-			hash.add(items[2], 'baz'); // id: 4
-			hash.add(items[3], 'fot'); // id: 2
+			map.add(items[0], 'foo'); // id: 1
+			map.add(items[1], 'bar'); // id: 3
+			map.add(items[2], 'baz'); // id: 4
+			map.add(items[3], 'fot'); // id: 2
 
-			hash.remove({ id: 3 });
+			map.remove({ id: 3 });
 
 			var spy = this.spy();
-			hash.forEach(spy);
+			map.forEach(spy);
 
 			assert.calledWith(spy, 'foo', items[0]);
 			refute.calledWith(spy, 'bar', items[1]);
@@ -129,27 +129,48 @@ buster.testCase('SortedMap', {
 		},
 
 		'should silently fail when removing non-existent items': function () {
-			var hash = new SortedMap(symbolizeItem, compareItems);
+			var map = new SortedMap(symbolizeItem, compareItems);
 
-			hash.add({ id: 1 }, 1);
-			refute.defined(hash.remove({ id: 2 }));
+			map.add({ id: 1 }, 1);
+			refute.defined(map.remove({ id: 2 }));
 
 		}
+	},
+
+	'clear': {
+		'should remove all items': function() {
+			var map = new SortedMap(symbolizeItem, compareItems);
+
+			map.add({ id: 1 }, 1);
+			map.add({ id: 2 }, 2);
+			map.add({ id: 3 }, 3);
+
+			map.clear();
+			refute.defined(map.get({ id: 1 }));
+			refute.defined(map.get({ id: 2 }));
+			refute.defined(map.get({ id: 3 }));
+
+			var spy = this.spy();
+			map.forEach(spy);
+
+			refute.called(spy);
+		}
+
 	},
 
 	'forEach': {
 
 		'should iterate over all items in order': function () {
-			var hash = new SortedMap(symbolizeItem, compareByLast);
+			var map = new SortedMap(symbolizeItem, compareByLast);
 
-			hash.add({ id: 1, last: 'Attercop', expected: 2 }, 1);
-			hash.add({ id: 3, last: 'TomNoddy', expected: 4 }, 2);
-			hash.add({ id: 4, last: 'Aardvark', expected: 1 }, 3);
-			hash.add({ id: 2, last: 'Bojangle', expected: 3 }, 4);
+			map.add({ id: 1, last: 'Attercop', expected: 2 }, 1);
+			map.add({ id: 3, last: 'TomNoddy', expected: 4 }, 2);
+			map.add({ id: 4, last: 'Aardvark', expected: 1 }, 3);
+			map.add({ id: 2, last: 'Bojangle', expected: 3 }, 4);
 
 			var count = 0, prev = 0;
 
-			hash.forEach(function (value, key) {
+			map.forEach(function (value, key) {
 				count++;
 				// cheap test to see if they're in order
 				assert.equals(key.expected - prev, 1);

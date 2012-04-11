@@ -62,7 +62,6 @@
 				adapted = new ResultAdapter(obj);
 				when(adapted.update({ last: 'Astaire' }),
 					function(updated) {
-						console.log(updated);
 						assert.equals(adapted._obj.first, 'Fred');
 						assert.equals(adapted._obj.last, 'Astaire');
 						assert.equals(adapted._obj, updated);

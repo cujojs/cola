@@ -21,6 +21,26 @@ buster.testCase('ArrayAdapter', {
 		}
 	},
 
+	'forEach': {
+
+		'should iterate over all items': function() {
+			var src, forEachSpy;
+
+			src = new ArrayAdapter([
+				{ id: 1 }, { id: 2 }
+			]);
+
+			forEachSpy = this.spy();
+
+			src.forEach(forEachSpy);
+
+			assert.calledTwice(forEachSpy);
+			assert.calledWith(forEachSpy, { id: 1 });
+			assert.calledWith(forEachSpy, { id: 2 });
+		}
+
+	},
+
 	'add': {
 
 		'should add new items': function() {
@@ -79,9 +99,38 @@ buster.testCase('ArrayAdapter', {
 		}
 	},
 
-	'forEach': {
+	'update': {
+		'should update items': function() {
+			var pa = new ArrayAdapter([
+				{ id: 1, success: false }
+			]);
 
-		'should iterate over all items': function() {
+			var spy = this.spy();
+
+			pa.update({ id: 1, success: true });
+
+			pa.forEach(spy);
+
+			assert.calledOnceWith(spy, { id: 1, success: true });
+		},
+
+		'should ignore updates to non-existent items': function() {
+			var pa = new ArrayAdapter([
+				{ id: 1, success: true }
+			]);
+
+			var spy = this.spy();
+
+			pa.update({ id: 2, success: false });
+
+			pa.forEach(spy);
+
+			assert.calledOnceWith(spy, { id: 1, success: true });
+		}
+	},
+
+	'clear': {
+		'should remove all items': function() {
 			var src, forEachSpy;
 
 			src = new ArrayAdapter([
@@ -90,13 +139,11 @@ buster.testCase('ArrayAdapter', {
 
 			forEachSpy = this.spy();
 
+			src.clear();
 			src.forEach(forEachSpy);
 
-			assert.calledTwice(forEachSpy);
-			assert.calledWith(forEachSpy, { id: 1 });
-			assert.calledWith(forEachSpy, { id: 2 });
+			refute.called(forEachSpy);
 		}
-
 	}
 });
 })(

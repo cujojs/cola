@@ -1,9 +1,10 @@
 (function(buster, when, QueryAdapter) {
 
-var assert, refute;
+var assert, refute, fail;
 
 assert = buster.assert;
 refute = buster.refute;
+fail = buster.assertions.fail;
 
 function promiseFor(it) {
 	return when(it);
@@ -14,6 +15,7 @@ function createDatasource() {
 		getIdentity: function() {},
 		query: function() {},
 		add: function() {},
+		put: function() {},
 		remove: function() {}
 	};
 }
@@ -34,7 +36,7 @@ buster.testCase('QueryAdapter', {
     },
 
 	'query': {
-		'should notify with results': function(done) {
+		'should query datasource': function(done) {
 			var qa, ds, added, removed;
 
 			ds = this.stub(createDatasource());
@@ -44,7 +46,6 @@ buster.testCase('QueryAdapter', {
 			removed = this.spy();
 
 			qa = new QueryAdapter(ds);
-			qa.watch(added, removed);
 
 			// TODO: Should be able to just return this, but there is an error
 			// in buster right now if we do.  When that's fixed, we can remove
@@ -52,15 +53,9 @@ buster.testCase('QueryAdapter', {
 			qa.query().then(
 				function() {
 					assert.calledOnce(ds.query);
-					assert.calledOnce(added);
-					refute.called(removed);
-					done();
 				},
-				function() {
-					buster.fail();
-					done();
-				}
-			);
+				fail
+			).then(done, done);
 		}
 	},
 
@@ -77,17 +72,9 @@ buster.testCase('QueryAdapter', {
 			qa.add(item).then(
 				function() {
 					assert.calledOnceWith(ds.add, item);
-					done();
-				}
-			);
-		},
-
-		'// should notify add then remove if adding to datasource fails': function() {
-
-		},
-
-		'// should notify when item has been added': function() {
-
+				},
+				fail
+			).then(done, done);
 		}
 	},
 
@@ -105,20 +92,34 @@ buster.testCase('QueryAdapter', {
 			qa.remove(item).then(
 				function() {
 					assert.calledOnceWith(ds.remove, item);
-					done();
-				}
-			);
-
-		},
-
-		'// should notify remove then add if removing from datasource fails': function() {
-
-		},
-
-		'// should notify when item has been removed': function() {
+				},
+				fail
+			).then(done, done);
 
 		}
 	},
+
+	'update': {
+		'should update item in datasource': function(done) {
+			var ds, qa, item;
+
+			item = { id: 1 };
+			ds = this.stub(createDatasource());
+			ds.getIdentity.returns(1);
+			ds.query.returns([item]);
+
+			qa = new QueryAdapter(ds);
+			qa.query();
+
+			qa.update(item).then(
+				function() {
+					assert.calledOnceWith(ds.put, item);
+				},
+				fail
+			).then(done, done);
+		}
+	},
+
 
 	'forEach': {
 		'should iterate over empty results before query': function() {
@@ -143,10 +144,12 @@ buster.testCase('QueryAdapter', {
 
 			qa.query();
 
-			qa.forEach(spy).then(function() {
-				assert.calledOnce(spy);
-				done();
-			});
+			qa.forEach(spy).then(
+				function() {
+					assert.calledOnce(spy);
+				},
+				fail
+			).then(done, done);
 
 		}
 	}

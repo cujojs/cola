@@ -39,8 +39,7 @@ define(function () {
 	ArrayAdapter.prototype = {
 
 		_init: function(dataArray) {
-			this._data = [];
-			this._index = {};
+			this.clear();
 
 			if(dataArray && dataArray.length) {
 				addAll(this, dataArray);
@@ -137,6 +136,11 @@ define(function () {
 			}
 
 			return index;
+		},
+
+		clear: function() {
+			this._data = [];
+			this._index = {};
 		}
 
 	};

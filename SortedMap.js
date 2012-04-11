@@ -14,11 +14,7 @@ define(function () {
 
 		// identifier is required, comparator is optional
 
-		// hashmap of object-object pairs
-		this._index = {};
-
-		// 2d array of objects
-		this._sorted = [];
+		this.clear();
 
 		/**
 		 * Fetches a value item for the given key item or the special object,
@@ -219,6 +215,14 @@ define(function () {
 					lambda(entries[j].value, entries[j].key);
 				}
 			}
+		},
+
+		clear: function() {
+			// hashmap of object-object pairs
+			this._index = {};
+
+			// 2d array of objects
+			this._sorted = [];
 		},
 
 		setComparator: function (comparator) {
