@@ -44,7 +44,7 @@ require(['cola/dom/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 	doh.register('the basics', [
 		function getOptions (doh) {
 			var bindings = { cake: 'yes' }, adaptedObject;
-			adaptedObject = new NodeAdapter({}, {
+			adaptedObject = new NodeAdapter(getNode('test'), {
 				bindings: bindings,
 				querySelector: querySelector
 			});
@@ -60,7 +60,26 @@ require(['cola/dom/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 		}
 	]);
 	doh.register('events', [
-		function watch (doh) {
+		function shouldInjectPropertyIntoNode (doh) {
+			var node, first, last, adapted;
+			node = getNode('test');
+			init();
+			first = node.elements.first;
+			last = node.elements.last;
+			adapted = new NodeAdapter(node, {
+				bindings: {
+					// test pre-resolved node
+					first: { events: 'click', prop: 'value', node: first },
+					// test auto-resolved form node (guessNode)
+					last: { events: 'click', prop: 'value' }
+				},
+				querySelector: querySelector
+			});
+			adapted.update({ first: 'Fred', last: 'Astaire' });
+			doh.assertEqual('Fred', first.value, 'first name is set');
+			doh.assertEqual('Astaire', last.value, 'last name is set');
+		},
+		function shouldCallUpdateWhenEventFires (doh) {
 			var node, first, adapted, dfd;
 			node = getNode('test');
 			init();
@@ -75,36 +94,16 @@ require(['cola/dom/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 				querySelector: querySelector
 			});
 			dfd = new doh.Deferred();
-			adapted.watch('first', function (name, value) {
-				dfd.callback(value == 'Martha' && name == 'first');
-			});
+			// record calls to update
+			adapted.update = function (item) {
+				dfd.callback(item.first == 'Martha');
+			};
 			first.value = 'Martha';
 			simulateEvent(first, 'click');
 			return dfd;
 		},
-		function set (doh) {
-			var node, first, adapted, dfd;
-			node = getNode('test');
-			init();
-			first = node.elements.first;
-			adapted = new NodeAdapter(node, {
-				bindings: {
-					// test pre-resolved node
-					first: { events: 'click', prop: 'value', node: first },
-					// test auto-resolved form node (guessNode)
-					last: { events: 'click', prop: 'value' }
-				},
-				querySelector: querySelector
-			});
-			dfd = new doh.Deferred();
-			adapted.watchAll(function (name, value) {
-				dfd.callback(node.elements.last.value == 'Astaire');
-			});
-			adapted.set('last', 'Astaire');
-			return dfd;
-		},
-		function classSet (doh) {
-			var node, first, adapted, dfd;
+		function shouldInsertClassNamesUsingClassSet (doh) {
+			var node, first, adapted;
 			node = getNode('test');
 			init();
 			first = node.elements.first;
@@ -115,16 +114,16 @@ require(['cola/dom/NodeAdapter', 'domReady!'], function(NodeAdapter) {
 				},
 				querySelector: querySelector
 			});
-			dfd = new doh.Deferred();
-			adapted.watchAll(function (name, value) {
-				dfd.callback(node.className.test(/foo bar/));
+			adapted.update({
+				state: {
+					'foo bar': true,
+					'baz bap': true,
+					'elmer fudd': false
+				}
 			});
-			adapted.set('state', {
-				'foo bar': true,
-				'baz bap': true,
-				'elmer fudd': false
-			});
-			return dfd;
+			doh.assertTrue(/foo bar/.test(node.className), 'class name contains "foo bar"');
+			doh.assertTrue(/baz bap/.test(node.className), 'class name contains "baz bap"');
+			doh.assertFalse(/elmer fudd/.test(node.className), 'class name contains "elmer fudd"');
 		}
 	]);
 

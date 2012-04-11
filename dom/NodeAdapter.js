@@ -115,7 +115,7 @@ define(function (require) {
 				binding = this._options.bindings[name];
 				events = binding.event || binding.events;
 				node = this._getNode(binding.node, name);
-				prop = 'prop' in binding ? binding.prop : guessPropFor(node);
+				prop = binding.prop || guessPropFor(node);
 				if (events && node && prop) {
 					this._watchEvents(node, events, name, prop);
 				}
