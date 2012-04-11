@@ -115,13 +115,8 @@ define(function () {
 			at = index[key];
 			data.splice(at, 1);
 
-<<<<<<< HEAD
 			// Rebuild index before notifying
 			this._index = buildIndex(data, this.identifier);
-=======
-			// Rebuild index
-			this._index = buildIndex(data, this._keyFunc);
->>>>>>> rough draft of eventhub-based cola
 
 			return at;
 		},

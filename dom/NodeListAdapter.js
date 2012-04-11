@@ -2,15 +2,16 @@
 define(function(require) {
 "use strict";
 
-	var when, SortedMap, classList, NodeAdapter,
-		undef, defaultTemplateSelector, listElementsSelector,
-		colaListBindingStates;
+	var SortedMap, classList, NodeAdapter,
+		defaultIdAttribute, defaultTemplateSelector, listElementsSelector,
+		colaListBindingStates, undef;
 
 	SortedMap = require('../SortedMap');
 	classList = require('./classList');
 	NodeAdapter = require('./NodeAdapter');
 
 	defaultTemplateSelector = '[data-cola-role="item-template"]';
+	defaultIdAttribute = 'data-cola-id';
 	listElementsSelector = 'tr,li';
 
 	colaListBindingStates = {
@@ -30,6 +31,8 @@ define(function(require) {
 	 * @param options.containerNode {Node} optional parent to all itemNodes. If
 	 * omitted, the parent of rootNode is assumed to be containerNode.
 	 * @param options.querySelector {Function} DOM query function
+	 * @param options.itemTemplateSelector {String}
+	 * @param options.idAttribute {String}
 	 */
 	function NodeListAdapter (rootNode, options) {
 		var container, self;
@@ -194,12 +197,18 @@ define(function(require) {
 		},
 
 		_createNodeAdapter: function (item) {
-			var node, adapter, origUpdate, self;
+			var node, adapter, idAttr, origUpdate, self;
 
 			// create NodeAdapter
 			node = this._templateNode.cloneNode(true);
 			adapter = new NodeAdapter(node, this._options);
 			adapter.update(item);
+
+			// label node for quick identification from events
+			if (this.identifier) {
+				idAttr = this._options.idAttribute || defaultIdAttribute;
+				adapter._rootNode.setAttribute(idAttr, this.identifier(item));
+			}
 
 			// override update() method to call back
 			origUpdate = adapter.update;

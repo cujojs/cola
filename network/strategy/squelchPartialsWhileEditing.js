@@ -1,12 +1,11 @@
 (function (define) {
-define(function (require) {
+define(function () {
 
 	/**
 	 * ***** This is just a sample. *****
 	 */
 
-	var Hub = require('../Hub'),
-		thisStrategy = {};
+	var thisStrategy = {};
 
 	return function configureStrategy (options) {
 		var option1, option2;
@@ -14,13 +13,13 @@ define(function (require) {
 		option1 = options.option1;
 		option2 = options.option2;
 
-		return function (source, dest, data, type) {
+		return function (source, dest, data, type, api) {
 			if (source == thisStrategy) return;
 			if ('partial' == type) {
-				if (option1 && dest == Hub.beforeSending) {
+				if (option1 && dest == api.beforeSending) {
 					return false;
 				}
-				else if (!option2 && dest == Hub.afterSending) {
+				else if (!option2 && dest == api.afterSending) {
 					return false;
 				}
 			}
@@ -31,5 +30,5 @@ define(function (require) {
 }(
 	typeof define == 'function' && define.amd
 		? define
-		: function (factory) { module.exports = factory(require); }
+		: function (factory) { module.exports = factory(); }
 ));

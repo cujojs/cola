@@ -11,9 +11,9 @@ define(function () {
 	function composeStrategies (strategies) {
 		var len = strategies.length;
 
-		return function (source, dest, data, type) {
+		return function (source, dest, data, type, api) {
 			var i = 0, proceed;
-			do proceed = strategies[i](source, dest, data, type);
+			do proceed = strategies[i](source, dest, data, type, api);
 			while (proceed !== false && ++i < len)
 		}
 

@@ -11,17 +11,25 @@ define(function () {
 	 * @param transforms {Object}
 	 */
 	function addPropertyTransforms (adapter, transforms) {
-		var origForEach, origSet, origWatch;
+		var origGet, origAdd, origUpdate, origForEach;
 
 		// only override if transforms has properties
 		if (transforms && hasProperties(transforms)) {
 
-			// keep a reference to original methods
+			origGet = adapter.get;
+			origAdd = adapter.add;
+			origUpdate = adapter.update;
 			origForEach = adapter.forEach;
-			origSet = adapter.set;
-			origWatch = adapter.watch;
 
-			adapter.set = function transformedSet (name, value) {
+			adapter.get = function transformedGet (id) {
+
+			};
+
+			adapter.add = function transformedAdd (item) {
+
+			};
+
+			adapter.update = function transformedUpdate (item) {
 				var transform = transforms[name]
 					|| identity;
 				return origSet.call(adapter, name, transform(value, name));
@@ -40,16 +48,6 @@ define(function () {
 				return origForEach.call(adapter, transformedLambda);
 			};
 
-			adapter.watch = function transformedWatch (name, callback) {
-				var reverse = transforms[name]
-					&& transforms[name].inverse
-					|| identity;
-				function transformedCallback (name, value) {
-					return callback(name, reverse(value, name));
-				}
-				return origWatch.call(adapter, name, transformedCallback);
-			};
-
 		}
 
 		return adapter;
@@ -61,6 +59,24 @@ define(function () {
 
 	function hasProperties (obj) {
 		for (var p in obj) return true;
+	}
+
+	function transformItem (item, transforms) {
+		var transformed, transform;
+
+		transformed = {};
+		for (var name in item) {
+			if (name in transforms) {
+				transform  = transforms[name] || identity;
+				transformed[name] = transform(item[name], name);
+			}
+		}
+
+		return transformed;
+	}
+
+	function reverseItem (item, transforms) {
+
 	}
 
 });

@@ -5,11 +5,10 @@
 define(function (require) {
 "use strict";
 
-	var domEvents, classList, fireSimpleEvent, watchNode;
+	var domEvents, classList, watchNode;
 
 	domEvents = require('./events');
 	classList = require('./classList');
-	fireSimpleEvent = domEvents.fireSimpleEvent;
 	watchNode = domEvents.watchNode;
 
 	/**
@@ -59,9 +58,9 @@ define(function (require) {
 		},
 
 		/**
-		 * Signals that a property in a synchronized object has changed.
-		 * @param name {String} the name of the changed property
-		 * @param value the value of the changed property
+		 * Changes the value of a node attribute mapped from an item property.
+		 * @param name {String} the name of the property
+		 * @param value the new value of the property
 		 */
 		_setProperty: function (name, value) {
 			var b, node, prop, current;
