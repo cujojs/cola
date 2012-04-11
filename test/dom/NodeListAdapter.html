@@ -30,7 +30,8 @@ require(['cola/dom/NodeListAdapter', 'cola/ObjectAdapter', 'domReady!'], functio
 
 	function compareById (a, b) { return a.id - b.id; }
 	function symbolizeById (a) { return a.id; }
-	function querySelector (selector, node) { return node.querySelector(selector); }
+	function querySelector (selector, node) { return (node||document).querySelector(selector); }
+	function querySelectorAll (selector, node) { return (node||document).querySelectorAll(selector); }
 
 
 	function init () {
@@ -41,24 +42,26 @@ require(['cola/dom/NodeListAdapter', 'cola/ObjectAdapter', 'domReady!'], functio
 	}
 
 	doh.register('the basics', [
-		function canHandle (doh) {
+		function shouldHandleNodes (doh) {
+			doh.assertTrue(NodeListAdapter.canHandle(getNode('test')), 'DOMNode');
+		},
+		function shouldNotHandleNonNodes (doh) {
 			doh.assertFalse(NodeListAdapter.canHandle(), 'undefined');
 			doh.assertFalse(NodeListAdapter.canHandle(null), 'null');
 			doh.assertFalse(NodeListAdapter.canHandle(function(){}), 'function');
 			doh.assertFalse(NodeListAdapter.canHandle([]), 'array');
 			doh.assertFalse(NodeListAdapter.canHandle({}), 'object');
-			doh.assertTrue(NodeListAdapter.canHandle(getNode('test')), 'DOMNode');
 		}
 	]);
-	doh.register('add', [
-		function add (doh) {
+	doh.register('events', [
+		function shouldAddNodeForEachItem (doh) {
 			var item, adapted, options;
 			init();
 			options = {
 				querySelector: querySelector,
 				itemTemplateSelector: itemNode,
 				comparator: compareById,
-				symbolizer: symbolizeById
+				identifier: symbolizeById
 			};
 			adapted = new NodeListAdapter(rootNode, options);
 			item = { id: 1 };
@@ -66,50 +69,42 @@ require(['cola/dom/NodeListAdapter', 'cola/ObjectAdapter', 'domReady!'], functio
 			adapted.add({ id: 9 });
 			adapted.add({ id: 3 });
 			doh.assertEqual(3, rootNode.querySelectorAll('fieldset').length);
-		}
-	]);
-	doh.register('events', [
-		function add (doh) {
-			var item, adapted, dfd, options;
-			init();
-			options = {
-				querySelector: querySelector,
-				itemTemplateSelector: itemNode,
-				comparator: compareById,
-				symbolizer: symbolizeById
-			};
-			adapted = new NodeListAdapter(rootNode, options);
-			dfd = new doh.Deferred();
-			item = { id: 1 };
-			adapted.watch(
-				function (addedItem) {
-					dfd.callback(addedItem == item);
-				}
-			);
-			adapted.add(item);
-			return dfd;
 		},
-		function remove (doh) {
-			var item, adapted, dfd;
+		function shouldUpdateNode (doh) {
+			var item, adapted, options;
 			init();
 			options = {
 				querySelector: querySelector,
 				itemTemplateSelector: itemNode,
 				comparator: compareById,
-				symbolizer: symbolizeById
+				identifier: symbolizeById,
+				bindings: {
+					name: { node: '', prop: 'name' }
+				}
 			};
 			adapted = new NodeListAdapter(rootNode, options);
-			dfd = new doh.Deferred();
+			item = { id: 1, name: 'bar' };
+			adapted.add(item);
+			adapted.update({ id: 1, name: 'foo' });
+			doh.assertEqual('foo', querySelector(itemNode).name);
+		},
+		function shouldRemoveNode (doh) {
+			var item, adapted;
+			init();
+			options = {
+				querySelector: querySelector,
+				itemTemplateSelector: itemNode,
+				comparator: compareById,
+				identifier: symbolizeById
+			};
+			adapted = new NodeListAdapter(rootNode, options);
+			rootNode.innerHTML = ''; // clear out previous tests
 			item = { id: 1 };
 			adapted.add(item);
-			adapted.watch(
-				null,
-				function (removedItem) {
-					dfd.callback(removedItem == item);
-				}
-			);
+			adapted.add({ id: 2 });
+			adapted.add({ id: 3 });
 			adapted.remove(item);
-			return dfd;
+			doh.assertEqual(2, querySelectorAll(itemNode, rootNode).length, 'two items remain in list')
 		}
 	]);
 
