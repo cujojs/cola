@@ -115,14 +115,28 @@ define(function () {
 			at = index[key];
 			data.splice(at, 1);
 
-			// Rebuild index before notifying
+			// Rebuild index
 			this._index = buildIndex(data, this.identifier);
 
 			return at;
 		},
 
 		update: function (item) {
-			return this.add(item);
+			var key, at, index;
+
+			key = this.identifier(item);
+			index = this._index;
+
+			at = index[key];
+
+			if (at >= 0) {
+				this._data[at] = item;
+			}
+			else {
+				index[key] = this._data.push(item) - 1;
+			}
+
+			return index;
 		}
 
 	};
