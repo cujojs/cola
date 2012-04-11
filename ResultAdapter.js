@@ -22,13 +22,7 @@ define(function (require) {
 
 	ResultAdapter.prototype = {
 
-		watch: makePromiseAware(ObjectAdapter.prototype.watch),
-
-		watchAll: makePromiseAware(ObjectAdapter.prototype.watchAll),
-
-		set: makePromiseAware(ObjectAdapter.prototype.set),
-
-		forEach: makePromiseAware(ObjectAdapter.prototype.forEach),
+		update: makePromiseAware(ObjectAdapter.prototype.update),
 
 		getOptions: ObjectAdapter.prototype.getOptions
 
