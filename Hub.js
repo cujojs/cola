@@ -43,7 +43,7 @@ define(function (require) {
 	 */
 	afterCanceling = {};
 
-	resolver = require('./resolver');
+	resolver = require('./AdapterResolver');
 	addPropertyTransforms = require('./addPropertyTransforms');
 
 	/**
