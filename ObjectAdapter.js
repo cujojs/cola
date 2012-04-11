@@ -18,9 +18,14 @@ define(function () {
 
 	ObjectAdapter.prototype = {
 
-		update: updateObject,
-
-		partial: updateObject,
+		update: function (item) {
+			var p, obj;
+			// don't replace item in case we got a partial object
+			obj = this._obj;
+			for (p in item) {
+				obj[p] = item[p];
+			}
+		},
 
 		getOptions: function () {
 			return this._options;
@@ -42,14 +47,6 @@ define(function () {
 	};
 
 	return ObjectAdapter;
-
-	function updateObject (item) {
-		var p, obj;
-		obj = this._obj;
-		for (var p in item) {
-			obj[name] = value;
-		}
-	}
 
 });
 }(
