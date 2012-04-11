@@ -187,10 +187,10 @@ define(function (require) {
 
 	// TODO: get rid of this mess
 	resolver.register(require('./ArrayAdapter'), 'collection');
-	resolver.register(require('./NodeListAdapter'), 'collection');
+	resolver.register(require('./dom/NodeListAdapter'), 'collection');
 	resolver.register(require('./ResultSetAdapter'), 'collection');
 	resolver.register(require('./QueryAdapter'), 'collection');
-	resolver.register(require('./NodeAdapter'), 'object');
+	resolver.register(require('./dom/NodeAdapter'), 'object');
 	resolver.register(require('./ObjectAdapter'), 'object');
 	resolver.register(require('./ResultAdapter'), 'object');
 
