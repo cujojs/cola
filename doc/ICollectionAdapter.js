@@ -57,12 +57,8 @@ ICollectionAdapter.prototype = {
 	 *
 	 * @param item {Object}
 	 *
-	 * @returns {Object} a new unadapted object, if one was created. The
-	 * collection may not need to create a new object if it can consume
-	 * adapted objects directly.
-	 *
-	 * @description After adding the item, this method fires an event
-	 * to listeners.
+	 * @description This function will only work if the collection has a
+	 * identity function.
 	 */
 	add: function (item) {},
 
@@ -73,26 +69,21 @@ ICollectionAdapter.prototype = {
 	 * @param item {Object}
 	 *
 	 * @description This function will only work if the collection has a
-	 * comparator function that can detect identity. A comparator that
-	 * only sorts will not work. After adding the item, this method fires
-	 * an event to listeners.
+	 * identity function.
 	 */
 	remove: function (item) {},
 
 	/**
-	 * Stores callback functions for listening to add and remove calls.
+	 * Indicates that an item in the collection should be updated.  If the
+	 * item doesn't already exist in the collection, it should be added.
 	 * @memberOf ICollectionAdapter
 	 *
-	 * @param add {Function} function (item) {}
-	 * @param remove {Function} function (item) {}
+	 * @param item {Object}
 	 *
-	 * @returns {Function} function () {} a function to call to stop
-	 * listening.
-	 *
-	 * @description No checks for recursion are made in the callbacks.
-	 * It is the job of a mediator to ensure that there are no cycles.
+	 * @description This function will only work if the collection has a
+	 * identity function.
 	 */
-	watch: function (add, remove) {},
+	update: function (item) {},
 
 	/**
 	 * Iterates over all of the items in the collection and runs the
@@ -100,14 +91,6 @@ ICollectionAdapter.prototype = {
 	 * @param lambda {Function} function (item) { }
 	 */
 	forEach: function (lambda) {},
-
-	/**
-	 * Optional. Determines if the given item has changed sufficiently that
-	 * it needs to be repositioned in the collection.
-	 *
-	 * @param item {Object}
-	 */
-	checkPosition: function (item) {},
 
 	/**
 	 * Optional method to get the options information that

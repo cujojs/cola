@@ -19,33 +19,10 @@ IObjectAdapter.prototype = {
 	},
 
 	/**
-	 * Watches a specific property and calls back when it changes.
-	 * @param name {String} the name of the property to watch.
-	 * @param callback {Function} function (propValue, propName) {}
-	 * @returns {Function} a function to call when done watching.
+	 * Signals that one or more of the properties has changed.
+	 * @param item {Object} the newly updated item
 	 */
-	watch: function (name, callback) {},
-
-	/**
-	 * Watches all nodes that have explicit bindings.
-	 * @param callback {Function} function (propValue, propName) {}
-	 * @returns {Function} a function to call when done watching.
-	 */
-	watchAll: function (callback) {},
-
-	/**
-	 * Signals that a property in a synchronized object has changed.
-	 * @param name {String} the name of the changed property
-	 * @param value the value of the changed property
-	 */
-	set: function (name, value) {},
-
-	/**
-	 * Iterates over all (known) properties and calls the lambda
-	 * function for each.
-	 * @param lambda {Function} function (value, name) {}
-	 */
-	forEach: function (lambda) {}
+	update: function (item) {}
 
 };
 
