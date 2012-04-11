@@ -33,6 +33,8 @@ define(function (require) {
 			forEach: function(lambda) {
 				var inflight;
 
+				// Ensure that these happen sequentially, even when
+				// the transform function is async
 				function transformedLambda(item) {
 
 					inflight = when(inflight, function() {
@@ -47,34 +49,16 @@ define(function (require) {
 				});
 			},
 
-			watch: function(added, removed) {
-				return adapter.watch(
-					function(item) {
-						return when(transform(item), added);
-					},
-					function(item) {
-						return when(transform(item), removed);
-					}
-				);
+			add: makeTransformedAndPromiseAware(adapter, 'add', inverse),
+
+			remove: makeTransformedAndPromiseAware(adapter, 'remove', inverse),
+
+			update: makeTransformedAndPromiseAware(adapter, 'update', inverse),
+
+			clear: function() {
+				// return the original clear result since it may be a promise
+				return adapter.clear();
 			},
-
-			// If no inverse is supplied, we can't transform the
-			// value back
-			add: inverse
-				? function(item) {
-					return when(inverse(item), function(transformed) {
-						return adapter.add(transformed);
-					});
-				}
-				: noop,
-
-			remove: inverse
-				? function(item) {
-					return when(inverse(item), function(transformed) {
-						return adapter.remove(transformed);
-					});
-				}
-				: noop,
 
 			getOptions: function() {
 				return adapter.getOptions();
@@ -84,6 +68,28 @@ define(function (require) {
 	}
 
 	return transformCollection;
+
+	/**
+	 * Creates a promise-aware version of the adapter method that supports
+	 * transform functions that may return a promise
+	 * @param adapter {Object} original adapter
+	 * @param method {String} name of adapter method to make promise-aware
+	 * @param transform {Function} transform function to apply to items
+	 * before passing them to the original adapter method
+	 * @return {Function} if transform is provided, returns a new function
+	 * that applies the (possibly async) supplied transform and invokes
+	 * the original adapter method with the transform result.  If transform
+	 * is falsey, a no-op function will be returned
+	 */
+	function makeTransformedAndPromiseAware(adapter, method, transform) {
+		return transform
+			? function(item) {
+				return when(transform(item), function(transformed) {
+					return adapter[method](transformed);
+				})
+			}
+			: noop;
+	}
 
 	function noop() {}
 

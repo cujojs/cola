@@ -10,16 +10,10 @@ fail = buster.assertions.fail;
 function createFakeAdapter(data) {
 	data = data || [];
 	return {
-		add: function(item) {
-			return this.added(item);
-		},
-		remove: function(item) {
-			return this.removed(item);
-		},
-		watch: function(added, removed) {
-			this.added = added;
-			this.removed = removed;
-		},
+		add: function(item) {},
+		remove: function(item) {},
+		update: function(item) {},
+		clear: function() {},
 		forEach: function(f) {
 			for(var i = 0, len = data.length; i < len; i++) {
 				f(data[i]);
@@ -153,147 +147,6 @@ buster.testCase('transformCollection', {
 		}
 	},
 
-	'watch': {
-		'should call original': function() {
-			var adapter, transformed;
-
-			adapter = this.stub(createFakeAdapter());
-			transformed = transformCollection(adapter, addOneWithInverse);
-
-			function noop() {}
-			transformed.watch(noop, noop);
-			assert.calledOnce(adapter.watch);
-			refute.calledOnceWith(adapter.watch, noop, noop);
-		},
-
-		'should watch transformed added items': function() {
-			var adapter, transformed, addedSpy;
-
-			adapter = createFakeAdapter();
-			transformed = transformCollection(adapter, addOneWithInverse);
-
-			addedSpy = this.spy();
-
-			transformed.watch(addedSpy, function(){});
-			transformed.add(2);
-
-			assert.calledOnceWith(addedSpy, 2);
-		},
-
-		'should watch transformed added items for promised transform': function(done) {
-			var adapter, transformed, addedSpy;
-
-			adapter = createFakeAdapter();
-			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
-
-			addedSpy = this.spy();
-
-			transformed.watch(addedSpy, function(){});
-			when(transformed.add(2),
-				function() {
-					assert.calledOnceWith(addedSpy, 2);
-				},
-				fail
-			).then(done, done);
-
-		},
-
-		'should notify with transformed item when item added to original adapter': function() {
-			var adapter, transformed, addedSpy;
-
-			adapter = createFakeAdapter();
-			transformed = transformCollection(adapter, addOneWithInverse);
-
-			addedSpy = this.spy();
-
-			transformed.watch(addedSpy, function(){});
-			adapter.add(1);
-
-			assert.calledOnceWith(addedSpy, 2);
-
-		},
-
-		'should notify with transformed item when item added to original adapter for promised transform': function(done) {
-			var adapter, transformed, addedSpy;
-
-			adapter = createFakeAdapter();
-			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
-
-			addedSpy = this.spy();
-
-			transformed.watch(addedSpy, function(){});
-			when(adapter.add(1),
-				function() {
-					assert.calledOnceWith(addedSpy, 2);
-				},
-				fail
-			).then(done, done);
-		},
-
-		'should watch transformed removed items': function() {
-			var adapter, transformed, removedSpy;
-
-			adapter = createFakeAdapter();
-			transformed = transformCollection(adapter, addOneWithInverse);
-
-			removedSpy = this.spy();
-
-			transformed.watch(function(){}, removedSpy);
-			transformed.remove(2);
-
-			assert.calledOnceWith(removedSpy, 2);
-		},
-
-		'should watch transformed removed items for promised transform': function(done) {
-			var adapter, transformed, removedSpy;
-
-			adapter = createFakeAdapter();
-			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
-
-			removedSpy = this.spy();
-
-			transformed.watch(function(){}, removedSpy);
-			when(transformed.remove(2),
-				function() {
-					assert.calledOnceWith(removedSpy, 2);
-				},
-				fail
-			).then(done, done);
-		},
-
-
-		'should notify with transformed item when item removed from original adapter': function() {
-			var adapter, transformed, removedSpy;
-
-			adapter = createFakeAdapter();
-			transformed = transformCollection(adapter, addOneWithInverse);
-
-			removedSpy = this.spy();
-
-			transformed.watch(function(){}, removedSpy);
-			adapter.remove(1);
-
-			assert.calledOnceWith(removedSpy, 2);
-		},
-
-		'should notify with transformed item when item removed from original adapter for promised transform': function(done) {
-			var adapter, transformed, removedSpy;
-
-			adapter = createFakeAdapter();
-			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
-
-			removedSpy = this.spy();
-
-			transformed.watch(function(){}, removedSpy);
-			when(adapter.remove(1),
-				function() {
-					assert.calledOnceWith(removedSpy, 2);
-				},
-				fail
-			).then(done, done);
-		}
-	},
-
 	'add': {
 		'should call original with inverse transformed item': function() {
 			var adapter, transformed;
@@ -343,6 +196,45 @@ buster.testCase('transformCollection', {
 				},
 				fail
 			).then(done, done);
+		}
+	},
+
+	'update': {
+		'should call original with inverse transformed item': function() {
+			var adapter, transformed;
+
+			adapter = this.stub(createFakeAdapter());
+			transformed = transformCollection(adapter, addOneWithInverse);
+
+			transformed.update(1);
+			assert.calledOnceWith(adapter.update, 0);
+		},
+
+		'should allow promised transforms': function(done) {
+			var adapter, transformed;
+
+			adapter = this.stub(createFakeAdapter());
+			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
+
+			when(transformed.update(1),
+				function() {
+					assert.calledOnceWith(adapter.update, 0);
+				},
+				fail
+			).then(done, done);
+		}
+	},
+
+	'clear': {
+		'should call original clear': function() {
+			var adapter, transformed;
+
+			adapter = this.stub(createFakeAdapter());
+			transformed = transformCollection(adapter, addOneWithInverse);
+
+			transformed.clear();
+			assert.calledOnce(adapter.clear);
+
 		}
 	}
 
