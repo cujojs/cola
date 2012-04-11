@@ -4,11 +4,12 @@ define(function () {
 
 	/**
 	 * Returns a network strategy that is a composition of two or more
-	 * other strategies.
+	 * other strategies.  The strategies are executed in the order
+	 * in which they're provided.
 	 * @param strategies {Array} collection of network strategies.
 	 * @returns {strategyFunction} composite network strategy
 	 */
-	function composeStrategies (strategies) {
+	return function composeStrategies (strategies) {
 		var len = strategies.length;
 
 		return function (source, dest, data, type, api) {
@@ -17,9 +18,7 @@ define(function () {
 			while (proceed !== false && ++i < len)
 		}
 
-	}
-
-	return composeStrategies;
+	};
 
 });
 }(
