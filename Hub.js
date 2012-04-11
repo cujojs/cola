@@ -4,20 +4,25 @@ define(function (require) {
 
 	var eventNames, colaIdAttr,
 		beforeSending, afterSending, afterCanceling,
-		resolver, addPropertyTransforms,
+		resolver, addPropertyTransforms, simpleStrategy,
 		undef;
 
 	// TODO: make these configurable/extensible and allow them to be mapped to other members of an adapter
 	eventNames = {
+		// collection item events
 		add: 1,
 		remove: 1,
 		update: 1,
-		select: 1,
-		unselect: 1,
 		target: 1,
 		edit: 1,
 		cancel: 1,
-		save: 1
+		save: 1,
+		// multi-item events
+		select: 1,
+		unselect: 1,
+		// network-level events
+		sync: 1,
+		join: 1
 	};
 
 	colaIdAttr = 'data-cola-id';
@@ -45,6 +50,7 @@ define(function (require) {
 
 	resolver = require('./AdapterResolver');
 	addPropertyTransforms = require('./addPropertyTransforms');
+	simpleStrategy = require('./network/strategy/base');
 
 	/**
 	 * @constructor
@@ -95,6 +101,8 @@ define(function (require) {
 		 * @param [options.eventNames] {Function} function that returns a
 		 *   list of method names that should be considered events
 		 *   If omitted, all methods, the standard event names are used.
+		 * @param options.sync {Boolean} if true, initiates a 'sync' event
+		 *   from this source's adapter
 		 */
 		function addSource (source, options) {
 			var Adapter, adapter, method, eventFinder;
@@ -207,26 +215,6 @@ define(function (require) {
 	 * @returns {Boolean} whether event is allowed.
 	 */
 	//function strategyFunction (source, dest, data, type, api) {};
-
-	/**
-	 * Base network event strategy function.
-	 * @type strategyFunction
-	 * @private
-	 * @param source {Object} the adapter that sourced the event
-	 * @param dest {Object} the adapter receiving the event
-	 * @param data {Object} any data associated with the event
-	 * @param type {String} the type of event
-	 * @returns {Boolean} Event is only allowed
-	 *   if source != dest;
-	 */
-	function simpleStrategy (source, dest, data, type) {
-		if (type in dest && typeof dest[type] != 'function') {
-			throw new Error('Hub: ' + type + ' is not a function.');
-		}
-		if (source != dest) {
-			dest[type](data);
-		}
-	}
 
 	function configureEventFinder (option) {
 		if (typeof option == 'function') return option;
