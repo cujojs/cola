@@ -1,16 +1,12 @@
-(function(buster, ResultAdapter) {
-	var assert, refute, promise, undef;
+(function(buster, when, delay, ResultAdapter) {
+	var assert, refute, fail, promise, undef;
 
 	assert = buster.assert;
 	refute = buster.refute;
-	promise = buster.promise;
+	fail = buster.assertions.fail;
 
 	function promiseFor(it) {
-		var p = promise.create();
-		setTimeout(function() {
-			p.resolve(it);
-		}, 0);
-		return p;
+		return delay(it, 0);
 	}
 
 	buster.testCase('ResultAdapter', {
@@ -45,59 +41,41 @@
 			}
 		},
 
-		'set': {
-			'should update property': function(done) {
-				var adapted;
-				adapted = new ResultAdapter(
-					promiseFor({ first: 'Fred', last: 'Fintstone' })
-				);
-
-				adapted.watch('first', function (name, value) {
-					assert.equals(name, 'first');
-					assert.equals(value, 'Martha');
-					done();
-				});
-
-				adapted.set('first', 'Martha');
-			}
-		},
-
-		'watchAll': {
-			'should watch all properties': function(done) {
-				var adapted;
-				adapted = new ResultAdapter(
-					promiseFor({ first: 'Fred', last: 'Fintstone' })
-				);
-
-				adapted.watch('*', function (name, value) {
-					assert.equals(name, 'first');
-					assert.equals(value, 'Martha');
-					done();
-				});
-
-				adapted.set('first', 'Martha');
-
+		'update': {
+			'should update an object': function (done) {
+				var obj, adapted;
+				obj = { first: 'Fred', last: 'Flintstone' };
+				adapted = new ResultAdapter(obj);
+				when(adapted.update({ first: 'Donna', last: 'Summer' }),
+					function(updated) {
+						assert.equals(adapted._obj.first, 'Donna');
+						assert.equals(adapted._obj.last, 'Summer');
+						assert.equals(adapted._obj, updated);
+					},
+					fail
+				).then(done, done);
 			},
 
-			'should watch properties brought into existence by set': function(done) {
-				var adapted;
-				adapted = new ResultAdapter(
-					promiseFor({})
-				);
-
-				adapted.watch('*', function (name, value) {
-					assert.equals(name, 'first');
-					assert.equals(value, 'Martha');
-					done();
-				});
-
-				adapted.set('first', 'Martha');
-
+			'should update supplied properties when called with a partial': function (done) {
+				var obj, adapted;
+				obj = { first: 'Fred', last: 'Flintstone' };
+				adapted = new ResultAdapter(obj);
+				when(adapted.update({ last: 'Astaire' }),
+					function(updated) {
+						console.log(updated);
+						assert.equals(adapted._obj.first, 'Fred');
+						assert.equals(adapted._obj.last, 'Astaire');
+						assert.equals(adapted._obj, updated);
+					},
+					fail
+				).then(done, done);
 			}
 		}
 	});
 
 })(
 	require('buster'),
+	require('when'),
+	require('when/delay'),
 	require('../ResultAdapter.js')
 );
