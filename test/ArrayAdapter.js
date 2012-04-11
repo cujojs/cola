@@ -23,60 +23,59 @@ buster.testCase('ArrayAdapter', {
 
 	'add': {
 
-		'should add new items': function(done) {
+		'should add new items': function() {
 			var pa = new ArrayAdapter([
 				{ id: 1 }
 			]);
 
-			pa.watch(function(item) {
-				assert.equals(item.id, 2);
-				done();
-			});
+			pa.add({ id: 2 });
 
-			assert(pa.add({ id: 2 }));
+			var spy = this.spy();
+
+			pa.forEach(spy);
+
+			assert.calledTwice(spy);
+
 		},
 
-		'should allow adding an item that already exists': function(done) {
+		'should allow adding an item that already exists': function() {
 			var pa = new ArrayAdapter([
 				{ id: 1 }
 			]);
 
-			pa.watch(function() {
-				buster.fail();
-				done();
-			});
+			var spy = this.spy();
 
-			refute(pa.add({ id: 1 }));
-			done();
+			pa.forEach(spy);
+
+			assert.calledOnce(spy);
 		}
 
 	},
 
 	'remove': {
 
-		'should remove items': function(done) {
+		'should remove items': function() {
 			var pa = new ArrayAdapter([
 				{ id: 1 }, { id: 2 }
 			]);
 
-			pa.watch(null, function(item) {
-				assert.equals(item.id, 1);
-				done();
-			});
-
 			pa.remove({ id: 1 });
+
+			var spy = this.spy();
+
+			pa.forEach(spy);
+
+			assert.calledOnce(spy);
 		},
 
-		'should allow removing non-existent items': function(done) {
+		'should allow removing non-existent items': function() {
 			var pa = new ArrayAdapter([]);
 
-			pa.watch(null, function() {
-				buster.fail();
-				done();
-			});
+			var spy = this.spy();
 
-			refute(pa.remove({ id: 1 }));
-			done();
+			pa.forEach(spy);
+
+			refute.called(spy);
 		}
 	},
 
