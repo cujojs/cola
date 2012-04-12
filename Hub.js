@@ -126,7 +126,8 @@ define(function (require) {
 			// if we can't find an Adapter constructor, it is assumed to be an
 			// adapter already.
 			// TODO: revisit this assumption?
-			Adapter = resolver(source);
+			// TODO: how to detect whether to use 'collection' or 'object' types
+			Adapter = resolver(source, 'collection');
 			adapter = Adapter ? new Adapter(source, options) : source;
 			if (options.bindings) {
 				adapter = addPropertyTransforms(adapter, collectPropertyTransforms(options.bindings));
@@ -195,7 +196,7 @@ define(function (require) {
 			var context, strategyApi, i, adapter, canceled;
 
 			// give public api a chance to see (and possibly cancel) event
-			canceled = callPublicEvent(data, camelize('before', type));
+			canceled = false == callPublicEvent(data, camelize('before', type));
 
 			// if public api cancels, the network never sees the event at all
 			if (!canceled) {
@@ -209,16 +210,17 @@ define(function (require) {
 				context.phase = propagatingPhase;
 				while (!canceled && (adapter = adapters[--i])) {
 					if (false === strategy(source, adapter, data, type, strategyApi)) {
+						canceled = true;
 						break;
 					}
 				}
 
 				context.phase = canceled ? canceledPhase : afterPhase;
-				canceled = strategy(source, undef, data, type, strategyApi);
+				canceled = false == strategy(source, undef, data, type, strategyApi);
 
 			}
 
-			callPublicEvent(data, type);
+			if (!canceled) callPublicEvent(data, type);
 
 			processNextEvent();
 
