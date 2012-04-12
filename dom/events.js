@@ -1,4 +1,4 @@
-(function (define, global) {
+(function (define, global, document) {
 define(function () {
 "use strict";
 
@@ -58,12 +58,14 @@ define(function () {
 			allUnwatches.push(unwatch);
 			return unwatch;
 		};
-		// set global unwatcher
 		// oh IE, you pile o' wonder
-		watchNode(global, 'unload', function () {
-			var unwatch;
-			while ((unwatch = allUnwatches.pop())) squelchedUnwatch(unwatch);
-		})
+		// set global unwatcher (only if we're in a browser environment)
+		if ('onunload' in global) {
+			watchNode(global, 'unload', function () {
+				var unwatch;
+				while ((unwatch = allUnwatches.pop())) squelchedUnwatch(unwatch);
+			});
+		}
 	}
 
 	if(has('dom-createevent')) {
@@ -103,5 +105,6 @@ define(function () {
 	typeof define == 'function'
 		? define
 		: function (factory) { module.exports = factory(); },
-	this
+	this,
+	this.document
 ));
