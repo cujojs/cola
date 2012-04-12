@@ -15,7 +15,7 @@ define(function () {
 			// since sync strategies may squelch network events
 			if (dest == api.beforeSending) {
 				if (first && 'add' == type) {
-					api.queueEvent(source, data, 'target'	);
+					api.queueEvent(source, data, 'target');
 					first = false;
 				}
 				else if ('sync' == type) {
