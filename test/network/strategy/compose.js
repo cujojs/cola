@@ -49,7 +49,7 @@ buster.testCase('cola/network/strategy/compose', {
 			this.spy()
 		];
 
-		compose(strategies)();
+		refute(compose(strategies)());
 
 		assert.called(strategies[0])
 		refute.called(strategies[2]);
