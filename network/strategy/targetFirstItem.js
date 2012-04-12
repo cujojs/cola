@@ -13,7 +13,7 @@ define(function () {
 		return function targetFirstItem (source, dest, data, type, api) {
 			// check to send "target" event before it gets on the network
 			// since sync strategies may squelch network events
-			if (dest == api.beforeSending) {
+			if (api.isBefore()) {
 				if (first && 'add' == type) {
 					api.queueEvent(source, data, 'target');
 					first = false;

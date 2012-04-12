@@ -31,7 +31,7 @@ define(function () {
 
 		return function syncDataDirectly (source, dest, provide, type, api) {
 			// this strategy stops sync events before going on the network
-			if ('sync' == type && dest == api.beforeSending) {
+			if ('sync' == type && api.isBefore()) {
 				synced = source;
 				try {
 					if (provide) {
@@ -74,12 +74,12 @@ define(function () {
 				}
 			}
 			// stop 'add' events between adapters while sync'ing, but allow
-			// strategies interested in the event to see it beforeSending
-			else if ('add' == type && synced && dest != api.beforeSending) {
+			// strategies interested in the event to see it before
+			else if ('add' == type && synced && !api.isBefore()) {
 				return false;
 			}
 			// keep track of adapters that leave
-			else if ('leave' == type && dest == api.afterSending) {
+			else if ('leave' == type && api.isAfter()) {
 				// these just end up being noops if the source isn't in the list
 				remove(providers, source);
 				remove(consumers, source);

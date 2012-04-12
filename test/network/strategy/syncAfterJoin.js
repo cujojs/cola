@@ -6,7 +6,9 @@ assert = buster.assert;
 refute = buster.refute;
 
 var syncAfterJoin = require('cola/network/strategy/syncAfterJoin'),
-	apiConstants = {};
+	mockApi = {
+		isAfter: function () { return true; }
+	};
 
 buster.testCase('cola/network/strategy/syncAfterJoin', {
 
@@ -17,8 +19,8 @@ buster.testCase('cola/network/strategy/syncAfterJoin', {
 	'should call hub\'s queueEvent': function () {
 		var qspy, api, dest, src, options;
 		qspy = this.spy();
-		api = { afterSending: {}, queueEvent: qspy };
-		dest = api.afterSending;
+		api = Object.create(mockApi);
+		api.queueEvent = qspy;
 		src = {
 			getOptions: function () { return options; }
 		};
@@ -40,8 +42,8 @@ buster.testCase('cola/network/strategy/syncAfterJoin', {
 	'should assume source is provider if data is present': function () {
 		var qspy, api, dest, src, options;
 		qspy = this.spy();
-		api = { afterSending: {}, queueEvent: qspy };
-		dest = api.afterSending;
+		api = Object.create(mockApi);
+		api.queueEvent = qspy;
 		src = {
 			forEach: function (lambda) { lambda(1); }
 		};

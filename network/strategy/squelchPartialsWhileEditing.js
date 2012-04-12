@@ -16,10 +16,10 @@ define(function () {
 		return function (source, dest, data, type, api) {
 			if (source == thisStrategy) return;
 			if ('partial' == type) {
-				if (option1 && dest == api.beforeSending) {
+				if (option1 && api.isBefore()) {
 					return false;
 				}
-				else if (!option2 && dest == api.afterSending) {
+				else if (!option2 && api.isAfter()) {
 					return false;
 				}
 			}

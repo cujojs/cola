@@ -3,7 +3,7 @@ define(function (require) {
 "use strict";
 
 	var eventNames, colaIdAttr,
-		beforeSending, afterSending, afterCanceling,
+		beforePhase, propagatingPhase, afterPhase, canceledPhase,
 		resolver, addPropertyTransforms, simpleStrategy,
 		undef;
 
@@ -30,25 +30,27 @@ define(function (require) {
 	colaIdAttr = 'data-cola-id';
 
 	/**
-	 * Pseudo-item used as `dest` parameter for injecting strategies before
-	 * an event is pushed onto the network.  Return false to prevent the
-	 * event from being pushed.
+	 * Signal that event has not yet been pushed onto the network.
+	 * Return false to prevent the event from being pushed.
 	 */
-	beforeSending = {};
+	beforePhase = {};
 
 	/**
-	 * Psuedo-item used as `dest` parameter for injecting strategies after
-	 * an event is pushed onto the network.  Return value is ignored since
-	 * the event has already propagated.
+	 * Signal that event is currently being propagated to adapters.
 	 */
-	afterSending = {};
+	propagatingPhase = {};
 
 	/**
-	 * Psuedo-item used as `dest` parameter for injecting strategies after
-	 * an event is pushed onto the network.  Return value is ignored since
-	 * the event has already propagated.
+	 * Signal that an event has already been pushed onto the network.
+	 * Return value is ignored since the event has already propagated.
 	 */
-	afterCanceling = {};
+	afterPhase = {};
+
+	/**
+	 * Signal that an event was canceled and not pushed onto the network.
+	 * Return value is ignored since the event has already propagated.
+	 */
+	canceledPhase = {};
 
 	resolver = require('./AdapterResolver');
 	addPropertyTransforms = require('./addPropertyTransforms');
@@ -64,7 +66,7 @@ define(function (require) {
 	 * can be composed/combined.
 	 */
 	function Hub (primary, options) {
-		var adapters, eventQueue, strategy, strategyApi, publicApi;
+		var adapters, eventQueue, strategy, publicApi;
 
 		// all adapters in network
 		adapters = [];
@@ -74,13 +76,6 @@ define(function (require) {
 
 		strategy = options.strategy;
 		if (!strategy) strategy = simpleStrategy;
-
-		strategyApi = {
-			queueEvent: queueEvent,
-			beforeSending: beforeSending,
-			afterSending: afterSending,
-			afterCanceling: afterCanceling
-		};
 
 		// create public api
 		publicApi = {
@@ -163,20 +158,36 @@ define(function (require) {
 		}
 
 		function processEvent (source, data, type) {
-			var i, adapter, canceled;
+			var context, strategyApi, i, adapter, canceled;
 
-			canceled = false === strategy(source, strategyApi.beforeSending, data, type, strategyApi);
+			context = { phase: beforePhase };
+			strategyApi = createStrategyApi(context);
+
+			canceled = false === strategy(source, undef, data, type, strategyApi);
 			i = adapters.length;
 
+			context.phase = propagatingPhase;
 			while (!canceled && (adapter = adapters[--i])) {
 				if (false === strategy(source, adapter, data, type, strategyApi)) {
 					break;
 				}
 			}
 
-			strategy(source, canceled ? strategyApi.afterCanceling : strategyApi.afterSending, data, type, strategyApi);
+			context.phase = canceled ? canceledPhase : afterPhase;
+			strategy(source, undef, data, type, strategyApi);
 
 			processNextEvent();
+		}
+
+		function createStrategyApi (context) {
+			function isPhase (phase) { return context.phase == phase; }
+			return {
+				queueEvent: queueEvent,
+				isBefore: function () { return isPhase(beforePhase); },
+				isAfter: function () { return isPhase(afterPhase); },
+				isCanceled: function () { return isPhase(canceledPhase); },
+				isPropagating: function () { return isPhase(propagatingPhase); }
+			};
 		}
 
 		function observeMethod (adapter, type, origEvent) {

@@ -5,7 +5,10 @@ var assert, refute, undef;
 assert = buster.assert;
 refute = buster.refute;
 
-var base = require('cola/network/strategy/base');
+var base = require('cola/network/strategy/base'),
+	mockApi = {
+		isPropagating: function () { return true; }
+	};
 
 buster.testCase('cola/network/strategy/base', {
 
@@ -21,7 +24,7 @@ buster.testCase('cola/network/strategy/base', {
 			anyEvent: spy
 		};
 
-		strategy(null, dest, {}, 'anyEvent');
+		strategy(null, dest, {}, 'anyEvent', mockApi);
 
 		assert.calledOnce(spy);
 	},
@@ -34,7 +37,7 @@ buster.testCase('cola/network/strategy/base', {
 			anyEvent: spy
 		};
 
-		strategy(dest, dest, {}, 'anyEvent');
+		strategy(dest, dest, {}, 'anyEvent', mockApi);
 
 		refute.calledOnce(spy);
 	},
@@ -45,7 +48,7 @@ buster.testCase('cola/network/strategy/base', {
 		strategy = base();
 		dest = {};
 
-		strategy(null, dest, {}, 'anyEvent');
+		strategy(null, dest, {}, 'anyEvent', mockApi);
 
 		refute.calledOnce(spy);
 	},
@@ -59,7 +62,7 @@ buster.testCase('cola/network/strategy/base', {
 		};
 
 		try {
-			strategy(null, dest, {}, 'anyProp');
+			strategy(null, dest, {}, 'anyProp', mockApi);
 			refute(true);
 		}
 		catch (ex) {

@@ -10,9 +10,7 @@ define(function () {
 	return function (options) {
 
 		return function baseStrategy (source, dest, data, type, api) {
-			// `type in dest` will implicitly fall through if dest is one
-			// of the meta-adapters (beforeSending, afterSending, etc.)
-			if (type in dest && source != dest) {
+			if (api.isPropagating() && type in dest && source != dest) {
 				if (typeof dest[type] != 'function') {
 					throw new Error('baseStrategy: ' + type + ' is not a function.');
 				}

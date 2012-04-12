@@ -19,22 +19,22 @@ buster.testCase('targetFirstItem', {
 		src = {};
 		data = {};
 		api = {
-			beforeSending: true,
+			isBefore: function () { return true; },
 			queueEvent: qspy
 		};
 
 		// call twice:
 		strategy = targetFirstItem();
-		strategy(src, api.beforeSending, data, 'add', api);
-		strategy(src, api.beforeSending, data, 'add', api);
+		strategy(src, null, data, 'add', api);
+		strategy(src, null, data, 'add', api);
 
 		assert.calledOnceWith(qspy, src, data, 'target');
 
-		// call once again after sync
+		// call twice again after sync
 		qspy = api.queueEvent = this.spy();
-		strategy(src, api.beforeSending, data, 'sync', api);
-		strategy(src, api.beforeSending, data, 'add', api);
-		strategy(src, api.beforeSending, data, 'add', api);
+		strategy(src, null, data, 'sync', api);
+		strategy(src, null, data, 'add', api);
+		strategy(src, null, data, 'add', api);
 
 		assert.calledOnceWith(qspy, src, data, 'target');
 	}
