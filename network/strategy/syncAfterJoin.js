@@ -3,21 +3,30 @@ define(function () {
 
 	/**
 	 * Returns a strategy function that fires a "sync" function after
-	 * an adapter joins the network.  If the adapter has a truthy `sync`
+	 * an adapter joins the network.  If the adapter has a truthy `provide`
 	 * option set, a "sync from" event is fired. Otherwise, a "sync to me"
 	 * request is sent.
-	 * @param options {Object} not currently used
+	 * @param [options] {Object} options.
+	 * @param [options.isProvider] {Function} function (adapter) { return bool; }
+	 *   returns true for adapters that should be considered to be data
+	 *   providers.  If not supplied, the default isProvider looks for a
+	 *   truthy property on the adapters options called "provide".  If that
+	 *   doesn't exist, it checks for data by calling the adapter's forEach.
+	 *   If the adapter has data, it is considered to be a provider.
 	 * @return {Function} a network strategy function
 	 */
 	return function (options) {
+		var isProvider;
+
+		if (!options) options = {};
+
+		isProvider = options.isProvider || defaultIsProvider;
 
 		return function syncAfterJoin (source, dest, data, type, api) {
-			var options;
 
 			// process this strategy after sending to network
 			if ('join' == type && dest == api.afterSending) {
-				options = source.getOptions && source.getOptions() || {};
-				if (options.sync) {
+				if (isProvider(source)) {
 					// request to sync *from* source (provide)
 					api.queueEvent(source, true, 'sync');
 				}
@@ -32,6 +41,26 @@ define(function () {
 		};
 
 	};
+
+	function defaultIsProvider (adapter) {
+		var options;
+		options = adapter.getOptions && adapter.getOptions() || {};
+		if ('provide' in options) {
+			return options.provide;
+		}
+		else if (adapter.forEach) {
+			// CAUTION: UGLY CODE AHEAD
+			try {
+				adapter.forEach(function (item) {
+					throw item;
+				})
+			}
+			catch (item) {
+				return true;
+			}
+			return false;
+		}
+	}
 
 });
 }(
