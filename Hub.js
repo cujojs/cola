@@ -7,13 +7,14 @@ define(function (require) {
 		resolver, addPropertyTransforms, simpleStrategy,
 		undef;
 
-	// TODO: make these configurable/extensible and allow them to be mapped to other members of an adapter
+	// TODO: make these configurable/extensible
 	eventNames = {
 		// collection item events
 		add: 1,
 		remove: 1,
 		update: 1,
 		target: 1,
+		// edit mode events
 		edit: 1,
 		cancel: 1,
 		save: 1,
@@ -21,8 +22,9 @@ define(function (require) {
 		select: 1,
 		unselect: 1,
 		// network-level events
+		join: 1,
 		sync: 1,
-		join: 1
+		leave: 1
 	};
 
 	colaIdAttr = 'data-cola-id';
@@ -62,19 +64,19 @@ define(function (require) {
 	 * can be composed/combined.
 	 */
 	function Hub (primary, options) {
-		var adapters, currEvents, strategy, strategyApi, publicApi;
+		var adapters, eventQueue, strategy, strategyApi, publicApi;
 
 		// all adapters in network
 		adapters = [];
 
-		// event(s) currently being processed
-		currEvents = {};
+		// events to be processed (fifo)
+		eventQueue = [];
 
 		strategy = options.strategy;
 		if (!strategy) strategy = simpleStrategy;
 
 		strategyApi = {
-			sendEvent: processEvent,
+			queueEvent: queueEvent,
 			beforeSending: beforeSending,
 			afterSending: afterSending,
 			afterCanceling: afterCanceling
@@ -135,32 +137,53 @@ define(function (require) {
 			adapters.push(adapter);
 		}
 
+		function queueEvent (source, data, type) {
+			var queueNeedsRestart;
+
+			// if queue length is zero, we need to start processing it again
+			queueNeedsRestart = eventQueue.length == 0;
+
+			// enqueue event
+			eventQueue.push({ source: source, data: data, type: type });
+
+			// start processing, if necessary
+			if (queueNeedsRestart) processNextEvent();
+		}
+
+		function processNextEvent () {
+			var event;
+
+			// get the next event, if any
+			event = eventQueue.shift();
+
+			// if there was an event, process it
+			if (event) {
+				processEvent(event.source, event.data, event.type);
+			}
+		}
+
 		function processEvent (source, data, type) {
 			var i, adapter, canceled;
 
-			currEvents[type] = source;
-			try {
-				canceled = false === strategy(source, strategyApi.beforeSending, data, type, strategyApi);
-				i = adapters.length;
+			canceled = false === strategy(source, strategyApi.beforeSending, data, type, strategyApi);
+			i = adapters.length;
 
-				while (!canceled && (adapter = adapters[--i])) {
-					if (false === strategy(source, adapter, data, type, strategyApi)) {
-						break;
-					}
+			while (!canceled && (adapter = adapters[--i])) {
+				if (false === strategy(source, adapter, data, type, strategyApi)) {
+					break;
 				}
+			}
 
-				strategy(source, canceled ? strategyApi.afterCanceling : strategyApi.afterSending, data, type, strategyApi);
-			}
-			finally {
-				delete currEvents[type];
-			}
+			strategy(source, canceled ? strategyApi.afterCanceling : strategyApi.afterSending, data, type, strategyApi);
+
+			processNextEvent();
 		}
 
 		function observedMethod (adapter, type, origEvent) {
 			return function (data) {
-				if (!(type in currEvents)) {
-					processEvent(adapter, data, type);
-				}
+				// TODO: use when (or callback) to ensure origEvent is called after queued event is executed
+				// Note: current implementation ensures that the queue is emptied sync, not async
+				queueEvent(adapter, data, type);
 				return origEvent.call(adapter, data);
 			};
 		}
@@ -172,12 +195,11 @@ define(function (require) {
 		}
 
 		function addEventHandler (name, source) {
-			// TODO: figure out how to bind a source from a spec
 			if (!publicApi[name]) {
 				publicApi[name] = function (itemOrDomEvent) {
 					var data;
 					data = convertFromDomEvent(itemOrDomEvent, primary);
-					processEvent(source, data, name);
+					queueEvent(source, data, name);
 				};
 			}
 		}
@@ -205,8 +227,7 @@ define(function (require) {
 	return Hub;
 
 	/**
-	 * Signature for all strategy functions.
-	 * @function strategyFunction
+	 * Signature for all network strategy functions.
 	 * @param source {Object} the adapter that sourced the event
 	 * @param dest {Object} the adapter receiving the event
 	 * @param data {Object} any data associated with the event
@@ -214,7 +235,7 @@ define(function (require) {
 	 * @param api {Object} helpful functions for strategies
 	 * @returns {Boolean} whether event is allowed.
 	 */
-	//function strategyFunction (source, dest, data, type, api) {};
+	function strategyFunction (source, dest, data, type, api) {};
 
 	function configureEventFinder (option) {
 		if (typeof option == 'function') return option;
