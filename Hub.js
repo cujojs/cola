@@ -89,7 +89,7 @@ define(function (require) {
 		};
 
 		// add standard events to publicApi
-		addEventHandlers(eventNames);
+		addApiMethods(eventNames);
 
 		// create adapter for primary and add it
 		addSource(primary, options);
@@ -128,8 +128,8 @@ define(function (require) {
 			for (method in adapter) {
 				if (typeof adapter[method] == 'function') {
 					if (eventFinder(method)) {
-						adapter[method] = observedMethod(adapter, method, adapter[method]);
-						addEventHandler(method, source);
+						observeMethod(adapter, method, adapter[method]);
+						addApiMethod(method, source);
 					}
 				}
 			}
@@ -179,8 +179,8 @@ define(function (require) {
 			processNextEvent();
 		}
 
-		function observedMethod (adapter, type, origEvent) {
-			return function (data) {
+		function observeMethod (adapter, type, origEvent) {
+			return adapter[type] = function (data) {
 				// TODO: use when (or callback) to ensure origEvent is called after queued event is executed
 				// Note: current implementation ensures that the queue is emptied sync, not async
 				queueEvent(adapter, data, type);
@@ -188,13 +188,13 @@ define(function (require) {
 			};
 		}
 
-		function addEventHandlers (eventNames) {
+		function addApiMethods (eventNames) {
 			for (var name in eventNames) {
-				addEventHandler(name);
+				addApiMethod(name);
 			}
 		}
 
-		function addEventHandler (name, source) {
+		function addApiMethod (name, source) {
 			if (!publicApi[name]) {
 				publicApi[name] = function (itemOrDomEvent) {
 					var data;
