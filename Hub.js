@@ -66,13 +66,16 @@ define(function (require) {
 	 * can be composed/combined.
 	 */
 	function Hub (primary, options) {
-		var adapters, eventQueue, strategy, publicApi;
+		var adapters, eventQueue, strategy, publicApi, eventsApi,
+			callPublicEvent;
 
 		// all adapters in network
 		adapters = [];
 
 		// events to be processed (fifo)
 		eventQueue = [];
+
+		callPublicEvent = checkEventsApi;
 
 		strategy = options.strategy;
 		if (!strategy) strategy = simpleStrategy;
@@ -86,8 +89,17 @@ define(function (require) {
 		// add standard events to publicApi
 		addApiMethods(eventNames);
 
+		// add events
+		publicApi.eventsHub = eventsApi = options.eventsHub;
+		if (eventsApi) {
+			addApiEvents(eventNames);
+		}
+		else {
+			eventsApi = {};
+		}
+
 		// create adapter for primary and add it
-		addSource(primary, options);
+		if (primary) addSource(primary, options);
 
 		return publicApi;
 
@@ -98,11 +110,11 @@ define(function (require) {
 		 * @param [options.eventNames] {Function} function that returns a
 		 *   list of method names that should be considered events
 		 *   If omitted, all methods, the standard event names are used.
-		 * @param options.sync {Boolean} if true, initiates a 'sync' event
+		 * @param options.provide {Boolean} if true, initiates a 'sync' event
 		 *   from this source's adapter
 		 */
 		function addSource (source, options) {
-			var Adapter, adapter, method, eventFinder;
+			var Adapter, adapter, proxy, method, eventFinder;
 
 			if (!options) options = {};
 
@@ -116,20 +128,28 @@ define(function (require) {
 				adapter = addPropertyTransforms(adapter, collectPropertyTransforms(options.bindings));
 			}
 
+			proxy = beget(adapter);
+
 			// sniff for event hooks
 			eventFinder = configureEventFinder(options.eventNames);
 
-			// override methods
+			// override methods that require event hooks
 			for (method in adapter) {
 				if (typeof adapter[method] == 'function') {
 					if (eventFinder(method)) {
-						observeMethod(adapter, method, adapter[method]);
-						addApiMethod(method, source);
+						// store original method on proxy (to stop recursion)
+						proxy[method] = adapter[method];
+						// change public api of adapter to call back into hub
+						observeAdapterMethod(adapter, method, adapter[method]);
+						// ensure hub has a public method of the same name
+						addApiMethod(method);
+						addApiEvent(method);
 					}
 				}
 			}
 
-			adapters.push(adapter);
+			// save the proxied adapter
+			adapters.push(proxy);
 		}
 
 		function queueEvent (source, data, type) {
@@ -151,32 +171,52 @@ define(function (require) {
 			// get the next event, if any
 			event = eventQueue.shift();
 
-			// if there was an event, process it
+			// if there was an event, process it soon
 			if (event) {
-				processEvent(event.source, event.data, event.type);
+				setTimeout(function () {
+					processEvent(event.source, event.data, event.type);
+				}, 0);
 			}
 		}
 
+		/*
+			1. call eventsHub.beforeXXX(data)
+			2. call strategy on each source/dest pair w/ event XXX and data
+				- cancel iteration if any strategy returns false for any pair
+			3. if not canceled, call eventsHub.XXX(data)
+		 */
 		function processEvent (source, data, type) {
 			var context, strategyApi, i, adapter, canceled;
 
-			context = { phase: beforePhase };
-			strategyApi = createStrategyApi(context);
+			// give public api a chance to see (and possibly cancel) event
+			canceled = callPublicEvent(data, camelize('before', type));
 
-			canceled = false === strategy(source, undef, data, type, strategyApi);
-			i = adapters.length;
+			// if public api cancels, the network never sees the event at all
+			if (!canceled) {
 
-			context.phase = propagatingPhase;
-			while (!canceled && (adapter = adapters[--i])) {
-				if (false === strategy(source, adapter, data, type, strategyApi)) {
-					break;
+				context = { phase: beforePhase };
+				strategyApi = createStrategyApi(context);
+
+				canceled = false === strategy(source, undef, data, type, strategyApi);
+				i = adapters.length;
+
+				context.phase = propagatingPhase;
+				while (!canceled && (adapter = adapters[--i])) {
+					if (false === strategy(source, adapter, data, type, strategyApi)) {
+						break;
+					}
 				}
+
+				context.phase = canceled ? canceledPhase : afterPhase;
+				canceled = strategy(source, undef, data, type, strategyApi);
+
 			}
 
-			context.phase = canceled ? canceledPhase : afterPhase;
-			strategy(source, undef, data, type, strategyApi);
+			callPublicEvent(data, type);
 
 			processNextEvent();
+
+			return canceled;
 		}
 
 		function createStrategyApi (context) {
@@ -190,12 +230,10 @@ define(function (require) {
 			};
 		}
 
-		function observeMethod (adapter, type, origEvent) {
+		function observeAdapterMethod (adapter, type, origMethod) {
 			return adapter[type] = function (data) {
-				// TODO: use when (or callback) to ensure origEvent is called after queued event is executed
-				// Note: current implementation ensures that the queue is emptied sync, not async
-				queueEvent(adapter, data, type);
-				return origEvent.call(adapter, data);
+				processEvent(adapter, data, type);
+				return origMethod.call(adapter, data);
 			};
 		}
 
@@ -205,13 +243,65 @@ define(function (require) {
 			}
 		}
 
-		function addApiMethod (name, source) {
+		function addApiMethod (name) {
 			if (!publicApi[name]) {
 				publicApi[name] = function (itemOrDomEvent) {
 					var data;
+					// Note: next line assumes the primary knows about all items
 					data = convertFromDomEvent(itemOrDomEvent, primary);
-					queueEvent(source, data, name);
+					return processEvent(null, data, name);
 				};
+			}
+		}
+
+		function addApiEvents (eventNames) {
+			for (var name in eventNames) {
+				addApiEvent(name);
+			}
+		}
+
+		function addApiEvent (name) {
+			// add function stub to api
+			if (!eventsApi[name]) {
+				eventsApi[name] = function (data) {};
+			}
+			// add beforeXXX stub, too
+			name = camelize('before', name);
+			if (!eventsApi[name]) {
+				eventsApi[name] = function (data) {};
+			}
+		}
+
+		function callEventsApi (data, name) {
+			// yah, this is simple, but there's some redirection going on
+			// see checkEventsApi
+			try {
+				return eventsApi[name](data);
+			}
+			catch (ex) {
+				return false;
+			}
+		}
+
+		function checkEventsApi (data, name) {
+			var tempApi;
+
+			// once we have an eventsHub, start using it and stop using
+			// this function
+			if (publicApi.eventsHub) {
+
+				// switch eventsApi to public property
+				eventsApi = publicApi.eventsHub;
+				tempApi = eventsApi;
+
+				// ensure all events are on new api
+				for (var p in tempApi) addApiEvent(p);
+
+				// switch callPublicEvent to normal function
+				callPublicEvent = callEventsApi;
+
+				// resume as usual
+				callPublicEvent(data, name);
 			}
 		}
 
@@ -254,13 +344,12 @@ define(function (require) {
 		return function (name) { return eventNames.hasOwnProperty(name); };
 	}
 
-	function convertFromDomEvent (obj, adapter) {
-		var node, id;
-		// HACK: feature detection
-		if (obj.target && obj.stopPropagation && obj.preventDefault) {
-			obj = undef;
+	function convertFromDomEvent (objOrEvent, adapter) {
+		var obj, node, id;
+		// using feature sniffing to detect if this is an event object
+		if (objOrEvent.target && objOrEvent.stopPropagation && objOrEvent.preventDefault) {
 			// walk dom, find id, return item with same identifier
-			node = obj.target;
+			node = objOrEvent.target;
 			while (node && !node.hasAttribute(colaIdAttr)) {
 				node = node.parentNode;
 				if (node.nodeType != 1) node = undef;
@@ -273,11 +362,14 @@ define(function (require) {
 			}
 			if (!obj) {
 				var err = new Error('Hub: could not find data item for dom event.');
-				err.event = obj; // TODO: is this helpful?
+				err.event = objOrEvent; // TODO: is this helpful?
 				throw err;
 			}
+			return obj;
 		}
-		return obj;
+		else {
+			return objOrEvent;
+		}
 	}
 
 	function collectPropertyTransforms (bindings) {
@@ -292,6 +384,21 @@ define(function (require) {
 		}
 
 		return propertyTransforms;
+	}
+
+	function Begetter () {}
+	function beget (proto) {
+		var obj;
+		Begetter.prototype = proto;
+		obj = new Begetter();
+		Begetter.prototype = undef;
+		return obj;
+	}
+
+	function noop () {}
+
+	function camelize (prefix, name) {
+		return prefix + name.charAt(0).toUpperCase() + name.substr(1);
 	}
 
 });
