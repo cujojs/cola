@@ -52,7 +52,7 @@ define(function (require) {
 
 	resolver = require('./AdapterResolver');
 	addPropertyTransforms = require('./addPropertyTransforms');
-	simpleStrategy = require('./network/strategy/base');
+	simpleStrategy = require('./network/strategy/default');
 
 	/**
 	 * @constructor
