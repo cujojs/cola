@@ -60,10 +60,12 @@ define(function (require) {
 	 * @constructor
 	 * @param primary {Object} primary data source
 	 * @param options.strategy {strategyFunction} a strategy
-	 * Strategies determine if an event gets onto the network and then how
-	 * it's processed by the other adapters in the network.
-	 * Only one strategy can be applied to a network. However, strategies
-	 * can be composed/combined.
+	 *   Strategies determine if an event gets onto the network and then how
+	 *   it's processed by the other adapters in the network.
+	 *   Only one strategy can be applied to a network. However, strategies
+	 *   can be composed/combined.
+	 * @param [options.eventsHub] {Object} an object to receive events
+	 *   from the hub's network
 	 */
 	function Hub (primary, options) {
 		var adapters, eventQueue, strategy, publicApi, eventsApi,
@@ -76,6 +78,8 @@ define(function (require) {
 		eventQueue = [];
 
 		callPublicEvent = checkEventsApi;
+
+		if (!options) options = {};
 
 		strategy = options.strategy;
 		if (!strategy) strategy = simpleStrategy;
@@ -150,6 +154,8 @@ define(function (require) {
 
 			// save the proxied adapter
 			adapters.push(proxy);
+
+			return adapter;
 		}
 
 		function queueEvent (source, data, type) {
