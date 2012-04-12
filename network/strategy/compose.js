@@ -5,17 +5,22 @@ define(function () {
 	/**
 	 * Returns a network strategy that is a composition of two or more
 	 * other strategies.  The strategies are executed in the order
-	 * in which they're provided.
+	 * in which they're provided.  If any strategy cancels, the remaining
+	 * strategies are never executed and the cancel is sent back to the Hub.
+	 *
 	 * @param strategies {Array} collection of network strategies.
-	 * @returns {strategyFunction} composite network strategy
+	 * @return {Function} a composite network strategy function
 	 */
 	return function composeStrategies (strategies) {
 		var len = strategies.length;
 
 		return function (source, dest, data, type, api) {
 			var i = 0, proceed;
+
 			do proceed = strategies[i](source, dest, data, type, api);
-			while (proceed !== false && ++i < len)
+			while (proceed !== false && ++i < len);
+
+			return proceed;
 		}
 
 	};
