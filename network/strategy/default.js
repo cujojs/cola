@@ -7,9 +7,9 @@ define(function (require) {
 	var
 		compose = require('./compose'),
 		base = require('./base'),
+		targetFirstItem = require('./targetFirstItem'),
 		syncAfterJoin = require('./syncAfterJoin'),
-		syncDataDirectly = require('./syncDataDirectly'),
-		compose = require('./compose');
+		syncDataDirectly = require('./syncDataDirectly');
 
 	/**
 	 * This is a composition of the strategies that Brian and I think
@@ -26,6 +26,7 @@ define(function (require) {
 		strategies = [
 			syncAfterJoin(options),
 			syncDataDirectly(options),
+			targetFirstItem(options),
 			base(options)
 		];
 

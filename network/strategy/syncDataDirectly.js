@@ -73,8 +73,9 @@ define(function () {
 					synced = undef;
 				}
 			}
-			// stop 'add' events while sync'ing
-			else if ('add' == type && synced) {
+			// stop 'add' events between adapters while sync'ing, but allow
+			// strategies interested in the event to see it beforeSending
+			else if ('add' == type && synced && dest != api.beforeSending) {
 				return false;
 			}
 			// keep track of adapters that leave
