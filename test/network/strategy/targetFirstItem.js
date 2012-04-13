@@ -5,7 +5,7 @@ var assert, refute, undef;
 assert = buster.assert;
 refute = buster.refute;
 
-var targetFirstItem = require('cola/network/strategy/targetFirstItem');
+var targetFirstItem = require('../../../network/strategy/targetFirstItem');
 
 buster.testCase('targetFirstItem', {
 

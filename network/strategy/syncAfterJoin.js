@@ -43,10 +43,8 @@ define(function () {
 	};
 
 	function defaultIsProvider (adapter) {
-		var options;
-		options = adapter.getOptions && adapter.getOptions() || {};
-		if ('provide' in options) {
-			return options.provide;
+		if ('provide' in adapter) {
+			return adapter.provide;
 		}
 		else if (adapter.forEach) {
 			// CAUTION: UGLY CODE AHEAD

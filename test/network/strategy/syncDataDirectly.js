@@ -5,7 +5,7 @@ var assert, refute, undef;
 assert = buster.assert;
 refute = buster.refute;
 
-var syncDataDirectly = require('cola/network/strategy/syncDataDirectly');
+var syncDataDirectly = require('../../../network/strategy/syncDataDirectly');
 
 var fakeApi = function (phase) {
 	return {

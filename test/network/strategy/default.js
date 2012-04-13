@@ -5,7 +5,7 @@ var assert, refute, undef;
 assert = buster.assert;
 refute = buster.refute;
 
-var def = require('cola/network/strategy/default');
+var def = require('../../../network/strategy/default');
 
 buster.testCase('cola/network/strategy/default', {
 

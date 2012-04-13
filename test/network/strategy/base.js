@@ -5,7 +5,7 @@ var assert, refute, undef;
 assert = buster.assert;
 refute = buster.refute;
 
-var base = require('cola/network/strategy/base'),
+var base = require('../../../network/strategy/base'),
 	mockApi = {
 		isPropagating: function () { return true; }
 	};

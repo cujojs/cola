@@ -77,6 +77,10 @@ define(function(require) {
 			}
 		);
 
+		this._itemsById = new SortedMap(
+			function(key) { return key; }
+		);
+
 	}
 
 	NodeListAdapter.prototype = {
@@ -95,6 +99,8 @@ define(function(require) {
 				this._itemCount++;
 				// insert
 				this._insertNodeAt(adapter._rootNode, index);
+
+				this._itemsById.add(this.identifier(item), item);
 			}
 		},
 
@@ -113,11 +119,13 @@ define(function(require) {
 				adapter.destroy();
 				// remove from dom
 				node.parentNode.removeChild(node);
+
+				this._itemsById.remove(this.identifier(item));
 			}
 		},
 
 		update: function (item) {
-			var adapter, index;
+			var adapter, index, key;
 
 			adapter = this._itemData.get(item);
 
@@ -137,6 +145,10 @@ define(function(require) {
 
 			this._itemData.remove(item);
 			index = this._itemData.add(item, adapter);
+
+			key = this.identifier(item);
+			this._itemsById.remove(key);
+			this._itemsById.add(key, item);
 
 			this._insertNodeAt(adapter._rootNode, index);
 		},
@@ -167,9 +179,9 @@ define(function(require) {
 			idAttr = this._options.idAttribute || defaultIdAttribute;
 
 			do id = node.getAttribute(idAttr);
-			while (!id && (node = node.parentNode) && node.nodeType == 1);
+			while (id == null && (node = node.parentNode) && node.nodeType == 1);
 
-			return id && this._itemData.get(id);
+			return id != null && this._itemsById.get(id);
 		},
 
 		/**

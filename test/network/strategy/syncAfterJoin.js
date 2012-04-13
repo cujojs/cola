@@ -1,11 +1,10 @@
 (function (buster, require) {
 
-var assert, refute, undef;
-
-assert = buster.assert;
+var assert, refute;
+	assert = buster.assert;
 refute = buster.refute;
 
-var syncAfterJoin = require('cola/network/strategy/syncAfterJoin'),
+var syncAfterJoin = require('../../../network/strategy/syncAfterJoin'),
 	mockApi = {
 		isAfter: function () { return true; }
 	};
@@ -16,31 +15,47 @@ buster.testCase('cola/network/strategy/syncAfterJoin', {
 		assert.isFunction(syncAfterJoin([]));
 		refute(syncAfterJoin([])());
 	},
-	'should call hub\'s queueEvent': function () {
-		var qspy, api, dest, src, options;
+
+	'should call hub\'s queueEvent': function (done) {
+		var qspy, api, dest, src;
+		qspy = this.spy();
+		api = Object.create(mockApi);
+		api.queueEvent = qspy;
+		src = {};
+
+		syncAfterJoin()(src, dest, {}, 'join', api);
+
+		setTimeout(function() {
+			assert.calledOnceWith(qspy, src, false, 'sync');
+			done();
+		}, 0);
+
+	},
+
+	'should call hub\'s queueEvent when provide is true': function (done) {
+		var qspy, api, dest, src;
 		qspy = this.spy();
 		api = Object.create(mockApi);
 		api.queueEvent = qspy;
 		src = {
-			getOptions: function () { return options; }
+			provide: true
 		};
-		options = {};
-
-		syncAfterJoin()(src, dest, {}, 'join', api);
-
-		assert.calledOnce(qspy);
-		assert.calledOnceWith(qspy, src, false, 'sync');
 
 		// add provider option and test for true data param
 
-		options.provide = true;
 		syncAfterJoin()(src, dest, {}, 'join', api);
 
-		assert.calledTwice(qspy);
-		assert.calledWith(qspy, src, true, 'sync');
+		setTimeout(function() {
+			// Ensure that it was called twice, *and* at least one of
+			// those was called with these args
+			assert.calledOnceWith(qspy, src, true, 'sync');
+			done();
+		}, 0);
+
 	},
+
 	'should assume source is provider if data is present': function () {
-		var qspy, api, dest, src, options;
+		var qspy, api, dest, src;
 		qspy = this.spy();
 		api = Object.create(mockApi);
 		api.queueEvent = qspy;

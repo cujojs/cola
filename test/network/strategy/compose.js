@@ -5,7 +5,7 @@ var assert, refute, compose, undef;
 assert = buster.assert;
 refute = buster.refute;
 
-compose = require('cola/network/strategy/compose');
+compose = require('../../../network/strategy/compose');
 
 buster.testCase('cola/network/strategy/compose', {
 

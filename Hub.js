@@ -77,9 +77,12 @@ define(function (require) {
 	 * root node) will automatically be translated to the correct data item and
 	 * the correct source.
 	 */
-	function Hub (primary, options) {
+	function Hub (options) {
 		var adapters, eventQueue, strategy, publicApi, eventsApi,
 			callPublicEvent;
+
+		// TODO: Determine if we need to save Hub options and mix them into
+		// options passed thru to adapters in addSource
 
 		// all adapters in network
 		adapters = [];
@@ -92,7 +95,7 @@ define(function (require) {
 		if (!options) options = {};
 
 		strategy = options.strategy;
-		if (!strategy) strategy = simpleStrategy;
+		if (!strategy) strategy = simpleStrategy(options.strategyOptions);
 
 		// create public api
 		publicApi = {
@@ -111,9 +114,6 @@ define(function (require) {
 		else {
 			eventsApi = {};
 		}
-
-		// create adapter for primary and add it
-		if (primary) addSource(primary, options);
 
 		return publicApi;
 
@@ -147,6 +147,7 @@ define(function (require) {
 
 			// keep copy of original source so we can match it up later
 			proxy.origSource = source;
+			proxy.provide = options.provide;
 
 			// sniff for event hooks
 			eventFinder = configureEventFinder(options.eventNames);
@@ -168,6 +169,11 @@ define(function (require) {
 
 			// save the proxied adapter
 			adapters.push(proxy);
+
+			// TODO: Should we use a boolean for the 2nd param to indicate join vs. leave
+			// instead of using separate events?
+			// Right now the second param is unused
+			processEvent(proxy, null, 'join');
 
 			return adapter;
 		}
@@ -209,7 +215,7 @@ define(function (require) {
 			var context, strategyApi, i, adapter, canceled;
 
 			// give public api a chance to see (and possibly cancel) event
-			canceled = false == callPublicEvent(data, camelize('before', type));
+			canceled = false === callPublicEvent(data, camelize('before', type));
 
 			// if public api cancels, the network never sees the event at all
 			if (!canceled) {
@@ -229,7 +235,7 @@ define(function (require) {
 				}
 
 				context.phase = canceled ? canceledPhase : afterPhase;
-				canceled = false == strategy(source, undef, data, type, strategyApi);
+				canceled = false === strategy(source, undef, data, type, strategyApi);
 
 			}
 

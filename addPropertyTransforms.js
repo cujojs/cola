@@ -29,13 +29,13 @@ define(function () {
 
 			if (origAdd) {
 				adapter.add = function transformedAdd (item) {
-					return origAdd.call(adapter, transformItem(item, transforms, true));
+					return origAdd.call(adapter, transformItem(item, transforms));
 				};
 			}
 
 			if (origUpdate) {
 				adapter.update = function transformedUpdate (item) {
-					return origUpdate.call(adapter, transformItem(item, transforms, true));
+					return origUpdate.call(adapter, transformItem(item, transforms));
 				};
 			}
 
@@ -73,12 +73,10 @@ define(function () {
 
 		// loop through properties. should we use hasOwnProperty()?
 		for (var name in item) {
-			if (name in transforms) {
-				transform = (inverse
-					? transforms[name] && transforms[name].inverse
-					: transforms[name]) || identity;
-				transformed[name] = transform(item[name], name);
-			}
+			transform = (inverse
+				? transforms[name] && transforms[name].inverse
+				: transforms[name]) || identity;
+			transformed[name] = transform(item[name], name);
 		}
 
 		return transformed;
