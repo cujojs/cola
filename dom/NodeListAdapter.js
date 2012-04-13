@@ -28,11 +28,12 @@ define(function(require) {
 	 * in the collection / list.
 	 * @param options.comparator {Function} comparator function to use for
 	 *  ordering nodes
-	 * @param options.containerNode {Node} optional parent to all itemNodes. If
+	 * @param [options.containerNode] {Node} optional parent to all itemNodes. If
 	 * omitted, the parent of rootNode is assumed to be containerNode.
-	 * @param options.querySelector {Function} DOM query function
-	 * @param options.itemTemplateSelector {String}
-	 * @param options.idAttribute {String}
+	 * @param [options.querySelector] {Function} DOM query function
+	 * @param [options.itemTemplateSelector] {String}
+	 * @param [options.idAttribute] {String}
+	 * @param [options.containerAttribute] {String}
 	 */
 	function NodeListAdapter (rootNode, options) {
 		var container, self;
@@ -157,13 +158,26 @@ define(function(require) {
 			return this._options;
 		},
 
+		getItemForEvent: function (e) {
+			var node, idAttr, id;
+
+			// start at e.target and work up
+			// Note: this method assumes the event object has been normalized
+			node = e.target;
+			idAttr = this._options.idAttribute || defaultIdAttribute;
+
+			do id = node.getAttribute(idAttr);
+			while (!id && (node = node.parentNode) && node.nodeType == 1);
+
+			return id && this._itemData.get(id);
+		},
+
 		/**
 		 * Compares two data items.  Works just like the comparator function
-		 * for Array.prototype.sort. This comparator is used for two purposes:
-		 * 1. to sort the items in the list (sequence)
-		 * 2. to find an item in the list (identity)
+		 * for Array.prototype.sort. This comparator is used to sort the
+		 * items in the list.
 		 * This property should be injected.  If not supplied, the list
-		 * will rely on one assigned by a mediator.
+		 * will rely on one assigned by cola.
 		 * @param a {Object}
 		 * @param b {Object}
 		 * @returns {Number} -1, 0, 1

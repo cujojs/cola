@@ -254,10 +254,15 @@ define(function (require) {
 		function addApiMethod (name) {
 			if (!publicApi[name]) {
 				publicApi[name] = function (itemOrDomEvent) {
-					var data;
-					// Note: next line assumes the primary knows about all items
-					data = convertFromDomEvent(itemOrDomEvent, primary);
-					return processEvent(null, data, name);
+					var sourceInfo;
+					if (isDomEvent(itemOrDomEvent)) {
+						sourceInfo = convertFromDomEvent(itemOrDomEvent, adapters);
+					}
+					else {
+						// TODO: figure out how to get source for public events
+						sourceInfo = { item: itemOrDomEvent };
+					}
+					return processEvent(sourceInfo.source, sourceInfo.item, name);
 				};
 			}
 		}
@@ -352,32 +357,30 @@ define(function (require) {
 		return function (name) { return eventNames.hasOwnProperty(name); };
 	}
 
-	function convertFromDomEvent (objOrEvent, adapter) {
-		var obj, node, id;
+	function convertFromDomEvent (itemOrEvent, adapters) {
+		var item, i, adapter;
+
+		// loop through adapters that have the getItemForEvent() method
+		// to try to find out which adapter and which data item
+		i = 0;
+		while (!item && (adapter = adapters[i++])) {
+			if (adapter.getItemForEvent) {
+				item = adapter.getItemForEvent(itemOrEvent);
+			}
+		}
+
+		if (!item) {
+			var err = new Error('Hub: could not find data item for dom event.');
+			err.event = itemOrEvent; // TODO: is this helpful?
+			throw err;
+		}
+
+		return { item: item, source: adapter };
+	}
+
+	function isDomEvent (e) {
 		// using feature sniffing to detect if this is an event object
-		if (objOrEvent.target && objOrEvent.stopPropagation && objOrEvent.preventDefault) {
-			// walk dom, find id, return item with same identifier
-			node = objOrEvent.target;
-			while (node && !node.hasAttribute(colaIdAttr)) {
-				node = node.parentNode;
-				if (node.nodeType != 1) node = undef;
-			}
-			if (node) {
-				id = node.getAttribute(colaIdAttr);
-				adapter.forEach(function (item) {
-					if (adapter.identifier(item) == id) obj = item;
-				});
-			}
-			if (!obj) {
-				var err = new Error('Hub: could not find data item for dom event.');
-				err.event = objOrEvent; // TODO: is this helpful?
-				throw err;
-			}
-			return obj;
-		}
-		else {
-			return objOrEvent;
-		}
+		return e.target && e.stopPropagation && e.preventDefault;
 	}
 
 	function collectPropertyTransforms (bindings) {
