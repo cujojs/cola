@@ -2,7 +2,7 @@
 define(function (require) {
 "use strict";
 
-	var eventNames, colaIdAttr,
+	var eventNames,
 		beforePhase, propagatingPhase, afterPhase, canceledPhase,
 		resolver, addPropertyTransforms, simpleStrategy,
 		undef;
@@ -26,8 +26,6 @@ define(function (require) {
 		sync: 1,
 		leave: 1
 	};
-
-	colaIdAttr = 'data-cola-id';
 
 	/**
 	 * Signal that event has not yet been pushed onto the network.
@@ -61,11 +59,23 @@ define(function (require) {
 	 * @param primary {Object} primary data source
 	 * @param options.strategy {strategyFunction} a strategy
 	 *   Strategies determine if an event gets onto the network and then how
-	 *   it's processed by the other adapters in the network.
+	 *   it's processed by the other data sources in the network.
 	 *   Only one strategy can be applied to a network. However, strategies
 	 *   can be composed/combined.
 	 * @param [options.eventsHub] {Object} an object to receive events
 	 *   from the hub's network
+	 *
+	 * @description
+	 * The hub exposes actions that can be propagated through the network
+	 * of data sources.  These actions are the same actions supported by
+	 * the adapters that wrap the data sources.  Examples include: add(),
+	 * remove(), update(), select(), unselect().  Each action has the same
+	 * signature: `function (data, [source]) { return bool; }`  The source
+	 * parameter is optional, but may be critical for proper operation of
+	 * certain strategies.  Supplying a dom event from a dom node that was
+	 * added to a hub (i.e. the dom node is under a NodeListAdapter's
+	 * root node) will automatically be translated to the correct data item and
+	 * the correct source.
 	 */
 	function Hub (primary, options) {
 		var adapters, eventQueue, strategy, publicApi, eventsApi,
@@ -134,6 +144,9 @@ define(function (require) {
 			}
 
 			proxy = beget(adapter);
+
+			// keep copy of original source so we can match it up later
+			proxy.origSource = source;
 
 			// sniff for event hooks
 			eventFinder = configureEventFinder(options.eventNames);
@@ -259,8 +272,10 @@ define(function (require) {
 						sourceInfo = convertFromDomEvent(itemOrDomEvent, adapters);
 					}
 					else {
-						// TODO: figure out how to get source for public events
-						sourceInfo = { item: itemOrDomEvent };
+						sourceInfo = {
+							item: itemOrDomEvent,
+							source: findAdapterForSource(arguments[1], adapters)
+						};
 					}
 					return processEvent(sourceInfo.source, sourceInfo.item, name);
 				};
@@ -381,6 +396,20 @@ define(function (require) {
 	function isDomEvent (e) {
 		// using feature sniffing to detect if this is an event object
 		return e.target && e.stopPropagation && e.preventDefault;
+	}
+
+	function findAdapterForSource (source, adapters) {
+		var i, adapter, found;
+
+		// loop through adapters and find which one was created for this source
+		i = 0;
+		while (!found && (adapter = adapters[i++])) {
+			if (adapter.origSource == source) {
+				found = adapter;
+			}
+		}
+
+		return found;
 	}
 
 	function collectPropertyTransforms (bindings) {
