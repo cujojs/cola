@@ -9,7 +9,6 @@ exports['shared tests'] = {
 		'SortedMap.js',
 		'Hub.js',
 		'network/strategy/*.js',
-		'mediator/*.js',
 		'transform/*.js',
 		'relational/*.js',
 		'relational/strategy/*.js',

@@ -14,8 +14,13 @@ define(function (require) {
 	/**
 	 * This is a composition of the strategies that Brian and I think
 	 * make sense. :)
-	 * @param {Object} a conglomeration of all of the options for the
+	 *
+	 * @param options {Object} a conglomeration of all of the options for the
 	 *   strategies used.
+	 * @param options.targetFirstItem {Boolean} if truthy, the strategy
+	 * will automatically target the first item that is added to the network.
+	 * If falsey, it will not automatically target.
+	 *
 	 * @return {Function} a composite network strategy function
 	 */
 	return function (options) {
@@ -25,10 +30,14 @@ define(function (require) {
 		// configure strategies
 		strategies = [
 			syncAfterJoin(options),
-			syncDataDirectly(options),
-			targetFirstItem(options),
-			base(options)
+			syncDataDirectly(options)
 		];
+
+		if(options && options.targetFirstItem) {
+			strategies.push(targetFirstItem(options));
+		}
+
+		strategies.push(base(options));
 
 		// compose them
 		return compose(strategies);
