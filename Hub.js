@@ -62,7 +62,7 @@ define(function (require) {
 	 *   it's processed by the other data sources in the network.
 	 *   Only one strategy can be applied to a network. However, strategies
 	 *   can be composed/combined.
-	 * @param [options.eventsHub] {Object} an object to receive events
+	 * @param [options.events] {Object} an object to receive events
 	 *   from the hub's network
 	 *
 	 * @description
@@ -107,7 +107,7 @@ define(function (require) {
 		addApiMethods(eventNames);
 
 		// add events
-		publicApi.eventsHub = eventsApi = options.eventsHub;
+		publicApi.events = eventsApi = options.events;
 		if (eventsApi) {
 			addApiEvents(eventNames);
 		}
@@ -206,10 +206,10 @@ define(function (require) {
 		}
 
 		/*
-			1. call eventsHub.beforeXXX(data)
+			1. call events.beforeXXX(data)
 			2. call strategy on each source/dest pair w/ event XXX and data
 				- cancel iteration if any strategy returns false for any pair
-			3. if not canceled, call eventsHub.XXX(data)
+			3. if not canceled, call events.XXX(data)
 		 */
 		function processEvent (source, data, type) {
 			var context, strategyApi, i, adapter, canceled;
@@ -320,12 +320,12 @@ define(function (require) {
 		function checkEventsApi (data, name) {
 			var tempApi;
 
-			// once we have an eventsHub, start using it and stop using
+			// once we have a publicApi.events, start using it and stop using
 			// this function
-			if (publicApi.eventsHub) {
+			if (publicApi.events) {
 
 				// switch eventsApi to public property
-				eventsApi = publicApi.eventsHub;
+				eventsApi = publicApi.events;
 				tempApi = eventsApi;
 
 				// ensure all events are on new api

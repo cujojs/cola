@@ -7,7 +7,7 @@ exports['shared tests'] = {
 		'QueryAdapter.js',
 		'transformCollection.js',
 		'SortedMap.js',
-		//'Hub.js',
+		'Hub.js',
 		'network/strategy/*.js',
 		'mediator/*.js',
 		'transform/*.js',

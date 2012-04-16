@@ -5,8 +5,8 @@ var assert, refute, undef;
 assert = buster.assert;
 refute = buster.refute;
 
-var Hub = require('cola/Hub');
-var ArrayAdapter = require('cola/ArrayAdapter');
+var Hub = require('../Hub');
+var ArrayAdapter = require('../ArrayAdapter');
 
 buster.testCase('cola/Hub', {
 
@@ -23,10 +23,10 @@ buster.testCase('cola/Hub', {
 		assert.isFunction(h.update);
 		assert.isFunction(h.remove);
 	},
-	'should add events to eventsHub': function () {
-		var e = {}, h = new Hub({}, {
-			eventsHub: e
-		});
+	'should add events to events api': function () {console.log('start');
+		var e = {}, h = new Hub({
+			events: e
+		});console.log('end');
 		// this isn't a complete list, but proves the mechanism basically works
 		assert.isObject(e);
 		assert.isFunction(e.add);
@@ -49,8 +49,8 @@ buster.testCase('cola/Hub', {
 		assert.same(a, adapter);
 	},
 	'should find and add new event types from adapter': function () {
-		var e = {}, h = new Hub({}, {
-			eventsHub: e
+		var e = {}, h = new Hub({
+			events: e
 		});
 		var adapter = new ArrayAdapter([]);
 		adapter.crazyNewEvent = function () {};
@@ -59,30 +59,28 @@ buster.testCase('cola/Hub', {
 		});
 		// check for method on hub api
 		assert.isFunction(h.crazyNewEvent);
-		// check for event on eventsHub api
+		// check for event on events api
 		assert.isFunction(e.crazyNewEvent);
 	},
-	'should call strategy n+2 times where n == number of adapters': function () {
+	'should call strategy to join adapter and add item': function () {
 		var strategy = this.spy();
 		var e = {};
+		e.join = this.spy();
 		e.add = this.spy();
 		e.beforeAdd = this.spy();
-		var h = new Hub(null, {
+		var h = new Hub({
 			strategy: strategy,
-			eventsHub: e
+			events: e
 		});
 		var primary = h.addSource([]);
 
+		// strategy should be called to join primary into network
+		assert.calledOnce(e.join);
+
 		primary.name = 'primary'; // debug
-//		var secondary = h.addSource([]);
-//		secondary.name = 'secondary'; // debug
 		primary.add({ id: 1 });
 
-		// strategy should be called three times
-		assert.calledThrice(strategy);
-
 		// event hub event should be called
-		// TODO: put this in its own test
 		assert.calledOnce(e.add);
 		assert.calledOnce(e.beforeAdd);
 		assert.callOrder(e.beforeAdd, e.add)
@@ -91,16 +89,14 @@ buster.testCase('cola/Hub', {
 		var e = {};
 		e.add = this.spy();
 		e.beforeAdd = this.spy();
-		var h = new Hub(null, {
+		var h = new Hub({
 			strategy: strategy,
-			eventsHub: e
+			events: e
 		});
 		var primary = h.addSource([]);
 		var isCanceled;
 
 		primary.name = 'primary'; // debug
-//		var secondary = h.addSource([]);
-//		secondary.name = 'secondary'; // debug
 		primary.add({ id: 1 });
 
 		// event hub add should not be called
@@ -116,7 +112,7 @@ buster.testCase('cola/Hub', {
 		}
 	},
 	'should run queued event in next turn': function (done) {
-		var h = new Hub(null, { strategy: strategy });
+		var h = new Hub({ strategy: strategy });
 		var primary = h.addSource([]);
 		var removeDetected;
 
