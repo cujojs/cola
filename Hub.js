@@ -78,8 +78,7 @@ define(function (require) {
 	 * the correct source.
 	 */
 	function Hub (options) {
-		var adapters, eventQueue, strategy, publicApi, eventsApi,
-			callPublicEvent;
+		var adapters, eventQueue, strategy, publicApi, eventsApi;
 
 		// TODO: Determine if we need to save Hub options and mix them into
 		// options passed thru to adapters in addSource
@@ -90,7 +89,7 @@ define(function (require) {
 		// events to be processed (fifo)
 		eventQueue = [];
 
-		callPublicEvent = checkEventsApi;
+//		callPublicEvent = callEventsApi;
 
 		if (!options) options = {};
 
@@ -98,7 +97,7 @@ define(function (require) {
 		if (!strategy) strategy = simpleStrategy(options.strategyOptions);
 
 		// create public api
-		publicApi = {
+		eventsApi = publicApi = {
 			addSource: addSource,
 			destroy: destroy
 		};
@@ -107,13 +106,7 @@ define(function (require) {
 		addApiMethods(eventNames);
 
 		// add events
-		publicApi.events = eventsApi = options.events;
-		if (eventsApi) {
-			addApiEvents(eventNames);
-		}
-		else {
-			eventsApi = {};
-		}
+		addApiEvents(eventNames);
 
 		return publicApi;
 
@@ -215,7 +208,7 @@ define(function (require) {
 			var context, strategyApi, i, adapter, canceled;
 
 			// give public api a chance to see (and possibly cancel) event
-			canceled = false === callPublicEvent(data, camelize('before', type));
+			canceled = false === callEventsApi(data, camelize('before', type));
 
 			// if public api cancels, the network never sees the event at all
 			if (!canceled) {
@@ -239,7 +232,7 @@ define(function (require) {
 
 			}
 
-			if (!canceled) callPublicEvent(data, type);
+			if (!canceled) callEventsApi(data, camelize('on', type));
 
 			processNextEvent();
 
@@ -295,47 +288,24 @@ define(function (require) {
 		}
 
 		function addApiEvent (name) {
+			var eventName = camelize('on', name);
 			// add function stub to api
-			if (!eventsApi[name]) {
-				eventsApi[name] = function (data) {};
+			if (!eventsApi[eventName]) {
+				eventsApi[eventName] = function (data) {};
 			}
 			// add beforeXXX stub, too
-			name = camelize('before', name);
-			if (!eventsApi[name]) {
-				eventsApi[name] = function (data) {};
+			eventName = camelize('before', name);
+			if (!eventsApi[eventName]) {
+				eventsApi[eventName] = function (data) {};
 			}
 		}
 
 		function callEventsApi (data, name) {
-			// yah, this is simple, but there's some redirection going on
-			// see checkEventsApi
 			try {
 				return eventsApi[name](data);
 			}
 			catch (ex) {
 				return false;
-			}
-		}
-
-		function checkEventsApi (data, name) {
-			var tempApi;
-
-			// once we have a publicApi.events, start using it and stop using
-			// this function
-			if (publicApi.events) {
-
-				// switch eventsApi to public property
-				eventsApi = publicApi.events;
-				tempApi = eventsApi;
-
-				// ensure all events are on new api
-				for (var p in tempApi) addApiEvent(p);
-
-				// switch callPublicEvent to normal function
-				callPublicEvent = callEventsApi;
-
-				// resume as usual
-				callPublicEvent(data, name);
 			}
 		}
 

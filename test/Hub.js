@@ -20,19 +20,14 @@ buster.testCase('cola/Hub', {
 		// this isn't a complete list, but proves the mechanism basically works
 		assert.isObject(h);
 		assert.isFunction(h.add);
+		assert.isFunction(h.beforeAdd);
+		assert.isFunction(h.onAdd);
 		assert.isFunction(h.update);
+		assert.isFunction(h.beforeUpdate);
+		assert.isFunction(h.onUpdate);
 		assert.isFunction(h.remove);
-	},
-	'should add events to events api': function () {console.log('start');
-		var e = {}, h = new Hub({
-			events: e
-		});console.log('end');
-		// this isn't a complete list, but proves the mechanism basically works
-		assert.isObject(e);
-		assert.isFunction(e.add);
-		assert.isFunction(e.beforeAdd);
-		assert.isFunction(e.remove);
-		assert.isFunction(e.beforeRemove);
+		assert.isFunction(h.beforeRemove);
+		assert.isFunction(h.onRemove);
 	},
 	'should return an adapter when calling addSource with a non-adapter': function () {
 		var h = new Hub();
@@ -58,51 +53,49 @@ buster.testCase('cola/Hub', {
 			eventNames: function (name) { return /^crazy/.test(name); }
 		});
 		// check for method on hub api
-		assert.isFunction(h.crazyNewEvent);
-		// check for event on events api
-		assert.isFunction(e.crazyNewEvent);
+		assert.isFunction(h.onCrazyNewEvent);
 	},
+
 	'should call strategy to join adapter and add item': function () {
 		var strategy = this.spy();
-		var e = {};
-		e.join = this.spy();
-		e.add = this.spy();
-		e.beforeAdd = this.spy();
 		var h = new Hub({
-			strategy: strategy,
-			events: e
+			strategy: strategy
 		});
+
+		h.onJoin = this.spy();
+		h.onAdd = this.spy();
+		h.beforeAdd = this.spy();
+
 		var primary = h.addSource([]);
 
 		// strategy should be called to join primary into network
-		assert.calledOnce(e.join);
+		assert.calledOnce(h.onJoin);
 
 		primary.name = 'primary'; // debug
 		primary.add({ id: 1 });
 
 		// event hub event should be called
-		assert.calledOnce(e.add);
-		assert.calledOnce(e.beforeAdd);
-		assert.callOrder(e.beforeAdd, e.add)
+		assert.calledOnce(h.onAdd);
+		assert.calledOnce(h.beforeAdd);
+		assert.callOrder(h.beforeAdd, h.onAdd)
 	},
 	'should not call events if strategy returns false': function () {
-		var e = {};
-		e.add = this.spy();
-		e.beforeAdd = this.spy();
 		var h = new Hub({
-			strategy: strategy,
-			events: e
+			strategy: strategy
 		});
 		var primary = h.addSource([]);
 		var isCanceled;
+
+		h.onAdd = this.spy();
+		h.beforeAdd = this.spy();
 
 		primary.name = 'primary'; // debug
 		primary.add({ id: 1 });
 
 		// event hub add should not be called
-		refute.calledOnce(e.add);
+		refute.calledOnce(h.onAdd);
 		// event hub beforeAdd should be called
-		assert.calledOnce(e.beforeAdd);
+		assert.calledOnce(h.beforeAdd);
 		// last strategy call should have api.isCanceled() == true;
 		assert(isCanceled, 'last event should be canceled');
 

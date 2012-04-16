@@ -92,14 +92,16 @@ define(function (require) {
 		 * @private
 		 */
 		_initResultSet: function (results) {
-			var map, i, len, item;
+			var map, i, len, item, self;
 
 			map = this._items;
 			map.clear();
 
+			self = this;
 			for(i = 0, len = results.length; i < len; i++) {
 				item = results[i];
 				map.add(item, item);
+				self.add(item);
 			}
 		},
 
