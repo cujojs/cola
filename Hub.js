@@ -360,11 +360,12 @@ define(function (require) {
 			}
 		}
 
-		if (!item) {
-			var err = new Error('Hub: could not find data item for dom event.');
-			err.event = itemOrEvent; // TODO: is this helpful?
-			throw err;
-		}
+		// TODO: make this an option?
+//		if (!item) {
+//			var err = new Error('Hub: could not find data item for dom event.');
+//			err.event = itemOrEvent; // TODO: is this helpful?
+//			throw err;
+//		}
 
 		return { item: item, source: adapter };
 	}
