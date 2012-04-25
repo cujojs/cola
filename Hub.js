@@ -372,7 +372,7 @@ define(function (require) {
 
 	function isDomEvent (e) {
 		// using feature sniffing to detect if this is an event object
-		return e.target && e.stopPropagation && e.preventDefault;
+		return e && e.target && e.stopPropagation && e.preventDefault;
 	}
 
 	function findAdapterForSource (source, adapters) {
