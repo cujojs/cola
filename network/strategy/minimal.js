@@ -2,17 +2,16 @@
 define(function (require) {
 "use strict";
 
-	// Note: browser loaders and builders require that we don't "meta-program"
-	// the require() calls:
 	var
 		compose = require('./compose'),
-		minimal = require('./default'),
-		collectThenDeliver = require('./collectThenDeliver')/*,
-		provideTotalIfMissing = require('./provideTotalIfMissing')*/;
+		base = require('./base'),
+		targetFirstItem = require('./targetFirstItem'),
+		syncAfterJoin = require('./syncAfterJoin'),
+		syncDataDirectly = require('./syncDataDirectly');
 
 	/**
-	 * This is a composition of the strategies that Brian and I think
-	 * make sense. :)
+	 * This is a composition of the minimal strategies to actually do something
+	 * meaningful with cola.
 	 *
 	 * @param options {Object} a conglomeration of all of the options for the
 	 *   strategies used.
@@ -28,11 +27,15 @@ define(function (require) {
 
 		// configure strategies
 		strategies = [
-			collectThenDeliver(options)/*,
-			provideTotalIfMissing(options)*/
+			syncAfterJoin(options),
+			syncDataDirectly(options)
 		];
 
-		strategies.push(minimal(options));
+		if(options && options.targetFirstItem) {
+			strategies.push(targetFirstItem(options));
+		}
+
+		strategies.push(base(options));
 
 		// compose them
 		return compose(strategies);
