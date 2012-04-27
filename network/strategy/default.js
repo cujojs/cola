@@ -6,7 +6,7 @@ define(function (require) {
 	// the require() calls:
 	var
 		compose = require('./compose'),
-		minimal = require('./default'),
+		minimal = require('./minimal'),
 		collectThenDeliver = require('./collectThenDeliver')/*,
 		provideTotalIfMissing = require('./provideTotalIfMissing')*/;
 
