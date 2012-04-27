@@ -43,21 +43,7 @@ define(function () {
 	};
 
 	function defaultIsProvider (adapter) {
-		if ('provide' in adapter) {
-			return adapter.provide;
-		}
-		else if (adapter.forEach) {
-			// CAUTION: UGLY CODE AHEAD
-			try {
-				adapter.forEach(function (item) {
-					throw item;
-				})
-			}
-			catch (item) {
-				return true;
-			}
-			return false;
-		}
+		return adapter.provide;
 	}
 
 });
