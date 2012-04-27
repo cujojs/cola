@@ -1,9 +1,10 @@
 (function (define) {
 define(function () {
 
-	var defaultCollectionProperty, isArray;
+	var defaultCollectionProperty, defaultPreserveCollection, isArray, undef;
 
 	defaultCollectionProperty = 'items';
+	defaultPreserveCollection = false;
 
 	isArray = Array.isArray || function (o) {
 		return Object.prototype.toString.call(o) == '[object Array]';
@@ -11,7 +12,16 @@ define(function () {
 
 	/**
 	 *
-	 * @param options
+	 * @param [options] {Object}
+	 * @param [options.collectionProperty] {String} the name of the array
+	 *   that will hold the collected items on the collector. If the collector
+	 *   is an array, this option is ignored.
+	 * @param [options.preserveCollection] {Boolean} set this to true to
+	 *   preserve any existing items in the collector when starting a new
+	 *   collection (i.e. a "collect" event happens).  Typically, you'd want
+	 *   to start a fresh collection each time, but this is a way to pre-
+	 *   load certain items.  This option is ignored if the collector is an
+	 *   array.
 	 * @return {Function}
 	 *
 	 * @description
@@ -20,11 +30,12 @@ define(function () {
 	 * have the option to send something else.)
 	 */
 	return function (options) {
-		var collProp, collector, collection, index;
+		var collProp, preserve, collector, collection, index;
 
 		if (!options) options = {};
 
 		collProp = options.collectionProperty || defaultCollectionProperty;
+		preserve = options.preserveCollection || defaultPreserveCollection;
 
 		return function collectThenDeliver (source, dest, data, type, api) {
 
@@ -72,18 +83,23 @@ define(function () {
 
 		function startCollecting (data) {
 			collector = data;
+			// figure out where to collect
 			if (isArray(collector)) {
 				// collector is the collection. append to it
 				collection = collector;
 			}
-			else if (isArray(data[collProp])) {
-				// found the collection property. append to it
-				collection = data[collProp];
-			}
 			else {
-				// create a collection property
-				collection = data[collProp] = [];
+				// use a property on collector
+				collection = data[collProp];
+				if (!collection) {
+					collection = data[collProp] = [];
+				}
 			}
+			// figure out if we need to remove any existing items
+			if (!preserve && collection.length) {
+				collection.splice(0, collection.length);
+			}
+			// create index
 			index = {};
 		}
 
@@ -92,7 +108,10 @@ define(function () {
 		}
 
 		function collect (item, id) {
-			index[id] = collection.push(item) - 1;
+			var pos = index[id];
+			if (pos === undef) {
+				index[id] = collection.push(item) - 1;
+			}
 		}
 
 		function uncollect (item, id) {
