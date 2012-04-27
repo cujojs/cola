@@ -9,22 +9,29 @@ define(function (require) {
 
 	// TODO: make these configurable/extensible
 	eventNames = {
-		// collection item events
-		add: 1,
-		remove: 1,
-		update: 1,
-		target: 1,
-		// edit mode events
-		edit: 1,
-		cancel: 1,
-		save: 1,
+		// collection item events. most of these come with data. devs can
+		// decide to use these events for their own purposes or send
+		// different data than described here, the following list outlines
+		// the intended behavior.
+		add: 1, // data == item added
+		remove: 1, // data == item removed
+		update: 1, // data == item updated
+		target: 1, // data == item targeted TODO: rename this to "point"?
+		// mode events
+		abort: 1, // abort the current mode (no data)
+		submit: 1, // finalize the current mode (no data)
+		// edit event
+		edit: 1, // enter edit mode (data == item to edit)
 		// multi-item events
-		select: 1,
-		unselect: 1,
-		// network-level events
-		join: 1,
-		sync: 1,
-		leave: 1
+		select: 1, // select an item (data == item)
+		unselect: 1, // deselect an item (data == item)
+		// network-level events (not to be used by adapters)
+		join: 1, // an adapter has joined (data == adapter)
+		sync: 1, // adapters need to sync (data == boolean. true == provider)
+		leave: 1, // an adpater has left (data == adapter)
+		// batch events
+		collect: 1, // start of batch mode (until abort or submit) (data = batch purpose)
+		deliver: 1 // collected items (data = batch purpose with collected items array as property)
 	};
 
 	/**
