@@ -63,7 +63,6 @@ define(function (require) {
 
 	/**
 	 * @constructor
-	 * @param primary {Object} primary data source
 	 * @param options.strategy {strategyFunction} a strategy
 	 *   Strategies determine if an event gets onto the network and then how
 	 *   it's processed by the other data sources in the network.
@@ -170,9 +169,6 @@ define(function (require) {
 			// save the proxied adapter
 			adapters.push(proxy);
 
-			// TODO: Should we use a boolean for the 2nd param to indicate join vs. leave
-			// instead of using separate events?
-			// Right now the second param is unused
 			processEvent(proxy, null, 'join');
 
 			return adapter;
@@ -272,14 +268,14 @@ define(function (require) {
 
 		function addApiMethod (name) {
 			if (!publicApi[name]) {
-				publicApi[name] = function (itemOrDomEvent) {
+				publicApi[name] = function (itemOrDomThing) {
 					var sourceInfo;
-					if (isDomEvent(itemOrDomEvent)) {
-						sourceInfo = convertFromDomEvent(itemOrDomEvent, adapters);
+					if (isElementOrEvent(itemOrDomThing)) {
+						sourceInfo = convertFromElementOrEvent(itemOrDomThing, adapters);
 					}
 					else {
 						sourceInfo = {
-							item: itemOrDomEvent,
+							item: itemOrDomThing,
 							source: findAdapterForSource(arguments[1], adapters)
 						};
 					}
@@ -347,7 +343,7 @@ define(function (require) {
 	 * @param api {Object} helpful functions for strategies
 	 * @returns {Boolean} whether event is allowed.
 	 */
-	function strategyFunction (source, dest, data, type, api) {};
+	function strategyFunction (source, dest, data, type, api) {}
 
 	function configureEventFinder (option) {
 		if (typeof option == 'function') return option;
@@ -355,7 +351,7 @@ define(function (require) {
 		return function (name) { return eventNames.hasOwnProperty(name); };
 	}
 
-	function convertFromDomEvent (itemOrEvent, adapters) {
+	function convertFromElementOrEvent (elementOrEvent, adapters) {
 		var item, i, adapter;
 
 		// loop through adapters that have the getItemForEvent() method
@@ -363,23 +359,18 @@ define(function (require) {
 		i = 0;
 		while (!item && (adapter = adapters[i++])) {
 			if (adapter.getItemForEvent) {
-				item = adapter.getItemForEvent(itemOrEvent);
+				item = adapter.getItemForEvent(elementOrEvent);
 			}
 		}
-
-		// TODO: make this an option?
-//		if (!item) {
-//			var err = new Error('Hub: could not find data item for dom event.');
-//			err.event = itemOrEvent; // TODO: is this helpful?
-//			throw err;
-//		}
 
 		return { item: item, source: adapter };
 	}
 
-	function isDomEvent (e) {
+	function isElementOrEvent (e) {
 		// using feature sniffing to detect if this is an event object
-		return e && e.target && e.stopPropagation && e.preventDefault;
+		// TODO: use instanceof HTMLElement where supported
+		return e && e.target && e.stopPropagation && e.preventDefault
+			|| e && e.nodeName && e.nodeType == 1; // not comments or text nodes
 	}
 
 	function findAdapterForSource (source, adapters) {

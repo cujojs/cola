@@ -170,14 +170,26 @@ define(function(require) {
 			return this._options;
 		},
 
-		getItemForEvent: function (e) {
+		getItemForEvent: function (eventOrElement) {
 			var node, idAttr, id;
 
-			// start at e.target and work up
-			// Note: this method assumes the event object has been normalized
-			node = e.target;
+			if (!eventOrElement) return;
+
+			// test for an event or an element (duck-typing by using
+			// the same features we're sniffing below helps kill two birds...)
+			if (eventOrElement.getAttribute && eventOrElement.nodeType) {
+				node = eventOrElement
+			}
+			else {
+				// TODO: do we really need to sniff for obsolete srcElement or will event be normalized?
+				node = eventOrElement.target || eventOrElement.srcElement;
+			}
+
+			if (!node) return;
+
 			idAttr = this._options.idAttribute || defaultIdAttribute;
 
+			// start at node and work up
 			do id = node.getAttribute(idAttr);
 			while (id == null && (node = node.parentNode) && node.nodeType == 1);
 
