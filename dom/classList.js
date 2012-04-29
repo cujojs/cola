@@ -61,11 +61,11 @@ define(function (require, exports) {
 	 * @param classSet {Object}
 	 * @description
 	 * Example bindings:
-	 * stepsCompleted: {
-	 *   node: 'viewNode',
-	 *   prop: 'classList',
-	 *   enumSet: ['one', 'two', 'three']
-	 * },
+	 * 	stepsCompleted: {
+	 *  	node: 'viewNode',
+	 *  	prop: 'classList',
+	 *  	enumSet: ['one', 'two', 'three']
+	 * 	},
 	 *  permissions: {
 	 * 		node: 'myview',
 	 * 		prop: 'classList',
@@ -83,11 +83,13 @@ define(function (require, exports) {
 		adds = [];
 
 		for (p in classSet) {
-			if (classSet[p]) {
-				adds.push(p);
-			}
-			else {
-				removes.push(p);
+			if (p) {
+				if (classSet[p]) {
+					adds.push(p);
+				}
+				else {
+					removes.push(p);
+				}
 			}
 		}
 

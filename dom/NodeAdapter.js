@@ -70,7 +70,7 @@ define(function (require) {
 				prop = 'prop' in b ? b.prop : guessPropFor(node);
 				current = getNodePropOrAttr(node, prop);
 				this._values[name] = current;
-				if (current != value) {
+				if (current !== value) {
 					setNodePropOrAttr(node, prop, value);
 				}
 			}
@@ -130,7 +130,7 @@ define(function (require) {
 				var prev, curr, partial;
 				prev = currValues[name];
 				curr = getNodePropOrAttr(node, prop);
-				if (prev != curr) {
+				if (prev !== curr) {
 					partial = {};
 					partial[name] = curr;
 					this._updating = true;
