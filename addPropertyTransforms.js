@@ -1,8 +1,10 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
 (function (define) {
-define(function () {
+define(function (require) {
 "use strict";
+
+	var SortedMap = require('./SortedMap');
 
 	/**
 	 * Decorator that applies transforms to properties flowing in
@@ -11,7 +13,8 @@ define(function () {
 	 * @param transforms {Object}
 	 */
 	function addPropertyTransforms (adapter, transforms) {
-		var origGet, origAdd, origUpdate, origForEach;
+		var origGet, origAdd, origUpdate, origForEach, origGetItemForEvent,
+			transformedItemMap;
 
 		// only override if transforms has properties
 		if (transforms && hasProperties(transforms)) {
@@ -20,22 +23,24 @@ define(function () {
 			origAdd = adapter.add;
 			origUpdate = adapter.update;
 			origForEach = adapter.forEach;
+			origGetItemForEvent = adapter.getItemForEvent;
+			transformedItemMap = new SortedMap(adapter.identifier, adapter.comparator);
 
 			if (origGet) {
 				adapter.get = function transformedGet (id) {
-					return transformItem(origGet.call(adapter, id), transforms, true);
+					return untransformItem(origGet.call(adapter, id), transforms, transformedItemMap);
 				};
 			}
 
 			if (origAdd) {
 				adapter.add = function transformedAdd (item) {
-					return origAdd.call(adapter, transformItem(item, transforms));
+					return origAdd.call(adapter, transformItem(item, transforms, transformedItemMap));
 				};
 			}
 
 			if (origUpdate) {
 				adapter.update = function transformedUpdate (item) {
-					return origUpdate.call(adapter, transformItem(item, transforms));
+					return origUpdate.call(adapter, transformItem(item, transforms, transformedItemMap));
 				};
 			}
 
@@ -44,11 +49,17 @@ define(function () {
 					// Note: potential performance improvement if we cache the
 					// transformed lambdas in a hashmap.
 					function transformedLambda (item, key) {
-						var inverted = transformItem(item, transforms, true);
+						var inverted = untransformItem(item, transforms, transformedItemMap);
 						return lambda(inverted, key);
 					}
 
 					return origForEach.call(adapter, transformedLambda);
+				};
+			}
+
+			if (origGetItemForEvent) {
+				adapter.getItemForEvent = function transformedGetItemForEvent (it) {
+					return untransformItem(origGetItemForEvent.call(adapter, it), transforms, transformedItemMap);
 				};
 			}
 
@@ -65,26 +76,48 @@ define(function () {
 		for (var p in obj) return true;
 	}
 
-	function transformItem (item, transforms, inverse) {
-		var transformed, transform;
+	function transformItem (item, transforms, map) {
+		var transformed, name, transform;
 
-		// only create an object if one was found
-		transformed = item && {};
+		transformed = {};
 
-		// loop through properties. should we use hasOwnProperty()?
-		for (var name in item) {
-			transform = (inverse
-				? transforms[name] && transforms[name].inverse
-				: transforms[name]) || identity;
-			transformed[name] = transform(item[name], name);
+		// direct transforms
+		for (name in item) {
+			transform = transforms[name] || identity;
+			transformed[name] = transform(item[name], name, item);
 		}
 
+		// derived transforms
+		for (name in transforms) {
+			if (!(name in item)) {
+				transformed[name] = transforms[name](null, name, item);
+			}
+		}
+
+		map.add(transformed, item);
+
 		return transformed;
+	}
+
+	function untransformItem (transformed, transforms, map) {
+		var origItem, name, transform;
+
+		// get original item
+		origItem = map.get(transformed);
+
+		for (name in origItem) {
+			transform = transforms[name] && transforms[name].inverse;
+			if (transform) {
+				origItem[name] = transform(transformed[name], name, transformed);
+			}
+		}
+
+		return origItem;
 	}
 
 });
 }(
 	typeof define == 'function'
 		? define
-		: function (factory) { module.exports = factory(); }
+		: function (factory) { module.exports = factory(require); }
 ));
