@@ -53,18 +53,17 @@ define(function () {
 						});
 					}
 					else {
-						// provide data onto consumers in network
-						if (typeof source.add != 'function') {
-							throw new Error('syncDataDirectly: consumer doesn\'t have `add()`.');
-						}
 						// keep track of consumers
 						add(consumers, synced);
-						// consume data from all providers
-						forEach(providers, function (provider) {
-							provider.forEach(function (item) {
-								synced.add(item);
+						// provide data onto consumers in network
+						if (typeof source.add == 'function') {
+							// consume data from all providers
+							forEach(providers, function (provider) {
+								provider.forEach(function (item) {
+									synced.add(item);
+								});
 							});
-						});
+						}
 					}
 					// the sync event never gets onto the network:
 					return false;
