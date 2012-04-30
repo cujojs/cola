@@ -123,7 +123,7 @@ define(function () {
 
 		function isArrayLike (obj) {
 			// IE doesn't have string[index]
-			return obj.length && !isString(obj);
+			return obj && obj.length && !isString(obj);
 		}
 
 		function Begetter () {}
