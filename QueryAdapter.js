@@ -15,7 +15,7 @@ define(function (require) {
 	 * Manages a collection of objects taken a queryable data source, which
 	 * must provide query, add, and remove methods
 	 * @constructor
-	 * @param datasource {Object} queryable data source with query, add, remove methods
+	 * @param datasource {Object} queryable data source with query, add, put, remove methods
 	 * @param [options.comparator] {Function} comparator function that will
 	 * be propagated to other adapters as needed.  Note that QueryAdapter does not
 	 * use this comparator internally.
@@ -30,6 +30,7 @@ define(function (require) {
 		// Always use the datasource's identity as the identifier
 		identifier = this.identifier =
 			function(item) {
+				// TODO: remove dojo-specific behavior
 				return datasource.getIdentity(item);
 			};
 
@@ -56,12 +57,13 @@ define(function (require) {
 
 		identifier: undef,
 
-		query: function(query, options) {
+		query: function(query) {
 
 			var self = this;
 
 			return this._queue(function() {
-				return when(self._datasource.query(query||{}, options),
+				// TODO: deal dojo-specific options parameter
+				return when(self._datasource.query(query||{}),
 				function(results) {
 					self._items = new SortedMap(self.identifier, self.comparator);
 					self._initResultSet(results);
@@ -139,6 +141,7 @@ define(function (require) {
 			}
 		},
 
+		// TODO: allow an item or an id to be provided
 		remove: function(item) {
 			var removed, items;
 
@@ -147,8 +150,11 @@ define(function (require) {
 
 			if(removed >= 0) {
 
+				// TODO: remove dojo-specific behavior
+				var id = this._datasource.getIdentity(item);
+
 				// Similar to add() above, this may be too optimistic.
-				return when(this._datasource.remove(item),
+				return when(this._datasource.remove(id),
 					null, // If all goes according to plan, great, nothing to do
 					function(err) {
 						items.add(item, item);
@@ -174,9 +180,6 @@ define(function (require) {
 					null, // If all goes according to plan, great, nothing to do
 					function(err) {
 						self._replace(item, orig);
-
-						items.remove(item);
-						items.add(orig, orig);
 						throw err;
 					}
 				)
