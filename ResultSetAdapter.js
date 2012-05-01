@@ -16,7 +16,7 @@ define(function (require) {
 	 * @constructor
 	 * @param resultSet {Array|Promise} array of data objects, or a promise for
 	 * an array of data objects
-	 * @param options.keyFunc {Function} function that returns a key/id for
+	 * @param options.identifier {Function} function that returns a key/id for
 	 * a data item.
 	 * @param options.comparator {Function} comparator function that will
 	 * be propagated to other adapters as needed
