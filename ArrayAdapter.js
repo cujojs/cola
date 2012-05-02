@@ -118,7 +118,7 @@ define(function (require) {
 
 			index[key] = this._data.push(item) - 1;
 
-			return index;
+			return index[key];
 		},
 
 		_remove: function(itemOrId) {
@@ -155,7 +155,7 @@ define(function (require) {
 				index[key] = this._data.push(item) - 1;
 			}
 
-			return index;
+			return at;
 		},
 
 		_clear: function() {
