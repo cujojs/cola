@@ -37,6 +37,18 @@ buster.testCase('cola/network/strategy/updateAfterItemChange', {
 
 	},
 
+	'should return false if it handles event': function () {
+		var qspy, api, dest, src;
+		qspy = this.spy();
+		api = Object.create(mockApi);
+		api.queueEvent = qspy;
+		src = {};
+		dest = { add: function () { return updatedData; } };
+
+		refute(updateAfterItemChange()(src, dest, data, 'add', api));
+
+	},
+
 	'should not call hub\'s queueEvent if returned value is falsey or empty': function (done) {
 		var qspy, api, dest, src;
 		qspy = this.spy();

@@ -21,6 +21,7 @@ define(function (require) {
 						api.queueEvent(dest, updated, 'update');
 					}
 				});
+				return false; // stop base strategy from firing, too.
 			}
 		};
 
