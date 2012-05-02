@@ -329,7 +329,6 @@ define(function (require) {
 	resolver.register(require('./QueryAdapter'), 'collection');
 	resolver.register(require('./dom/NodeAdapter'), 'object');
 	resolver.register(require('./ObjectAdapter'), 'object');
-	resolver.register(require('./ResultAdapter'), 'object');
 
 	return Hub;
 

@@ -1,12 +1,15 @@
 /** MIT License (c) copyright B Cavalier & J Hann */
 
 (function (define) {
-define(function () {
+define(function (require) {
 "use strict";
 
+	var when = require('when');
+
 	/**
+	 * Adapter that handles a plain object or a promise for a plain object
 	 * @constructor
-	 * @param obj {Object}
+	 * @param obj {Object|Promise}
 	 * @param options {Object}
 	 */
 	function ObjectAdapter(obj, options) {
@@ -19,12 +22,21 @@ define(function () {
 	ObjectAdapter.prototype = {
 
 		update: function (item) {
-			var p, obj;
-			// don't replace item in case we got a partial object
-			obj = this._obj;
-			for (p in item) {
-				obj[p] = item[p];
-			}
+			var self = this;
+
+			return when(this._obj, function(obj) {
+				function updateSynchronously(item) {
+					// don't replace item in case we got a partial object
+					for (var p in item) {
+						obj[p] = item[p];
+					}
+				}
+
+				self.update = updateSynchronously;
+
+				return updateSynchronously(item);
+			});
+
 		},
 
 		getOptions: function () {
@@ -43,7 +55,9 @@ define(function () {
 		// this seems close enough to ensure that instanceof works.
 		// a RegExp will pass as a valid prototype, but I am not sure
 		// this is a bad thing even if it is unusual.
-		return Object.prototype.toString.call(obj) == '[object Object]';
+		// IMPORTANT: since promises *are* objects, the check for isPromise
+		// must come first in the OR
+		return obj && (when.isPromise(obj) || Object.prototype.toString.call(obj) == '[object Object]');
 	};
 
 	return ObjectAdapter;
