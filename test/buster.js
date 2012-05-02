@@ -2,9 +2,9 @@ exports['shared tests'] = {
 	tests: [
 		'ArrayAdapter.js',
 		'ObjectAdapter.js',
-		'ResultSetAdapter.js',
 		'ResultAdapter.js',
 		'QueryAdapter.js',
+		'WidenAdapter.js',
 		'transformCollection.js',
 		'SortedMap.js',
 		'Hub.js',

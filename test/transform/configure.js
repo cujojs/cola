@@ -9,18 +9,18 @@ refute = buster.refute;
 buster.testCase('transform/configure', {
 
 	'should return a function': function() {
-		assert.typeOf(configure(function() {}), 'function');
+		assert.isFunction(configure(function() {}));
 	},
 
 	'should not return an inverse when input does not have an inverse': function() {
-		refute.defined(configure(function() {}).inverse, 'function');
+		refute.defined(configure(function() {}).inverse);
 	},
 
 	'should return an inverse when input has an inverse': function() {
 		function t() {}
 		t.inverse = function() {};
 
-		assert.typeOf(configure(t).inverse, 'function');
+		assert.isFunction(configure(t).inverse);
 	},
 
 	'should pass all configured parameters through to resulting function': function() {

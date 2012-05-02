@@ -9,11 +9,11 @@ refute = buster.refute;
 buster.testCase('transform/createEnum', {
 
 	'should return a function': function() {
-		assert.typeOf(createEnum({}), 'function');
+		assert.isFunction(createEnum({}));
 	},
 
 	'should return an inverse function': function() {
-		assert.typeOf(createEnum({}).inverse, 'function');
+		assert.isFunction(createEnum({}).inverse);
 	},
 
 	'transform': {

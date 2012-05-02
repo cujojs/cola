@@ -4,11 +4,13 @@
 // store items in sorted order based on its comparator
 
 (function(define) {
-define(function () {
+define(function (require) {
 
 	"use strict";
 
-	var undef;
+	var when, methods, undef;
+
+	when = require('when');
 
 	/**
 	 * Manages a collection of objects taken from the supplied dataArray
@@ -31,16 +33,21 @@ define(function () {
 		// adapter's comparator
 		this.comparator = options.comparator || this._defaultComparator;
 
-		this.identifier = options.identifier || defaultKeyFunc;
+		this.identifier = options.identifier || defaultIdentifier;
 
-		this._init(dataArray);
+		this._array = dataArray;
+		this.clear();
+
+		var self = this;
+		when(dataArray, function(array) {
+			mixin(self, methods);
+			self._init(array);
+		});
 	}
 
 	ArrayAdapter.prototype = {
 
 		_init: function(dataArray) {
-			this.clear();
-
 			if(dataArray && dataArray.length) {
 				addAll(this, dataArray);
 			}
@@ -75,7 +82,20 @@ define(function () {
 			return this._options;
 		},
 
-		forEach: function(lambda) {
+		forEach: function(lambda) { return this._forEach(lambda); },
+
+		add: function(item) { return this._add(item); },
+
+		remove: function(item) { return this._remove(item); },
+
+		update: function(item) { return this._update(item); },
+
+		clear: function() { return this._clear(); }
+	};
+
+	methods = {
+
+		_forEach: function(lambda) {
 			var i, data, len;
 
 			i = 0;
@@ -88,7 +108,7 @@ define(function () {
 			}
 		},
 
-		add: function(item) {
+		_add: function(item) {
 			var key, index;
 
 			key = this.identifier(item);
@@ -101,7 +121,7 @@ define(function () {
 			return index;
 		},
 
-		remove: function(itemOrId) {
+		_remove: function(itemOrId) {
 			var key, at, index, data;
 
 			key = this.identifier(itemOrId);
@@ -120,7 +140,7 @@ define(function () {
 			return at;
 		},
 
-		update: function (item) {
+		_update: function (item) {
 			var key, at, index;
 
 			key = this.identifier(item);
@@ -138,18 +158,56 @@ define(function () {
 			return index;
 		},
 
-		clear: function() {
+		_clear: function() {
 			this._data = [];
 			this._index = {};
 		}
 
 	};
 
+	mixin(ArrayAdapter.prototype, methods, makePromiseAware);
+
+	/**
+	 *
+	 * @param to
+	 * @param from
+	 * @param [transform]
+	 */
+	function mixin(to, from, transform) {
+		var name, func;
+		for(name in from) {
+			if(from.hasOwnProperty(name)) {
+				func = from[name];
+				to[name] = transform ? transform(func) : func;
+			}
+		}
+	}
+
+	/**
+	 * Returns a new function that will delay execution of the supplied
+	 * function until this._resultSetPromise has resolved.
+	 *
+	 * @param func {Function} original function
+	 * @return {Promise}
+	 */
+	function makePromiseAware(func) {
+		return function promiseAware() {
+			var self, args;
+
+			self = this;
+			args = Array.prototype.slice.call(arguments);
+
+			return when(this._array, function() {
+				return func.apply(self, args);
+			});
+		}
+	}
+
 	ArrayAdapter.canHandle = function(it) {
-		return it && Object.prototype.toString.call(it) == '[object Array]';
+		return it && (when.isPromise(it) || Object.prototype.toString.call(it) == '[object Array]');
 	};
 
-	function defaultKeyFunc(item) {
+	function defaultIdentifier(item) {
 		return typeof item == 'object' ? item.id : item;
 	}
 
@@ -183,5 +241,5 @@ define(function () {
 })(
 	typeof define == 'function'
 		? define
-		: function(factory) { module.exports = factory(); }
+		: function(factory) { module.exports = factory(require); }
 );

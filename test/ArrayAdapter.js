@@ -1,15 +1,23 @@
-(function(buster, ArrayAdapter) {
+(function(buster, when, delay, ArrayAdapter) {
 
 var assert, refute, undef;
 
 assert = buster.assert;
 refute = buster.refute;
 
+function promiseFor(array) {
+	return delay(array, 0);
+}
+
 buster.testCase('ArrayAdapter', {
 
 	'canHandle': {
 		'should return true for an Array': function() {
 			assert(ArrayAdapter.canHandle([]));
+		},
+
+		'should return true for a promise': function() {
+			assert(ArrayAdapter.canHandle(when.defer().promise));
 		},
 
 		'should return false for a non-Array': function() {
@@ -37,6 +45,23 @@ buster.testCase('ArrayAdapter', {
 			assert.calledTwice(forEachSpy);
 			assert.calledWith(forEachSpy, { id: 1 });
 			assert.calledWith(forEachSpy, { id: 2 });
+		},
+
+		'should iterate over all promised items': function(done) {
+			var src, forEachSpy;
+
+			src = new ArrayAdapter(promiseFor([
+				{ id: 1 }, { id: 2 }
+			]));
+
+			forEachSpy = this.spy();
+
+			src.forEach(forEachSpy).then(function() {
+				assert.calledTwice(forEachSpy);
+				assert.calledWith(forEachSpy, { id: 1 });
+				assert.calledWith(forEachSpy, { id: 2 });
+				done();
+			});
 		}
 
 	},
@@ -68,6 +93,50 @@ buster.testCase('ArrayAdapter', {
 			pa.forEach(spy);
 
 			assert.calledOnce(spy);
+		},
+
+		'promise-aware': {
+
+			'should add new items': function(done) {
+				var pa, spy;
+
+				pa = new ArrayAdapter(promiseFor([
+					{ id: 1 }
+				]));
+
+				spy = this.spy();
+
+				when(pa.add({ id: 2 }),
+					function() {
+						return pa.forEach(spy);
+					}
+				).then(
+					function() {
+						assert.calledTwice(spy);
+					}
+				).then(done, done);
+			},
+
+			'should allow adding an item that already exists': function(done) {
+				var pa, spy;
+
+				pa = new ArrayAdapter(promiseFor([
+					{ id: 1 }
+				]));
+
+				spy = this.spy();
+
+				when(pa.add({ id: 1 }),
+					function() {
+						return pa.forEach(spy);
+					}
+				).then(
+					function() {
+						assert.calledOnce(spy);
+					}
+				).then(done, done);
+			}
+
 		}
 
 	},
@@ -96,7 +165,51 @@ buster.testCase('ArrayAdapter', {
 			pa.forEach(spy);
 
 			refute.called(spy);
+		},
+
+		'promise-aware': {
+
+			'should remove items': function(done) {
+				var pa, spy;
+
+				pa = new ArrayAdapter(promiseFor([
+					{ id: 1 }, { id: 2 }
+				]));
+
+				spy = this.spy();
+
+				when(pa.remove({ id: 2 }),
+					function() {
+						return pa.forEach(spy);
+					}
+				).then(
+					function() {
+						assert.calledOnce(spy);
+					}
+				).then(done, done);
+			},
+
+			'should allow removing non-existent items': function(done) {
+				var pa, spy;
+
+				pa = new ArrayAdapter(promiseFor([]));
+
+				spy = this.spy();
+
+				when(pa.remove({ id: 2 }),
+					function() {
+						return pa.forEach(spy);
+					}
+				).then(
+					function() {
+						refute.calledOnce(spy);
+					}
+				).then(done, done);
+
+			}
+
 		}
+
 	},
 
 	'update': {
@@ -126,6 +239,53 @@ buster.testCase('ArrayAdapter', {
 			pa.forEach(spy);
 
 			assert.calledOnceWith(spy, { id: 1, success: true });
+		},
+
+		'promise-aware': {
+
+			'should update items': function(done) {
+				var pa, spy, expected;
+
+				pa = new ArrayAdapter(promiseFor([
+					{ id: 1, success: false }
+				]));
+
+				spy = this.spy();
+
+				expected = { id: 1, success: true };
+
+				when(pa.update(expected),
+					function() {
+						return pa.forEach(spy);
+					}
+				).then(
+					function() {
+						assert.calledOnceWith(spy, expected);
+					}
+				).then(done, done);
+			},
+
+			'should ignore updates to non-existent items': function(done) {
+				var pa, spy, expected;
+
+				expected = { id: 1, success: true };
+				pa = new ArrayAdapter(promiseFor([
+					expected
+				]));
+
+				spy = this.spy();
+
+
+				when(pa.update({ id: 2, success: false }),
+					function() {
+						return pa.forEach(spy);
+					}
+				).then(
+					function() {
+						assert.calledOnceWith(spy, expected);
+					}
+				).then(done, done);
+			}
 		}
 	},
 
@@ -143,10 +303,34 @@ buster.testCase('ArrayAdapter', {
 			src.forEach(forEachSpy);
 
 			refute.called(forEachSpy);
+		},
+
+		'promise-aware': {
+			'should remove all items': function(done) {
+				var src, forEachSpy;
+
+				src = new ArrayAdapter(promiseFor([
+					{ id: 1 }, { id: 2 }
+				]));
+
+				forEachSpy = this.spy();
+
+				when(src.clear(),
+					function() {
+						return src.forEach(forEachSpy);
+					}
+				).then(
+					function() {
+						refute.called(forEachSpy);
+					}
+				).then(done, done);
+			}
 		}
 	}
 });
 })(
 	require('buster'),
+	require('when'),
+	require('when/delay'),
 	require('../ArrayAdapter.js')
 );

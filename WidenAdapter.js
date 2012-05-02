@@ -5,12 +5,10 @@ define(function (require) {
 
 	"use strict";
 
-	var ArrayAdapter, ObjectAdapter, propertiesKey, byProperty, when, undef;
+	var ArrayAdapter, ObjectAdapter, when;
 
 	ArrayAdapter = require('./ArrayAdapter');
 	ObjectAdapter = require('./ObjectAdapter');
-	propertiesKey = require('./relational/propertiesKey');
-	byProperty = require('./comparator/byProperty');
 	when = require('when');
 
 	/**
@@ -28,10 +26,6 @@ define(function (require) {
 	 */
 	function WidenAdapter(object, options) {
 
-		var self, init;
-
-		this._resultSetPromise = object;
-
 		if (!(options && options.transform)) {
 			throw new Error("options.transform must be provided");
 		}
@@ -39,45 +33,12 @@ define(function (require) {
 		this._transform = options.transform;
 		delete options.transform;
 
-		this.identifier = options.identifier;
-		this.comparator = options.comparator;
-
-		self = this;
-		init = ArrayAdapter.prototype._init;
-
-		ArrayAdapter.call(self, [], options);
-
-		when(object, function (result) {
-			init.call(self, self._transform(result));
-		});
+		ArrayAdapter.call(this, object, options);
 	}
 
-	WidenAdapter.prototype = {
-
-		/**
-		 * ResultSetAdapter needs to delay running ArrayAdapter._init, so provides
-		 * it's own noop _init which ArrayAdapter() will call immediately, and
-		 * ResultSetAdapter() above will call ArrayAdapter._init at the appropriate
-		 * time.
-		 */
-		_init: function() {},
-
-		comparator: undef,
-
-		identifier: undef,
-
-		// just stubs for now
-		getOptions: ArrayAdapter.prototype.getOptions,
-
-		forEach: makePromiseAware(ArrayAdapter.prototype.forEach),
-
-		add: makePromiseAware(ArrayAdapter.prototype.add),
-
-		remove: makePromiseAware(ArrayAdapter.prototype.remove),
-
-		update: makePromiseAware(ArrayAdapter.prototype.update),
-
-		clear: makePromiseAware(ArrayAdapter.prototype.clear)
+	WidenAdapter.prototype = new ArrayAdapter();
+	WidenAdapter.prototype._init = function(object) {
+		ArrayAdapter.prototype._init.call(this, this._transform(object));
 	};
 
 	/**
@@ -94,26 +55,6 @@ define(function (require) {
 	WidenAdapter.canHandle = function(it) {
 		return when.isPromise(it) || ObjectAdapter.canHandle(it);
 	};
-
-	/**
-	 * Returns a new function that will delay execution of the supplied
-	 * function until this._resultSetPromise has resolved.
-	 *
-	 * @param func {Function} original function
-	 * @return {Promise}
-	 */
-	function makePromiseAware(func) {
-		return function() {
-			var self, args;
-
-			self = this;
-			args = Array.prototype.slice.call(arguments);
-
-			return when(this._resultSetPromise, function() {
-				return func.apply(self, args);
-			});
-		}
-	}
 
 	return WidenAdapter;
 });

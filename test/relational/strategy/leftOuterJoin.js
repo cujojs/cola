@@ -38,7 +38,7 @@ buster.testCase('relational/strategy/leftOuterJoin', {
 	},
 
 	'should return a function if options.leftKey is provided': function() {
-		assert.typeOf(createLeftOuterJoin({ leftKey: 'id' }), 'function');
+		assert.isFunction(createLeftOuterJoin({ leftKey: 'id' }));
 	},
 
 	'should return a function that forwards parameters to join engine': function() {
