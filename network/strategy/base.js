@@ -14,7 +14,7 @@ define(function () {
 				if (typeof dest[type] != 'function') {
 					throw new Error('baseStrategy: ' + type + ' is not a function.');
 				}
-				dest[type](data);
+				return dest[type](data);
 			}
 		};
 
