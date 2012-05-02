@@ -85,13 +85,14 @@ buster.testCase('QueryAdapter', {
 			item = { id: 1 };
 			ds = this.stub(createDatasource());
 			ds.query.returns([item]);
+			ds.getIdentity.returns(item.id);
 
 			qa = new QueryAdapter(ds);
 			qa.query();
 
 			qa.remove(item).then(
 				function() {
-					assert.calledOnceWith(ds.remove, item);
+					assert.calledOnceWith(ds.remove, item.id);
 				},
 				fail
 			).then(done, done);
