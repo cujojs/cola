@@ -1,7 +1,8 @@
 (function (define) {
 define(function (require) {
 
-	var when = require('when');
+	var when = require('when'),
+		itemChangeEvents = { add: 1, update: 1 };
 
 	/**
 	 * Creates a strategy function that re-broadcasts item changes as "update"
@@ -12,7 +13,7 @@ define(function (require) {
 	return function (options) {
 
 		return function updateAfterItemChange (source, dest, data, type, api) {
-			if (api.isPropagating() && source != dest && typeof dest[type] == 'function') {
+			if (api.isPropagating() && source != dest && eventCouldChangeItem(dest, type)) {
 				when(dest[type](data), function (updated) {
 					// only re-broadcast if we received an object that has
 					// properties.
@@ -24,6 +25,10 @@ define(function (require) {
 		};
 
 	};
+
+	function eventCouldChangeItem (dest, type) {
+		return type in itemChangeEvents && typeof dest[type] == 'function'
+	}
 
 	function hasProperties (o) {
 		if (!o) return false;
