@@ -84,8 +84,7 @@ define(function (require) {
 	 * the correct source.
 	 */
 	function Hub (options) {
-		var adapters, eventQueue, strategy, publicApi, eventsApi,
-			currDestAdapter;
+		var adapters, eventQueue, strategy, publicApi, eventsApi;
 
 		// TODO: Determine if we need to save Hub options and mix them into
 		// options passed thru to adapters in addSource
