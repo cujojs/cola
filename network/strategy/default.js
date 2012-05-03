@@ -7,8 +7,7 @@ define(function (require) {
 	var
 		compose = require('./compose'),
 		minimal = require('./minimal'),
-		collectThenDeliver = require('./collectThenDeliver'),
-		updateAfterItemChange = require('./updateAfterItemChange');
+		collectThenDeliver = require('./collectThenDeliver');
 
 	/**
 	 * This is a composition of the strategies that Brian and I think
@@ -28,8 +27,7 @@ define(function (require) {
 
 		// configure strategies
 		strategies = [
-			collectThenDeliver(options),
-			updateAfterItemChange(options)
+			collectThenDeliver(options)
 		];
 
 		strategies.push(minimal(options));
