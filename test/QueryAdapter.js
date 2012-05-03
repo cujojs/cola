@@ -153,6 +153,11 @@ buster.testCase('QueryAdapter', {
 			).then(done, done);
 
 		}
+	},
+
+	'async': {
+		'// should have tests to assert that values returned from server update internal state': function () {},
+		'// should have tests to assert that errors returned from server are handled': function () {}
 	}
 
 });

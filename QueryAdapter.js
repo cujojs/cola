@@ -119,22 +119,30 @@ define(function (require) {
 		},
 
 		add: function(item) {
-			var items, added;
+			var items, added, self;
 
 			items = this._items;
 			added = items.add(item, item);
 
-			if(added >= 0) {
+			if(added >= 0 && !this._dontCallDatasource) {
+
+				self = this;
 
 				// This is optimistic, maybe overly so.  It notifies listeners
 				// that the item is added, even though there may be an inflight
 				// async store.add().  If the add fails, it tries to revert
 				// by removing the item from the local map, notifying listeners
 				// that it is removed, and "rethrowing" the failure.
+				// When we move all data to a central SortedMap, we can handle
+				// this behavior with a strategy.
 				return when(this._datasource.add(item),
-					null, // If all goes according to plan, great, nothing to do
+					function(returned) {
+						if (self._itemWasUpdatedByDatasource(returned)) {
+							self._execMethodWithoutCallingDatasource('update', returned);
+						}
+					},
 					function(err) {
-						items.remove(item);
+						self._execMethodWithoutCallingDatasource('remove', item);
 						throw err;
 					}
 				);
@@ -148,16 +156,17 @@ define(function (require) {
 			items = this._items;
 			removed = items.remove(item);
 
-			if(removed >= 0) {
+			if(removed >= 0 && !this._dontCallDatasource) {
 
 				// TODO: remove dojo-specific behavior
 				var id = this._datasource.getIdentity(item);
 
-				// Similar to add() above, this may be too optimistic.
+				// Similar to add() above, this should be replaced with a
+				// central SortedMap and strategy.
 				return when(this._datasource.remove(id),
 					null, // If all goes according to plan, great, nothing to do
 					function(err) {
-						items.add(item, item);
+						self._execMethodWithoutCallingDatasource('add', item);
 						throw err;
 					}
 				);
@@ -173,22 +182,43 @@ define(function (require) {
 			if(orig) {
 				this._replace(orig, item);
 
-				self = this;
+				if (!this._dontCallDatasource) {
+					self = this;
 
-				// Similar to add() above, this may be too optimistic.
-				return when(this._datasource.put(item),
-					null, // If all goes according to plan, great, nothing to do
-					function(err) {
-						self._replace(item, orig);
-						throw err;
-					}
-				)
+					// Similar to add() above, this should be replaced with a
+					// central SortedMap and strategy.
+					return when(this._datasource.put(item),
+						function(returned) {
+							if (self._itemWasUpdatedByDatasource(returned)) {
+								self._execMethodWithoutCallingDatasource('update', returned);
+							}
+						},
+						function(err) {
+							self._execMethodWithoutCallingDatasource('update', orig);
+							throw err;
+						}
+					);
+				}
 			}
 		},
 
 		_replace: function(oldItem, newItem) {
 			this._items.remove(oldItem);
 			this._items.add(newItem, newItem);
+		},
+
+		_itemWasUpdatedByDatasource: function(item) {
+			return hasProperties(item);
+		},
+
+		_execMethodWithoutCallingDatasource: function(method, item) {
+			this._dontCallDatasource = true;
+			try {
+				return this[method](item);
+			}
+			finally {
+				this._dontCallDatasource = false;
+			}
 		},
 
 		clear: function() {
@@ -201,6 +231,12 @@ define(function (require) {
 	};
 
 	return QueryAdapter;
+
+	function hasProperties (o) {
+		if (!o) return false;
+		for (var p in o) return true;
+	}
+
 });
 
 })(
