@@ -84,7 +84,8 @@ define(function (require) {
 	 * the correct source.
 	 */
 	function Hub (options) {
-		var adapters, eventQueue, strategy, publicApi, eventsApi;
+		var adapters, eventQueue, strategy, publicApi, eventsApi,
+			currDestAdapter;
 
 		// TODO: Determine if we need to save Hub options and mix them into
 		// options passed thru to adapters in addSource
@@ -226,7 +227,9 @@ define(function (require) {
 
 				context.phase = propagatingPhase;
 				while (!context.canceled && (adapter = adapters[--i])) {
-					strategy(source, adapter, data, type, strategyApi);
+					if (source != adapter) {
+						strategy(source, adapter, data, type, strategyApi);
+					}
 				}
 
 				context.phase = context.canceled ? canceledPhase : afterPhase;

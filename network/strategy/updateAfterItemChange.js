@@ -13,7 +13,7 @@ define(function (require) {
 	return function (options) {
 
 		return function updateAfterItemChange (source, dest, data, type, api) {
-			if (!api.isHandled() && api.isPropagating() && source != dest && eventCouldChangeItem(dest, type)) {
+			if (!api.isHandled() && api.isPropagating() && eventCouldChangeItem(dest, type)) {
 				when(dest[type](data), function (updated) {
 					// only re-broadcast if we received an object that has
 					// properties.
