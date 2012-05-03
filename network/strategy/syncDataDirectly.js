@@ -66,7 +66,7 @@ define(function () {
 						}
 					}
 					// the sync event never gets onto the network:
-					return false;
+					api.cancel();
 				}
 				finally {
 					synced = undef;
@@ -75,7 +75,7 @@ define(function () {
 			// stop 'add' events between adapters while sync'ing, but allow
 			// strategies interested in the event to see it before
 			else if ('add' == type && synced && !api.isBefore()) {
-				return false;
+				api.cancel();
 			}
 			// keep track of adapters that leave
 			else if ('leave' == type && api.isAfter()) {

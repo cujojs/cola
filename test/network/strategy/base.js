@@ -7,7 +7,8 @@ refute = buster.refute;
 
 var base = require('../../../network/strategy/base'),
 	mockApi = {
-		isPropagating: function () { return true; }
+		isPropagating: function () { return true; },
+		isHandled: function () { return false; }
 	};
 
 buster.testCase('cola/network/strategy/base', {

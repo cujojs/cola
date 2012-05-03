@@ -46,7 +46,7 @@ define(function () {
 					if ('collect' == type) {
 						// TODO: how do we notify the system why we canceled?
 						// queue an "error" event?
-						return false;
+						api.cancel();
 					}
 				}
 				else if (api.isAfter()) {

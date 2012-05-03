@@ -84,7 +84,7 @@ buster.testCase('cola/Hub', {
 			strategy: strategy
 		});
 		var primary = h.addSource([]);
-		var isCanceled;
+		var isAfterCanceled;
 
 		h.onAdd = this.spy();
 		h.beforeAdd = this.spy();
@@ -96,11 +96,11 @@ buster.testCase('cola/Hub', {
 		refute.calledOnce(h.onAdd);
 		// event hub beforeAdd should be called
 		assert.calledOnce(h.beforeAdd);
-		// last strategy call should have api.isCanceled() == true;
-		assert(isCanceled, 'last event should be canceled');
+		// last strategy call should have api.isAfterCanceled() == true;
+		assert(isAfterCanceled, 'last event should be canceled');
 
 		function strategy (source, dest, data, type, api) {
-			isCanceled = api.isCanceled();
+			isAfterCanceled = api.isAfterCanceled();
 			return false;
 		}
 	},

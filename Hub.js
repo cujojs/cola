@@ -224,6 +224,7 @@ define(function (require) {
 
 				context.phase = propagatingPhase;
 				while (!canceled && (adapter = adapters[--i])) {
+					strategy(source, adapter, data, type, strategyApi);
 					if (false === strategy(source, adapter, data, type, strategyApi)) {
 						canceled = true;
 						break;
@@ -245,10 +246,14 @@ define(function (require) {
 		function createStrategyApi (context) {
 			function isPhase (phase) { return context.phase == phase; }
 			return {
+				cancel: function () { context.canceled = true; },
+				isCanceled: function () { return context.canceled == true; },
+				handle: function () { context.handled = true; },
+				isHandled: function () { return context.handled == true; },
 				queueEvent: queueEvent,
 				isBefore: function () { return isPhase(beforePhase); },
 				isAfter: function () { return isPhase(afterPhase); },
-				isCanceled: function () { return isPhase(canceledPhase); },
+				isAfterCanceled: function () { return isPhase(canceledPhase); },
 				isPropagating: function () { return isPhase(propagatingPhase); }
 			};
 		}

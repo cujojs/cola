@@ -11,6 +11,7 @@ define(function () {
 
 		return function baseStrategy (source, dest, data, type, api) {
 			if (api.isPropagating() && type in dest && source != dest) {
+				if (api.isHandled()) return;
 				if (typeof dest[type] != 'function') {
 					throw new Error('baseStrategy: ' + type + ' is not a function.');
 				}

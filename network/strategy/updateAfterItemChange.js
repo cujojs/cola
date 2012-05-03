@@ -13,7 +13,7 @@ define(function (require) {
 	return function (options) {
 
 		return function updateAfterItemChange (source, dest, data, type, api) {
-			if (api.isPropagating() && source != dest && eventCouldChangeItem(dest, type)) {
+			if (!api.isHandled() && api.isPropagating() && source != dest && eventCouldChangeItem(dest, type)) {
 				when(dest[type](data), function (updated) {
 					// only re-broadcast if we received an object that has
 					// properties.
@@ -21,7 +21,7 @@ define(function (require) {
 						api.queueEvent(dest, updated, 'update');
 					}
 				});
-				return false; // stop base strategy from firing, too.
+				api.handle(); // stop base strategy from handling, too.
 			}
 		};
 

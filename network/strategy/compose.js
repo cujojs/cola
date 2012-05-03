@@ -15,12 +15,11 @@ define(function () {
 		var len = strategies.length;
 
 		return function (source, dest, data, type, api) {
-			var i = 0, proceed;
+			var i = 0;
 
-			do proceed = strategies[i](source, dest, data, type, api);
-			while (proceed !== false && ++i < len);
+			do strategies[i](source, dest, data, type, api);
+			while (!api.isCanceled() && ++i < len);
 
-			return proceed;
 		}
 
 	};

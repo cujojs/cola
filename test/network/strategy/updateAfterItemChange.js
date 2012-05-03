@@ -6,10 +6,14 @@ refute = buster.refute;
 
 var updateAfterItemChange = require('../../../network/strategy/updateAfterItemChange'),
 	mockApi = {
-		isPropagating: function () { return true; }
+		isPropagating: function () { return true; },
+		handle: function (val) { this.handled = val; },
+		isHandled: function () { return this.handled; }
 	},
 	badApi = {
-		isPropagating: function () { return false; }
+		isPropagating: function () { return false; },
+		handle: function (val) { this.handled = val; },
+		isHandled: function () { return this.handled; }
 	},
 	data = { foo: 2 },
 	updatedData = { foo: 3 };
@@ -37,15 +41,17 @@ buster.testCase('cola/network/strategy/updateAfterItemChange', {
 
 	},
 
-	'should return false if it handles event': function () {
+	'should call api.handle() if it handles event': function () {
 		var qspy, api, dest, src;
 		qspy = this.spy();
 		api = Object.create(mockApi);
-		api.queueEvent = qspy;
+		api.handle = qspy;
 		src = {};
 		dest = { add: function () { return updatedData; } };
 
-		refute(updateAfterItemChange()(src, dest, data, 'add', api));
+		updateAfterItemChange()(src, dest, data, 'add', api);
+
+		assert.called(qspy);
 
 	},
 

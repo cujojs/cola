@@ -34,8 +34,6 @@ define(function () {
 					// request to sync *to* source (consume)
 					api.queueEvent(source, false, 'sync');
 				}
-				// return value doesn't matter
-				return false;
 			}
 
 		};

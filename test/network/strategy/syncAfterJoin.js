@@ -11,9 +11,8 @@ var syncAfterJoin = require('../../../network/strategy/syncAfterJoin'),
 
 buster.testCase('cola/network/strategy/syncAfterJoin', {
 
-	'should return function that returns false': function () {
+	'should return function': function () {
 		assert.isFunction(syncAfterJoin([]));
-		refute(syncAfterJoin([])());
 	},
 
 	'should call hub\'s queueEvent': function (done) {
@@ -52,21 +51,6 @@ buster.testCase('cola/network/strategy/syncAfterJoin', {
 			done();
 		}, 0);
 
-	},
-
-	'should assume source is provider if data is present': function () {
-		var qspy, api, dest, src;
-		qspy = this.spy();
-		api = Object.create(mockApi);
-		api.queueEvent = qspy;
-		src = {
-			forEach: function (lambda) { lambda(1); }
-		};
-
-		syncAfterJoin()(src, dest, {}, 'join', api);
-
-		assert.calledOnce(qspy);
-		assert.calledWith(qspy, src, true, 'sync');
 	}
 
 });
