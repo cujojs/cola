@@ -157,7 +157,7 @@ define(function (require) {
 				if (typeof adapter[method] == 'function') {
 					if (eventFinder(method)) {
 						// store original method on proxy (to stop recursion)
-						proxy[method] = adapter[method];
+						proxy[method] = callOrigAdapterMethod(adapter, adapter[method]);
 						// change public api of adapter to call back into hub
 						observeAdapterMethod(adapter, method, adapter[method]);
 						// ensure hub has a public method of the same name
@@ -173,6 +173,12 @@ define(function (require) {
 			processEvent(proxy, null, 'join');
 
 			return adapter;
+		}
+
+		function callOrigAdapterMethod (adapter, orig) {
+			return function () {
+				return orig.apply(adapter, arguments);
+			};
 		}
 
 		function queueEvent (source, data, type) {
