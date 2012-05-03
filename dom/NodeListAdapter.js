@@ -73,13 +73,11 @@ define(function(require) {
 				return self.identifier(item);
 			},
 			function (a, b) {
-				return self.comparator(a, b)
+				return self.comparator(a, b);
 			}
 		);
 
-		this._itemsById = new SortedMap(
-			function(key) { return key; }
-		);
+		this._itemsById = {};
 
 	}
 
@@ -100,7 +98,7 @@ define(function(require) {
 				// insert
 				this._insertNodeAt(adapter._rootNode, index);
 
-				this._itemsById.add(this.identifier(item), item);
+				this._itemsById[this.identifier(item)] = item;
 			}
 		},
 
@@ -120,7 +118,7 @@ define(function(require) {
 				// remove from dom
 				node.parentNode.removeChild(node);
 
-				this._itemsById.remove(this.identifier(item));
+				delete this._itemsById[this.identifier(item)];
 			}
 		},
 
@@ -147,8 +145,7 @@ define(function(require) {
 			index = this._itemData.add(item, adapter);
 
 			key = this.identifier(item);
-			this._itemsById.remove(key);
-			this._itemsById.add(key, item);
+			this._itemsById[key] = item;
 
 			this._insertNodeAt(adapter._rootNode, index);
 		},
@@ -193,7 +190,7 @@ define(function(require) {
 			do id = node.getAttribute(idAttr);
 			while (id == null && (node = node.parentNode) && node.nodeType == 1);
 
-			return id != null && this._itemsById.get(id);
+			return id != null && this._itemsById[id];
 		},
 
 		/**
