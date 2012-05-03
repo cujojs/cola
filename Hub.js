@@ -208,39 +208,37 @@ define(function (require) {
 			3. if not canceled, call events.XXX(data)
 		 */
 		function processEvent (source, data, type) {
-			var context, strategyApi, i, adapter, canceled;
+			var context, strategyApi, i, adapter;
+
+			context = {};
 
 			// give public api a chance to see (and possibly cancel) event
-			canceled = false === callEventsApi(data, camelize('before', type));
+			context.canceled = false === callEventsApi(data, camelize('before', type));
 
 			// if public api cancels, the network never sees the event at all
-			if (!canceled) {
+			if (!context.canceled) {
 
-				context = { phase: beforePhase };
+				context.phase = beforePhase;
 				strategyApi = createStrategyApi(context);
 
-				canceled = false === strategy(source, undef, data, type, strategyApi);
+				strategy(source, undef, data, type, strategyApi);
 				i = adapters.length;
 
 				context.phase = propagatingPhase;
-				while (!canceled && (adapter = adapters[--i])) {
+				while (!context.canceled && (adapter = adapters[--i])) {
 					strategy(source, adapter, data, type, strategyApi);
-					if (false === strategy(source, adapter, data, type, strategyApi)) {
-						canceled = true;
-						break;
-					}
 				}
 
-				context.phase = canceled ? canceledPhase : afterPhase;
-				canceled = false === strategy(source, undef, data, type, strategyApi);
+				context.phase = context.canceled ? canceledPhase : afterPhase;
+				strategy(source, undef, data, type, strategyApi);
 
 			}
 
-			if (!canceled) callEventsApi(data, camelize('on', type));
+			if (!context.canceled) callEventsApi(data, camelize('on', type));
 
 			processNextEvent();
 
-			return canceled;
+			return context.canceled;
 		}
 
 		function createStrategyApi (context) {
@@ -313,6 +311,7 @@ define(function (require) {
 				return eventsApi[name](data);
 			}
 			catch (ex) {
+				// TODO: do something with this exception
 				return false;
 			}
 		}
