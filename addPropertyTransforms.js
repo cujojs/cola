@@ -94,6 +94,8 @@ define(function (require) {
 			}
 		}
 
+		// remove should be a noop if we don't already have it
+		map.remove(transformed);
 		map.add(transformed, item);
 
 		return transformed;
