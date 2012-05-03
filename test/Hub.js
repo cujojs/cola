@@ -79,7 +79,7 @@ buster.testCase('cola/Hub', {
 		assert.calledOnce(h.beforeAdd);
 		assert.callOrder(h.beforeAdd, h.onAdd)
 	},
-	'should not call events if strategy returns false': function () {
+	'should not call events if strategy cancels event': function () {
 		var h = new Hub({
 			strategy: strategy
 		});
@@ -101,7 +101,7 @@ buster.testCase('cola/Hub', {
 
 		function strategy (source, dest, data, type, api) {
 			isAfterCanceled = api.isAfterCanceled();
-			return false;
+			api.cancel();
 		}
 	},
 	'should run queued event in next turn': function (done) {

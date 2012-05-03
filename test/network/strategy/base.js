@@ -29,19 +29,6 @@ buster.testCase('cola/network/strategy/base', {
 
 		assert.calledOnce(spy);
 	},
-	'should not execute method on dest adapter if source == dest': function () {
-		var spy, strategy, dest;
-
-		spy = this.spy();
-		strategy = base();
-		dest = {
-			anyEvent: spy
-		};
-
-		strategy(dest, dest, {}, 'anyEvent', mockApi);
-
-		refute.calledOnce(spy);
-	},
 	'should not execute method on dest adapter if method doesn\'t exist': function () {
 		var spy, strategy, dest;
 
