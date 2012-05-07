@@ -22,7 +22,7 @@ define(function (require) {
 	 */
 	function QueryAdapter(datasource, options) {
 
-		var identifier;
+		var identifier, dsQuery, self;
 
 		this._datasource = datasource;
 		this._options = options || {};
@@ -49,6 +49,20 @@ define(function (require) {
 			};
 
 		this._items = new SortedMap(identifier, this.comparator);
+
+		// override the store's query
+		dsQuery = datasource.query;
+		self = this;
+		datasource.query = function(query) {
+			return this._queue(function() {
+				return when(dsQuery.call(datasource, arguments), function(results) {
+					self._items = new SortedMap(self.identifier, self.comparator);
+					self._initResultSet(results);
+					return results;
+				});
+			});
+		};
+
 	}
 
 	QueryAdapter.prototype = {
@@ -58,18 +72,7 @@ define(function (require) {
 		identifier: undef,
 
 		query: function(query) {
-
-			var self = this;
-
-			return this._queue(function() {
-				// TODO: deal dojo-specific options parameter
-				return when(self._datasource.query(query||{}),
-				function(results) {
-					self._items = new SortedMap(self.identifier, self.comparator);
-					self._initResultSet(results);
-					return results;
-				});
-			});
+			return this._datasource.query.apply(this._datasource, arguments);
 		},
 
 		/**
