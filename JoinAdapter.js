@@ -21,6 +21,7 @@ define(function (require) {
 
 		this.identifier = primary.identifier;
 		this.comparator = primary.comparator;
+		this.provide = primary.provide;
 
 		this._primary = primary;
 		this._options = options;

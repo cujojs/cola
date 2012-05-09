@@ -146,7 +146,9 @@ define(function (require) {
 
 			// keep copy of original source so we can match it up later
 			proxy.origSource = source;
-			proxy.provide = options.provide;
+			if('provide' in options) {
+				proxy.provide = options.provide;
+			}
 
 			// sniff for event hooks
 			eventFinder = configureEventFinder(options.eventNames);

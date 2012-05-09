@@ -5,11 +5,10 @@ define(function (require) {
 
 //	"use strict";
 
-	var when, SortedMap, Notifier, undef;
+	var when, SortedMap, undef;
 
 	when = require('when');
 	SortedMap = require('./SortedMap');
-	Notifier = require('./Notifier');
 
 	/**
 	 * Manages a collection of objects taken a queryable data source, which
@@ -25,7 +24,14 @@ define(function (require) {
 		var identifier;
 
 		this._datasource = datasource;
-		this._options = options || {};
+
+		if(!options) options = {};
+
+		this._options = options;
+
+		if('provide' in options) {
+			this.provide = options.provide;
+		}
 
 		// Always use the datasource's identity as the identifier
 		identifier = this.identifier =
@@ -52,6 +58,8 @@ define(function (require) {
 	}
 
 	QueryAdapter.prototype = {
+
+		provide: true,
 
 		comparator: undef,
 
