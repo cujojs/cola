@@ -54,7 +54,7 @@ define(function (require) {
 		dsQuery = datasource.query;
 		self = this;
 		datasource.query = function(query) {
-			return this._queue(function() {
+			return self._queue(function() {
 				return when(dsQuery.call(datasource, arguments), function(results) {
 					self._items = new SortedMap(self.identifier, self.comparator);
 					self._initResultSet(results);
