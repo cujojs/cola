@@ -9,7 +9,6 @@ define(function (require) {
 	"use strict";
 
 	var when, methods, undef;
-
 	when = require('when');
 
 	/**
@@ -35,6 +34,10 @@ define(function (require) {
 
 		this.identifier = options.identifier || defaultIdentifier;
 
+		if('provide' in options) {
+			this.provide = options.provide;
+		}
+
 		this._array = dataArray;
 		this.clear();
 
@@ -46,6 +49,8 @@ define(function (require) {
 	}
 
 	ArrayAdapter.prototype = {
+
+		provide: true,
 
 		_init: function(dataArray) {
 			if(dataArray && dataArray.length) {
@@ -181,6 +186,8 @@ define(function (require) {
 				to[name] = transform ? transform(func) : func;
 			}
 		}
+
+		return to;
 	}
 
 	/**

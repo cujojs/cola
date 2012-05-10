@@ -43,6 +43,13 @@ buster.testCase('cola/Hub', {
 		// sniff for an adapter
 		assert.same(a, adapter);
 	},
+	'should override adapter default provide via options': function() {
+		var h = new Hub();
+		var defaultProvide = true;
+		var a = h.addSource([], { provide: false });
+		// sniff for an adapter
+		refute.equals(a.provide, defaultProvide);
+	},
 	'should find and add new event types from adapter': function () {
 		var e = {}, h = new Hub({
 			events: e

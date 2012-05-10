@@ -23,7 +23,17 @@ function createDatasource() {
 buster.testCase('QueryAdapter', {
 
     'options': {
-        'should preserve bindings options': function() {
+		'should be a provider by default': function() {
+			var a = new QueryAdapter({});
+			assert(a.provide);
+		},
+
+		'should allow overriding provide': function() {
+			var a = new QueryAdapter({}, { provide: false });
+			refute(a.provide);
+		},
+
+		'should preserve bindings options': function() {
             var bindings, adaptedObject;
 
             bindings = {};

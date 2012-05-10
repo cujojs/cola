@@ -29,6 +29,18 @@ buster.testCase('ArrayAdapter', {
 		}
 	},
 
+	'options': {
+		'should be a provider by default': function() {
+			var a = new ArrayAdapter([]);
+			assert(a.provide);
+		},
+
+		'should allow overriding provide': function() {
+			var a = new ArrayAdapter([], { provide: false });
+			refute(a.provide);
+		}
+	},
+
 	'forEach': {
 
 		'should iterate over all items': function() {

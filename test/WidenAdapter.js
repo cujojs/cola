@@ -1,13 +1,9 @@
 (function(buster, when, delay, WidenAdapter) {
 
-var assert, refute, undef;
+var assert, refute;
 
 assert = buster.assert;
 refute = buster.refute;
-
-function promiseFor(array) {
-	return delay(array, 0);
-}
 
 buster.testCase('WidenAdapter', {
 
