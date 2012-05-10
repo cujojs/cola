@@ -14,7 +14,7 @@ define(function (require) {
 	var when, methodsToReplace;
 
 	when = require('when');
-	
+
 	methodsToReplace = {
 		add: 1,
 		update: 1,
