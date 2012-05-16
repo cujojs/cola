@@ -42,7 +42,7 @@ define(function (require, exports) {
 			// figure out what to add and remove
 			adds = list.add || list || [];
 			removes = list.remove || [];
-			node.className = spliceClassNames(node.className, adds, removes);
+			node.className = spliceClassNames(node.className, removes, adds);
 		}
 		return getClassList(node);
 	}
