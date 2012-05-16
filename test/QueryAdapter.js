@@ -22,6 +22,12 @@ function createDatasource() {
 
 buster.testCase('QueryAdapter', {
 
+	'should throw if no datasource provided': function() {
+		assert.exception(function() {
+			new QueryAdapter();
+		});
+	},
+
     'options': {
 		'should be a provider by default': function() {
 			var a = new QueryAdapter({});
@@ -47,10 +53,13 @@ buster.testCase('QueryAdapter', {
 
 	'query': {
 		'should query datasource': function(done) {
-			var qa, ds, added, removed;
+			var qa, ds, queryStub, added, removed;
 
 			ds = this.stub(createDatasource());
 			ds.query.returns(promiseFor([{ id: 1 }]));
+			// Have to hold onto this stub because QueryAdapter
+			// will replace ds.query
+			queryStub = ds.query;
 
 			added = this.spy();
 			removed = this.spy();
@@ -62,7 +71,7 @@ buster.testCase('QueryAdapter', {
 			// the done() calls and just return a promise.
 			qa.query().then(
 				function() {
-					assert.calledOnce(ds.query);
+					assert.calledOnce(queryStub);
 				},
 				fail
 			).then(done, done);
@@ -136,7 +145,7 @@ buster.testCase('QueryAdapter', {
 		'should iterate over empty results before query': function() {
 			var qa, spy;
 
-			qa = new QueryAdapter();
+			qa = new QueryAdapter(createDatasource());
 			spy = this.spy();
 
 			qa.forEach(spy);

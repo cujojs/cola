@@ -23,6 +23,8 @@ define(function (require) {
 
 		var identifier, dsQuery, self;
 
+		if(!datasource) throw new Error('cola/QueryAdapter: datasource must be provided');
+
 		this._datasource = datasource;
 
 		if(!options) options = {};
