@@ -13,7 +13,8 @@ exports['shared tests'] = {
 		'relational/strategy/*.js',
 		'projection/*.js',
 		'comparator/*.js',
-		'validation/**/*.js'
+		'validation/**/*.js',
+		'dom/*.js'
 	]
 };
 
