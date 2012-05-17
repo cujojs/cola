@@ -35,7 +35,7 @@ define(function () {
 					// the object always has a property of the given name.
 					// forms would normally not submit a checkbox if it isn't
 					// checked.
-					obj[name] = !!el.checked && value;
+					obj[name] = el.hasAttribute('value') ? !!el.checked && value : !!el.checked;
 				}
 				else if (el.checked) {
 					// collect checkbox groups into an array.

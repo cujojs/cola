@@ -15,6 +15,8 @@ fakeForm = {
 		{ name: 'text', type: 'text', value: 'text value' },
 		{ name: 'checkbox1', type: 'checkbox', value: 'checkbox value 1', checked: true },
 		{ name: 'checkbox2', type: 'checkbox', value: 'checkbox value 2', checked: false },
+		{ name: 'checkbox3', type: 'checkbox', value: null, checked: false },
+		{ name: 'checkbox4', type: 'checkbox', value: null, checked: true },
 		{ name: 'radio1', type: 'radio', value: 'radio value 1' },
 		{ name: 'radio2', type: 'radio', value: 'radio value 2', checked: true },
 		{ name: 'select', value: 'select value' },
@@ -54,6 +56,12 @@ fakeForm = {
 	]
 };
 
+// add hasAttribute() to each "element" since formToObject uses it
+// this is special logic to return false for null to better simulate dom nodes
+for (var i in fakeForm.elements) (function (el){
+	el.hasAttribute = function (attr) { return attr in el && el[attr] !== null; }
+}(fakeForm.elements[i]));
+
 buster.testCase('cola/dom/formToObject', {
 
 	'formToObject': {
@@ -62,6 +70,8 @@ buster.testCase('cola/dom/formToObject', {
 			assert.equals('text value', obj.text, 'text input');
 			assert.equals('checkbox value 1', obj.checkbox1, 'checked checkbox');
 			assert.equals(false, obj.checkbox2, 'unchecked checkbox');
+			assert.equals(false, obj.checkbox3, 'unchecked checkbox with no value');
+			assert.equals(true, obj.checkbox4, 'checked checkbox with no value');
 			assert.equals(false, obj.radio1, 'unchecked radio');
 			assert.equals('radio value 2', obj.radio2, 'checked radio');
 			assert.equals('select value', obj.select, 'select');
