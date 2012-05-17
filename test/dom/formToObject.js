@@ -56,10 +56,9 @@ fakeForm = {
 	]
 };
 
-// add hasAttribute() to each "element" since formToObject uses it
-// this is special logic to return false for null to better simulate dom nodes
-for (var i in fakeForm.elements) (function (el){
-	el.hasAttribute = function (attr) { return attr in el && el[attr] !== null; }
+// add fake attributes collection to each "element" since formToObject uses it
+for (var i in fakeForm.elements) (function (el) {
+	el.attributes = el;
 }(fakeForm.elements[i]));
 
 buster.testCase('cola/dom/formToObject', {
