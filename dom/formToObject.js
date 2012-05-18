@@ -1,6 +1,7 @@
+/** @license MIT License (c) copyright B Cavalier & J Hann */
+
 (function (define) {
 define(function () {
-
 
 	/**
 	 * Simple routine to pull input values out of a form.
