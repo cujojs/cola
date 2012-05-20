@@ -16,7 +16,8 @@ define(function (require) {
 		if(!options) options = {};
 
 		findNode = options.findNode || defaultFindNode;
-		invalidClass = options.invalidClass || defaultInvalidClass;
+		invalidClass = 'invalidClass' in options ? options.invalidClass : defaultInvalidClass;
+
 		invalidFieldToNode = {};
 
 		return function formValidationHandler(validationResults) {
@@ -28,14 +29,14 @@ define(function (require) {
 			var i, error;
 
 			// Clear previously invalidated nodes first
-			removeClass(form, invalidClass);
+			removeClasses(form, [invalidClass]);
 			for(i in invalidFieldToNode) {
-				removeClass(invalidFieldToNode[i], invalidClass);
+				removeClasses(invalidFieldToNode[i].node, invalidFieldToNode[i].classes);
 			}
 
 			// Invalidate the form if results are invalid
 			if(validationResults.valid === false) {
-				addClass(form, invalidClass);
+				addClasses(form, [invalidClass]);
 			}
 
 			if(!validationResults.errors) return;
@@ -49,12 +50,16 @@ define(function (require) {
 				// Since this only applies a single invalid class
 				// we can skip multiple errors on the same field
 				if(!(error.property in invalidFieldToNode)) {
-					var node = findNode(form, error.property);
+					var node = findNode(form, error.property),
+						classes = [error.className || error.code];
+					if (invalidClass) classes.push(invalidClass);
 					if(node) {
-						addClass(node, invalidClass);
+						addClasses(node, classes);
+						invalidFieldToNode[error.property] = {
+							node: node,
+							classes: classes
+						};
 					}
-
-					invalidFieldToNode[error.property] = node;
 				}
 			}
 
@@ -62,12 +67,12 @@ define(function (require) {
 		}
 	};
 
-	function addClass(node, cls) {
-		classList.setClassList(node, [cls]);
+	function addClasses(node, cls) {
+		classList.setClassList(node, cls);
 	}
 
-	function removeClass(node, cls) {
-		classList.setClassList(node, { add: [], remove: [cls] });
+	function removeClasses(node, cls) {
+		classList.setClassList(node, { add: [], remove: cls });
 	}
 
 	function defaultFindNode(form, fieldName) {
@@ -79,6 +84,7 @@ define(function (require) {
 			node = form.elements[fieldName];
 		}
 
+		// TODO: just return node as the default behavior
 		return (node && node.parentNode) || node;
 	}
 
