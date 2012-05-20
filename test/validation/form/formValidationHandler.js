@@ -41,7 +41,7 @@ buster.testCase('validation/form/formValidationHandler', {
 		formValidationHandler = createFormValidationHandler(
 			form, { findNode: function() { return node; } });
 
-		formValidationHandler({ valid: false, errors: [{ name: 'test', message: 'test' }] });
+		formValidationHandler({ valid: false, errors: [{ name: 'test', code: 'test', message: 'test' }] });
 
 		assert.match(node.className, /\binvalid\b/);
 	},
@@ -69,7 +69,7 @@ buster.testCase('validation/form/formValidationHandler', {
 		formValidationHandler = createFormValidationHandler(
 			form, { findNode: function() { return node; } });
 
-		formValidationHandler({ valid: false, errors: [{ name: 'test', message: 'test' }] });
+		formValidationHandler({ valid: false, errors: [{ name: 'test', code: 'test', message: 'test' }] });
 
 		assert.match(node.className, /\binvalid\b/);
 
