@@ -20,6 +20,16 @@ function createForm() {
 	};
 }
 
+var validationObjectWithErrors;
+
+validationObjectWithErrors = {
+	valid: false,
+	errors: [
+		{ property: 'test', code: 'test', message: 'test' },
+		{ property: 'test2', code: 'test2', className: 'class', message: 'test2' }
+	]
+};
+
 buster.testCase('validation/form/formValidationHandler', {
 
 	'should add invalid class to form': function() {
@@ -33,7 +43,24 @@ buster.testCase('validation/form/formValidationHandler', {
 		assert.match(form.className, /\binvalid\b/);
 	},
 
-	'should add invalid class to associated node': function() {
+	'should add default and custom classes to associated node': function() {
+		var formValidationHandler, form, node, node2;
+
+		form = createForm();
+		node = createFakeNode();
+		node2 = createFakeNode();
+		formValidationHandler = createFormValidationHandler(
+			form, { findNode: function(f, name) { return name == 'test' ? node : node2; } });
+
+		formValidationHandler(validationObjectWithErrors);
+
+		assert.match(node.className, /\binvalid\b/);
+		assert.match(node2.className, /\binvalid\b/);
+		assert.match(node.className, /\btest\b/);
+		assert.match(node2.className, /\bclass\b/);
+	},
+
+	'should remove classes from form when it becomes valid': function() {
 		var formValidationHandler, form, node;
 
 		form = createForm();
@@ -41,18 +68,7 @@ buster.testCase('validation/form/formValidationHandler', {
 		formValidationHandler = createFormValidationHandler(
 			form, { findNode: function() { return node; } });
 
-		formValidationHandler({ valid: false, errors: [{ name: 'test', code: 'test', message: 'test' }] });
-
-		assert.match(node.className, /\binvalid\b/);
-	},
-
-	'should remove invalid class from form when it becomes valid': function() {
-		var formValidationHandler, form;
-
-		form = createForm();
-		formValidationHandler = createFormValidationHandler(form);
-
-		formValidationHandler({ valid: false });
+		formValidationHandler(validationObjectWithErrors);
 
 		assert.match(form.className, /\binvalid\b/);
 
@@ -61,21 +77,26 @@ buster.testCase('validation/form/formValidationHandler', {
 		refute.match(form.className, /\binvalid\b/);
 	},
 
-	'should remove invalid class from associated node when it becomes valid': function() {
-		var formValidationHandler, form, node;
+	'should remove classes from associated node when it becomes valid': function() {
+		var formValidationHandler, form, node, node2;
 
 		form = createForm();
 		node = createFakeNode();
+		node2 = createFakeNode();
 		formValidationHandler = createFormValidationHandler(
-			form, { findNode: function() { return node; } });
+			form, { findNode: function(f, name) { return name == 'test' ? node : node2; } });
 
-		formValidationHandler({ valid: false, errors: [{ name: 'test', code: 'test', message: 'test' }] });
+		formValidationHandler(validationObjectWithErrors);
 
 		assert.match(node.className, /\binvalid\b/);
+		assert.match(node.className, /\btest\b/);
+		assert.match(node2.className, /\bclass\b/);
 
 		formValidationHandler({ valid: true });
 
 		refute.match(node.className, /\binvalid\b/);
+		refute.match(node.className, /\btest\b/);
+		refute.match(node2.className, /\bclass\b/);
 	}
 
 });
