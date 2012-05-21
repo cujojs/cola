@@ -98,15 +98,16 @@ define(function (require, exports) {
 
 	// class parsing
 
-	var openRx, closeRx, innerRx, trimLeadingRx;
+	var openRx, closeRx, innerRx, innerSpacesRx, outerSpacesRx;
 
-	openRx = '(\\s+|^)(';
-	closeRx = ')(\\b(?![\\-_])|$)';
+	openRx = '(?:\\b\\s+|^\\s*)(';
+	closeRx = ')(?:\\b(?!-))|(?:\\s*)$';
 	innerRx = '|';
-	trimLeadingRx = /^\s+/;
+	innerSpacesRx = /\b\s+\b/;
+	outerSpacesRx = /^\s+|\s+$/;
 
 	/**
-	 * Adds and removes class names to a tokenized, space-delimited string.
+	 * Adds and removes class names to a string.
 	 * @private
 	 * @param className {String} current className
 	 * @param removes {Array} class names to remove
@@ -117,13 +118,21 @@ define(function (require, exports) {
 		var rx, leftovers;
 		// create regex to find all removes *and adds* since we're going to
 		// remove them all to prevent duplicates.
+		removes = trim(removes.concat(adds).join(' '));
+		adds = trim(adds.join(' '));
 		rx = new RegExp(openRx
-			+ removes.concat(adds).join(innerRx)
+			+ removes.replace(innerSpacesRx, innerRx)
 			+ closeRx, 'g');
-		// remove and clean up whitespace
-		leftovers = className.replace(rx, '').replace(trimLeadingRx, '');
-		// put the adds back in
-		return (leftovers ? [leftovers].concat(adds) : adds).join(' ');
+		// remove and add
+		return trim(className.replace(rx, function (m) {
+			// if nothing matched, we're at the end
+			return !m && adds ? ' '  + adds : '';
+		}));
+	}
+
+	function trim (str) {
+		// don't worry about high-unicode spaces. they should never be here.
+		return str.replace(outerSpacesRx, '');
 	}
 
 	return {

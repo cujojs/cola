@@ -46,6 +46,7 @@ define(function (require) {
 			i = 0;
 			invalidFieldToNode = {};
 
+			// TODO: change this to support more than one error per node
 			while((error = validationResults.errors[i++])) {
 				// Since this only applies a single invalid class
 				// we can skip multiple errors on the same field
@@ -94,3 +95,4 @@ typeof define == 'function'
 	? define
 	: function (factory) { module.exports = factory(require); }
 ));
+
