@@ -5,8 +5,9 @@ define(function (require) {
 
 	"use strict";
 
-	var when, undef;
+	var when, defaultIdentifier, undef;
 
+	defaultIdentifier = require('identifier/default');
 	when = require('when');
 
 	function LocalStorageAdapter(namespace, options) {
@@ -16,7 +17,6 @@ define(function (require) {
 
 		if (!options) options = {};
 
-		this._idGenerator = options.idGenerator || defaultIdGenerator;
 		this._storage = options.localStorage || global.localStorage;
 
 		if(!this._storage) throw new Error('cola/LocalStorageAdapter: localStorage not available, must be supplied in options');
@@ -45,14 +45,9 @@ define(function (require) {
 		add: function(item) {
 			var id = this.identifier(item);
 
-			if(id === undef) {
-				id = this._idGenerator(item);
-			}
-
 			if(id in this._data) return null;
 
 			this._data[id] = item;
-
 			this._sync();
 
 			return id;
@@ -94,25 +89,7 @@ define(function (require) {
 
 	return LocalStorageAdapter;
 
-	// GUID-like generation, not actually a GUID, tho, from:
-	// http://stackoverflow.com/questions/7940616/what-makes-this-pseudo-guid-generator-better-than-math-random
-	function s4() {
-		return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
-	}
-
-	function guidLike() {
-		return (s4()+s4()+"-"+s4()+"-"+s4()+"-"+s4()+"-"+s4()+s4()+s4());
-	}
-
-	function defaultIdGenerator(item) {
-		return (item.id = guidLike());
-	}
-
-	function defaultIdentifier(item) {
-		return item && item.id;
-	}
-
-})
+});
 })(this.window || global,
 	typeof define == 'function'
 		? define
