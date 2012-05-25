@@ -3,6 +3,7 @@ exports['shared tests'] = {
 		'ArrayAdapter.js',
 		'ObjectAdapter.js',
 		'QueryAdapter.js',
+		'LocalStorageAdapter.js',
 		'WidenAdapter.js',
 		'transformCollection.js',
 		'SortedMap.js',
