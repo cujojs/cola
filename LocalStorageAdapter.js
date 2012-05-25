@@ -17,6 +17,10 @@ define(function (require) {
 
 		if (!options) options = {};
 
+		if('provide' in options) {
+			this.provide = options.provide;
+		}
+
 		this._storage = options.localStorage || global.localStorage;
 
 		if(!this._storage) throw new Error('cola/LocalStorageAdapter: localStorage not available, must be supplied in options');
@@ -28,6 +32,8 @@ define(function (require) {
 	}
 
 	LocalStorageAdapter.prototype = {
+
+		provide: true,
 
 		identifier: undef,
 
