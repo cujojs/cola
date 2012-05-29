@@ -375,7 +375,8 @@ define(function (require) {
 			}
 		}
 
-		return { item: item, source: adapter };
+		return { item: item };
+//		return { item: item, source: adapter };
 	}
 
 	function isElementOrEvent (e) {

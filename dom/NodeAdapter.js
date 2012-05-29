@@ -47,6 +47,7 @@ define(function (require) {
 		update: function (item) {
 			var p;
 			if (this._updating) return;
+			this._item = item;
 			for (p in item) {
 				this._setProperty(p, item[p]);
 			}
@@ -127,18 +128,18 @@ define(function (require) {
 			self = this;
 			currValues = this._values;
 			this._unwatches.push(listenToNode(node, events, function (e) {
-				var prev, curr, partial;
+				var prev, curr;//, partial;
 				prev = currValues[name];
 				curr = getNodePropOrAttr(node, prop);
 				if (prev !== curr) {
-					partial = {};
-					partial[name] = curr;
-					this._updating = true;
+//					partial = {};
+					self._item[name] = currValues[name] = curr;
+					self._updating = true;
 					try {
-						self.update(partial);
+						self.update(self._item);
 					}
 					finally {
-						this._updating = false;
+						self._updating = false;
 					}
 				}
 			}));

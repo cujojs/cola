@@ -8,8 +8,10 @@ define(function () {
 	 * @param form {HTMLFormElement}
 	 * @return {Object} populated object
 	 */
-	return function formToObject (form) {
-		var obj, els, seen, i, el, name, value;
+	return function formToObject (formOrEvent) {
+		var obj, form, els, seen, i, el, name, value;
+
+		form = formOrEvent.selectorTarget || formOrEvent.target || formOrEvent;
 
 		obj = {};
 
