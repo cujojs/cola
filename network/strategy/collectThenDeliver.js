@@ -82,7 +82,7 @@ define(function () {
 		};
 
 		function startCollecting (data) {
-			collector = data;
+			collector = data || [];
 			// figure out where to collect
 			if (isArray(collector)) {
 				// collector is the collection. append to it
