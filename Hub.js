@@ -105,7 +105,9 @@ define(function (require) {
 		// create public api
 		eventsApi = publicApi = {
 			addSource: addSource,
-			destroy: destroy
+			destroy: destroy,
+			forEach: forEach,
+			get: getItem
 		};
 
 		// add standard events to publicApi
@@ -115,6 +117,23 @@ define(function (require) {
 		addApiEvents(eventNames);
 
 		return publicApi;
+
+		function forEach(lambda) {
+			var provider = findProvider();
+			return provider && provider.forEach(lambda);
+		}
+
+		function getItem(nodeOrEvent) {
+			var info = convertFromElementOrEvent(nodeOrEvent, adapters);
+			return info && info.item;
+		}
+
+		function findProvider() {
+			var a, i = adapters.length;
+			while(!adapters[--i].provide) {
+				if(a.provide) return a;
+			}
+		}
 
 		/**
 		 * @memberOf Hub
@@ -375,8 +394,8 @@ define(function (require) {
 			}
 		}
 
-//		return { item: item };
-		return { item: item, source: adapter };
+		return { item: item };
+//		return { item: item, source: adapter };
 	}
 
 	function isElementOrEvent (e) {
