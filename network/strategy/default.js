@@ -1,13 +1,15 @@
 (function (define) {
 define(function (require) {
-"use strict";
+	"use strict";
 
 	// Note: browser loaders and builders require that we don't "meta-program"
 	// the require() calls:
-	var
-		compose = require('./compose'),
-		minimal = require('./minimal'),
-		collectThenDeliver = require('./collectThenDeliver');
+	var compose, minimal, collectThenDeliver, validate;
+
+	compose = require('./compose');
+	minimal = require('./minimal');
+	collectThenDeliver = require('./collectThenDeliver');
+	validate = require('./validate');
 
 	/**
 	 * This is a composition of the strategies that Brian and I think
@@ -27,10 +29,12 @@ define(function (require) {
 
 		// configure strategies
 		strategies = [
-			collectThenDeliver(options)
+			validate(options),
+			collectThenDeliver(options),
+			minimal(options)
 		];
 
-		strategies.push(minimal(options));
+//		strategies.push(minimal(options));
 
 		// compose them
 		return compose(strategies);
