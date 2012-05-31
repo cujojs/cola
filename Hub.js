@@ -85,7 +85,7 @@ define(function (require) {
 	 * the correct source.
 	 */
 	function Hub (options) {
-		var adapters, eventQueue, strategy, publicApi, eventsApi;
+		var adapters, eventQueue, strategy, identifier, publicApi, eventsApi;
 
 		// TODO: Determine if we need to save Hub options and mix them into
 		// options passed thru to adapters in addSource
@@ -102,6 +102,8 @@ define(function (require) {
 
 		strategy = options.strategy;
 		if (!strategy) strategy = simpleStrategy(options.strategyOptions);
+
+		identifier = options.identifier || defaultIdentifier;
 
 		// create public api
 		eventsApi = publicApi = {
@@ -151,7 +153,7 @@ define(function (require) {
 
 			if (!options) options = {};
 
-			if (!options.identifier) options.identifier = defaultIdentifier;
+			if (!options.identifier) options.identifier = identifier;
 
 			// create an adapter for this source
 			// if we can't find an Adapter constructor, it is assumed to be an
