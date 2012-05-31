@@ -3,8 +3,10 @@ define(function () {
 	"use strict";
 
 	/**
-	 * Targets the first item added after a sync.
-	 * @param [options] {Object} not currently used.
+	 * Executes a configured validator and issues a validation event
+	 * with the results in response to an add or update event.
+	 * *Cancels* the add or update if validation fails
+	 * @param [options.validator] {Function} validator function
 	 * @return {Function} a network strategy function.
 	 */
 	return function configure (options) {
@@ -15,14 +17,12 @@ define(function () {
 			// Run validator on items before add or update
 			var result;
 
-			if (api.isBefore()) {
-				if('add' == type || 'update' == type) {
-					result = validator(data);
+			if (api.isBefore() && ('add' == type || 'update' == type)) {
+				result = validator(data);
 
-					if(!result.valid) api.cancel();
+				if (!result.valid) api.cancel();
 
-					api.queueEvent(source, result, 'validate');
-				}
+				api.queueEvent(source, result, 'validate');
 			}
 		};
 

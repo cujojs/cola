@@ -4,12 +4,13 @@ define(function (require) {
 
 	// Note: browser loaders and builders require that we don't "meta-program"
 	// the require() calls:
-	var compose, minimal, collectThenDeliver, validate;
+	var compose, minimal, collectThenDeliver, validate, changeEvent;
 
 	compose = require('./compose');
 	minimal = require('./minimal');
 	collectThenDeliver = require('./collectThenDeliver');
 	validate = require('./validate');
+	changeEvent = require('./changeEvent');
 
 	/**
 	 * This is a composition of the strategies that Brian and I think
@@ -31,7 +32,8 @@ define(function (require) {
 		return compose([
 			validate(options),
 			collectThenDeliver(options),
-			minimal(options)
+			minimal(options),
+			changeEvent(options)
 		]);
 
 	};

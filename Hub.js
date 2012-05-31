@@ -17,6 +17,7 @@ define(function (require) {
 		remove: 1, // data == item removed
 		update: 1, // data == item updated
 		target: 1, // data == item targeted TODO: rename this to "point"?
+		change: 1, // data == event type that caused the change
 		validate: 1, // data == validation result object with at least a boolean valid prop
 		// mode events
 		abort: 1, // abort the current mode (no data)
