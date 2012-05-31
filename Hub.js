@@ -4,7 +4,7 @@ define(function (require) {
 
 	var eventNames,
 		beforePhase, propagatingPhase, afterPhase, canceledPhase,
-		resolver, addPropertyTransforms, simpleStrategy,
+		resolver, addPropertyTransforms, simpleStrategy, defaultIdentifier,
 		undef;
 
 	// TODO: make these configurable/extensible
@@ -60,6 +60,7 @@ define(function (require) {
 	resolver = require('./AdapterResolver');
 	addPropertyTransforms = require('./addPropertyTransforms');
 	simpleStrategy = require('./network/strategy/default');
+	defaultIdentifier = require('./identifier/default');
 
 	/**
 	 * @constructor
@@ -149,6 +150,8 @@ define(function (require) {
 			var Adapter, adapter, proxy, method, eventFinder;
 
 			if (!options) options = {};
+
+			if (!options.identifier) options.identifier = defaultIdentifier;
 
 			// create an adapter for this source
 			// if we can't find an Adapter constructor, it is assumed to be an
@@ -395,8 +398,8 @@ define(function (require) {
 			}
 		}
 
-		return item && { item: item };
-//		return item && { item: item, source: adapter };
+//		return item && { item: item };
+		return item && { item: item, source: adapter };
 	}
 
 	function findAdapterForSource (source, adapters) {
