@@ -2,10 +2,14 @@
 define(function () {
 	"use strict";
 
-	var triggeringEventTypes = {
-		add: 1,
-		update: 1,
+	var beforeEvents, afterEvents;
+
+	beforeEvents = {
 		sync: 1
+	};
+	afterEvents = {
+		add: 1,
+		update: 1
 	};
 
 	/**
@@ -15,7 +19,8 @@ define(function () {
 	return function configure () {
 
 		return function queueChange (source, dest, data, type, api) {
-			if (api.isAfter() && triggeringEventTypes[type]) {
+			if (api.isBefore() && beforeEvents[type]
+				|| api.isAfter() && afterEvents[type]) {
 				api.queueEvent(source, type, 'change');
 			}
 		};

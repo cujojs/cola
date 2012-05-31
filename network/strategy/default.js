@@ -30,10 +30,14 @@ define(function (require) {
 
 		// compose them
 		return compose([
+			// Validate should be early so it can cancel other events
+			// when validation fails
 			validate(options),
 			collectThenDeliver(options),
-			minimal(options),
-			changeEvent(options)
+			// Change event support should be earlier than sync events
+			// so that it can translate them
+			changeEvent(options),
+			minimal(options)
 		]);
 
 	};
