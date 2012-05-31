@@ -66,6 +66,7 @@ define(function (require) {
 		_setProperty: function (name, value) {
 			var b, node, prop, current;
 			b = this._getBindingsFor(name);
+			if(b && b.to) name = b.to;
 			node = b && this._getNode(b.node, name);
 			if (b && node) {
 				prop = 'prop' in b ? b.prop : guessPropFor(node);
@@ -114,6 +115,7 @@ define(function (require) {
 			var name, binding, events, node, prop;
 			for (name in this._options.bindings) {
 				binding = this._options.bindings[name];
+				if(binding.to) name = binding.to;
 				events = binding.event || binding.events;
 				node = this._getNode(binding.node, name);
 				prop = binding.prop || guessPropFor(node);
