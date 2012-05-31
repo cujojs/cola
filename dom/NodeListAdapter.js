@@ -167,20 +167,20 @@ define(function(require) {
 			return this._options;
 		},
 
-		getItemForEvent: function (eventOrElement) {
+		get: function (eventOrElement) {
 			var node, idAttr, id;
 
-			if (!eventOrElement) return;
+			// using feature sniffing to detect if this is an event object
+			// TODO: use instanceof HTMLElement where supported
+			if (!(eventOrElement && eventOrElement.target && eventOrElement.stopPropagation && eventOrElement.preventDefault
+				|| eventOrElement && eventOrElement.nodeName && eventOrElement.nodeType == 1))
+				return; // not comments or text nodes
 
 			// test for an event or an element (duck-typing by using
 			// the same features we're sniffing below helps kill two birds...)
-			if (eventOrElement.getAttribute && eventOrElement.nodeType) {
-				node = eventOrElement
-			}
-			else {
-				// TODO: do we really need to sniff for obsolete srcElement or will event be normalized?
-				node = eventOrElement.target || eventOrElement.srcElement;
-			}
+			node = eventOrElement.nodeType
+				? eventOrElement
+				: eventOrElement.target || eventOrElement.srcElement;
 
 			if (!node) return;
 

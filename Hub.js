@@ -107,7 +107,7 @@ define(function (require) {
 			addSource: addSource,
 			destroy: destroy,
 			forEach: forEach,
-			get: getItem
+			get: itemFor
 		};
 
 		// add standard events to publicApi
@@ -123,8 +123,8 @@ define(function (require) {
 			return provider && provider.forEach(lambda);
 		}
 
-		function getItem(nodeOrEvent) {
-			var info = convertFromElementOrEvent(nodeOrEvent, adapters);
+		function itemFor(anything) {
+			var info = findItemFor(anything, adapters);
 			return info && info.item;
 		}
 
@@ -300,17 +300,18 @@ define(function (require) {
 
 		function addApiMethod (name) {
 			if (!publicApi[name]) {
-				publicApi[name] = function (itemOrDomThing) {
+				publicApi[name] = function (anything) {
 					var sourceInfo;
-					if (isElementOrEvent(itemOrDomThing)) {
-						sourceInfo = convertFromElementOrEvent(itemOrDomThing, adapters);
-					}
-					else {
+
+					sourceInfo = findItemFor(anything, adapters);
+
+					if(!sourceInfo) {
 						sourceInfo = {
-							item: itemOrDomThing,
+							item: anything,
 							source: findAdapterForSource(arguments[1], adapters)
 						};
 					}
+
 					return processEvent(sourceInfo.source, sourceInfo.item, name);
 				};
 			}
@@ -382,27 +383,20 @@ define(function (require) {
 		return function (name) { return eventNames.hasOwnProperty(name); };
 	}
 
-	function convertFromElementOrEvent (elementOrEvent, adapters) {
+	function findItemFor (anything, adapters) {
 		var item, i, adapter;
 
 		// loop through adapters that have the getItemForEvent() method
 		// to try to find out which adapter and which data item
 		i = 0;
 		while (!item && (adapter = adapters[i++])) {
-			if (adapter.getItemForEvent) {
-				item = adapter.getItemForEvent(elementOrEvent);
+			if (adapter.get) {
+				item = adapter.get(anything);
 			}
 		}
 
 		return { item: item };
 //		return { item: item, source: adapter };
-	}
-
-	function isElementOrEvent (e) {
-		// using feature sniffing to detect if this is an event object
-		// TODO: use instanceof HTMLElement where supported
-		return e && e.target && e.stopPropagation && e.preventDefault
-			|| e && e.nodeName && e.nodeType == 1; // not comments or text nodes
 	}
 
 	function findAdapterForSource (source, adapters) {

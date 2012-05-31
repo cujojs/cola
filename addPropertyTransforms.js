@@ -13,8 +13,7 @@ define(function (require) {
 	 * @param transforms {Object}
 	 */
 	function addPropertyTransforms (adapter, transforms) {
-		var origGet, origAdd, origUpdate, origForEach, origGetItemForEvent,
-			transformedItemMap;
+		var origGet, origAdd, origUpdate, origForEach, transformedItemMap;
 
 		// only override if transforms has properties
 		if (transforms && hasProperties(transforms)) {
@@ -23,7 +22,6 @@ define(function (require) {
 			origAdd = adapter.add;
 			origUpdate = adapter.update;
 			origForEach = adapter.forEach;
-			origGetItemForEvent = adapter.getItemForEvent;
 			transformedItemMap = new SortedMap(adapter.identifier, adapter.comparator);
 
 			if (origGet) {
@@ -54,12 +52,6 @@ define(function (require) {
 					}
 
 					return origForEach.call(adapter, transformedLambda);
-				};
-			}
-
-			if (origGetItemForEvent) {
-				adapter.getItemForEvent = function transformedGetItemForEvent (it) {
-					return untransformItem(origGetItemForEvent.call(adapter, it), transforms, transformedItemMap);
 				};
 			}
 
