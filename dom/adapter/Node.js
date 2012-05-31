@@ -25,14 +25,10 @@ define(function (require) {
 		// set options
 		this._options = options || {};
 
-		// flag to avoid circles when updating from an event
-		this._updating = false;
-
 		// event unwatchers to be called to prevent memory leaks in IE
 		this._unwatches = [];
 
 		this._watchAllEvents();
-
 	}
 
 	NodeAdapter.prototype = {
