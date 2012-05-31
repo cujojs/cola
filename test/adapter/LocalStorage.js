@@ -25,7 +25,7 @@ function fakeLocalStorage() {
 	}
 }
 
-buster.testCase('LocalStorageAdapter', {
+buster.testCase('adapter/LocalStorage', {
 
 	'should throw when namespace not provided': function() {
 		assert.exception(function() {
@@ -144,5 +144,5 @@ buster.testCase('LocalStorageAdapter', {
 
 })(
 	require('buster'),
-	require('../LocalStorageAdapter')
+	require('../../adapter/LocalStorage')
 );

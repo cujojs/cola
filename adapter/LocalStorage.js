@@ -7,7 +7,7 @@ define(function (require) {
 
 	var when, defaultIdentifier, undef;
 
-	defaultIdentifier = require('./identifier/default');
+	defaultIdentifier = require('./../identifier/default');
 	when = require('when');
 
 	function LocalStorageAdapter(namespace, options) {

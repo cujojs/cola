@@ -1,13 +1,8 @@
 exports['shared tests'] = {
 	tests: [
-		'ArrayAdapter.js',
-		'ObjectAdapter.js',
-		'QueryAdapter.js',
-		'LocalStorageAdapter.js',
-		'WidenAdapter.js',
-		'transformCollection.js',
 		'SortedMap.js',
 		'Hub.js',
+		'adapter/*.js',
 		'network/strategy/*.js',
 		'transform/*.js',
 		'relational/*.js',
@@ -15,7 +10,7 @@ exports['shared tests'] = {
 		'projection/*.js',
 		'comparator/*.js',
 		'validation/**/*.js',
-		'dom/*.js'
+		'dom/**/*.js'
 	]
 };
 

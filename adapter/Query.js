@@ -8,7 +8,7 @@ define(function (require) {
 	var when, SortedMap, undef;
 
 	when = require('when');
-	SortedMap = require('./SortedMap');
+	SortedMap = require('./../SortedMap');
 
 	/**
 	 * Manages a collection of objects taken a queryable data source, which

@@ -11,7 +11,7 @@ function promiseFor(it) {
 	return delay(it, 0);
 }
 
-buster.testCase('ObjectAdapter', {
+buster.testCase('adapter/Object', {
 	'options': {
 		'should pass options to getOptions': function () {
 			var bindings = {}, adaptedObject;
@@ -96,5 +96,5 @@ buster.testCase('ObjectAdapter', {
 	require('buster'),
 	require('when'),
 	require('when/delay'),
-	require('../ObjectAdapter.js')
+	require('../../adapter/Object')
 );

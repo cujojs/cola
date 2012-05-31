@@ -7,8 +7,8 @@ define(function (require) {
 
 	var ArrayAdapter, ObjectAdapter, when;
 
-	ArrayAdapter = require('./ArrayAdapter');
-	ObjectAdapter = require('./ObjectAdapter');
+	ArrayAdapter = require('./Array');
+	ObjectAdapter = require('./Object');
 	when = require('when');
 
 	/**

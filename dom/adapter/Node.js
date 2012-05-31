@@ -7,8 +7,8 @@ define(function (require) {
 
 	var domEvents, classList, watchNode;
 
-	domEvents = require('./events');
-	classList = require('./classList');
+	domEvents = require('./../events');
+	classList = require('./../classList');
 	watchNode = domEvents.watchNode;
 
 	/**

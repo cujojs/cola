@@ -4,7 +4,7 @@
 define(function (require) {
 "use strict";
 
-	var SortedMap = require('./SortedMap');
+	var SortedMap = require('./../SortedMap');
 
 	/**
 	 * Decorator that applies transforms to properties flowing in

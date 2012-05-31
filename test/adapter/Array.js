@@ -9,7 +9,7 @@ function promiseFor(array) {
 	return delay(array, 0);
 }
 
-buster.testCase('ArrayAdapter', {
+buster.testCase('adapter/Array', {
 
 	'canHandle': {
 		'should return true for an Array': function() {
@@ -344,5 +344,5 @@ buster.testCase('ArrayAdapter', {
 	require('buster'),
 	require('when'),
 	require('when/delay'),
-	require('../ArrayAdapter.js')
+	require('../../adapter/Array')
 );

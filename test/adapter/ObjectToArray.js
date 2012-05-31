@@ -5,7 +5,7 @@ var assert, refute;
 assert = buster.assert;
 refute = buster.refute;
 
-buster.testCase('WidenAdapter', {
+buster.testCase('adapter/ObjectToArray', {
 
 	'should throw if transform not supplied': function() {
 		assert.exception(function() {
@@ -36,5 +36,5 @@ buster.testCase('WidenAdapter', {
 	require('buster'),
 	require('when'),
 	require('when/delay'),
-	require('../WidenAdapter.js')
+	require('../../adapter/ObjectToArray')
 );

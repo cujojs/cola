@@ -6,9 +6,9 @@ define(function(require) {
 		defaultIdAttribute, defaultTemplateSelector, listElementsSelector,
 		colaListBindingStates, undef;
 
-	SortedMap = require('../SortedMap');
-	classList = require('./classList');
-	NodeAdapter = require('./NodeAdapter');
+	SortedMap = require('../../SortedMap');
+	classList = require('../classList');
+	NodeAdapter = require('./Node');
 
 	defaultTemplateSelector = '[data-cola-role="item-template"]';
 	defaultIdAttribute = 'data-cola-id';

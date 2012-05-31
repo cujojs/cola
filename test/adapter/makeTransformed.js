@@ -1,4 +1,4 @@
-(function(buster, when, delay, transformCollection) {
+(function(buster, when, delay, makeTransformed) {
 "use strict";
 
 var assert, refute, fail;
@@ -53,10 +53,10 @@ addOneWithInverse.inverse = function(x) {
 	return x - 1;
 };
 
-buster.testCase('transformCollection', {
+buster.testCase('adapter/makeTransformed', {
 	'should throw if no transform provided': function() {
 		assert.exception(function() {
-			transformCollection(createFakeAdapter());
+			makeTransformed(createFakeAdapter());
 		});
 	},
 
@@ -70,7 +70,7 @@ buster.testCase('transformCollection', {
 			originals[p] = adapter[p];
 		}
 
-		transformCollection(adapter, addOneWithInverse);
+		makeTransformed(adapter, addOneWithInverse);
 		for(p in adapter) {
 			assert.same(adapter[p], originals[p]);
 		}
@@ -83,7 +83,7 @@ buster.testCase('transformCollection', {
 
 		adapter = createFakeAdapter();
 		adapter.comparator = comparator;
-		transformed = transformCollection(adapter, addOneWithInverse);
+		transformed = makeTransformed(adapter, addOneWithInverse);
 
 		assert.same(transformed.comparator, comparator);
 	},
@@ -95,7 +95,7 @@ buster.testCase('transformCollection', {
 
 		adapter = createFakeAdapter();
 		adapter.identifier = identifier;
-		transformed = transformCollection(adapter, addOneWithInverse);
+		transformed = makeTransformed(adapter, addOneWithInverse);
 
 		assert.same(transformed.identifier, identifier);
 	},
@@ -106,7 +106,7 @@ buster.testCase('transformCollection', {
 
 			options = {};
 			adapter = this.stub(createFakeAdapter());
-			transformed = transformCollection(adapter, addOneWithInverse);
+			transformed = makeTransformed(adapter, addOneWithInverse);
 
 			adapter.getOptions.returns(options);
 			assert.same(transformed.getOptions(), options);
@@ -118,7 +118,7 @@ buster.testCase('transformCollection', {
 			var adapter, transformed, lambda;
 
 			adapter = createFakeAdapter([1]);
-			transformed = transformCollection(adapter, addOne);
+			transformed = makeTransformed(adapter, addOne);
 
 			lambda = this.spy();
 
@@ -131,7 +131,7 @@ buster.testCase('transformCollection', {
 			var adapter, transformed, lambda, results;
 
 			adapter = createFakeAdapter([1, 2, 3]);
-			transformed = transformCollection(adapter, makePromised(addOne));
+			transformed = makeTransformed(adapter, makePromised(addOne));
 
 			results = [];
 			lambda = function(val) {
@@ -152,7 +152,7 @@ buster.testCase('transformCollection', {
 			var adapter, transformed;
 
 			adapter = this.stub(createFakeAdapter());
-			transformed = transformCollection(adapter, addOneWithInverse);
+			transformed = makeTransformed(adapter, addOneWithInverse);
 
 			transformed.add(1);
 			assert.calledOnceWith(adapter.add, 0);
@@ -162,7 +162,7 @@ buster.testCase('transformCollection', {
 			var adapter, transformed;
 
 			adapter = this.stub(createFakeAdapter());
-			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
+			transformed = makeTransformed(adapter, makePromised(addOneWithInverse));
 
 			when(transformed.add(1),
 				function() {
@@ -178,7 +178,7 @@ buster.testCase('transformCollection', {
 			var adapter, transformed;
 
 			adapter = this.stub(createFakeAdapter());
-			transformed = transformCollection(adapter, addOneWithInverse);
+			transformed = makeTransformed(adapter, addOneWithInverse);
 
 			transformed.remove(1);
 			assert.calledOnceWith(adapter.remove, 0);
@@ -188,7 +188,7 @@ buster.testCase('transformCollection', {
 			var adapter, transformed;
 
 			adapter = this.stub(createFakeAdapter());
-			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
+			transformed = makeTransformed(adapter, makePromised(addOneWithInverse));
 
 			when(transformed.remove(1),
 				function() {
@@ -204,7 +204,7 @@ buster.testCase('transformCollection', {
 			var adapter, transformed;
 
 			adapter = this.stub(createFakeAdapter());
-			transformed = transformCollection(adapter, addOneWithInverse);
+			transformed = makeTransformed(adapter, addOneWithInverse);
 
 			transformed.update(1);
 			assert.calledOnceWith(adapter.update, 0);
@@ -214,7 +214,7 @@ buster.testCase('transformCollection', {
 			var adapter, transformed;
 
 			adapter = this.stub(createFakeAdapter());
-			transformed = transformCollection(adapter, makePromised(addOneWithInverse));
+			transformed = makeTransformed(adapter, makePromised(addOneWithInverse));
 
 			when(transformed.update(1),
 				function() {
@@ -230,7 +230,7 @@ buster.testCase('transformCollection', {
 			var adapter, transformed;
 
 			adapter = this.stub(createFakeAdapter());
-			transformed = transformCollection(adapter, addOneWithInverse);
+			transformed = makeTransformed(adapter, addOneWithInverse);
 
 			transformed.clear();
 			assert.calledOnce(adapter.clear);
@@ -244,5 +244,5 @@ buster.testCase('transformCollection', {
 	require('buster'),
 	require('when'),
 	require('when/delay'),
-	require('../transformCollection')
+	require('../../adapter/makeTransformed')
 );

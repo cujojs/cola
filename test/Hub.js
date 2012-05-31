@@ -6,7 +6,7 @@ assert = buster.assert;
 refute = buster.refute;
 
 var Hub = require('../Hub');
-var ArrayAdapter = require('../ArrayAdapter');
+var ArrayAdapter = require('../adapter/Array');
 
 buster.testCase('cola/Hub', {
 

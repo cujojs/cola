@@ -20,7 +20,7 @@ function createDatasource() {
 	};
 }
 
-buster.testCase('QueryAdapter', {
+buster.testCase('adapter/Query', {
 
 	'should throw if no datasource provided': function() {
 		assert.exception(function() {
@@ -184,5 +184,5 @@ buster.testCase('QueryAdapter', {
 })(
     require('buster'),
     require('when'),
-    require('../QueryAdapter.js')
+    require('../../adapter/Query')
 );

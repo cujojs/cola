@@ -4,7 +4,7 @@ define(function (require) {
 
 	var eventNames,
 		beforePhase, propagatingPhase, afterPhase, canceledPhase,
-		enqueue, resolver, addPropertyTransforms, simpleStrategy, defaultIdentifier,
+		enqueue, resolver, makeTransformedProperties, simpleStrategy, defaultIdentifier,
 		undef;
 
 	// TODO: make these configurable/extensible
@@ -61,7 +61,7 @@ define(function (require) {
 
 	enqueue = require('./enqueue');
 	resolver = require('./AdapterResolver');
-	addPropertyTransforms = require('./addPropertyTransforms');
+	makeTransformedProperties = require('./adapter/makeTransformedProperties');
 	simpleStrategy = require('./network/strategy/default');
 	defaultIdentifier = require('./identifier/default');
 
@@ -166,7 +166,7 @@ define(function (require) {
 			Adapter = resolver(source, 'collection');
 			adapter = Adapter ? new Adapter(source, options) : source;
 			if (options.bindings) {
-				adapter = addPropertyTransforms(adapter, collectPropertyTransforms(options.bindings));
+				adapter = makeTransformedProperties(adapter, collectPropertyTransforms(options.bindings));
 			}
 
 			proxy = beget(adapter);
@@ -358,11 +358,11 @@ define(function (require) {
 	}
 
 	// TODO: get rid of this mess
-	resolver.register(require('./ArrayAdapter'), 'collection');
-	resolver.register(require('./dom/NodeListAdapter'), 'collection');
-	resolver.register(require('./QueryAdapter'), 'collection');
-	resolver.register(require('./dom/NodeAdapter'), 'object');
-	resolver.register(require('./ObjectAdapter'), 'object');
+	resolver.register(require('./adapter/Array'), 'collection');
+	resolver.register(require('./dom/adapter/NodeList'), 'collection');
+	resolver.register(require('./adapter/Query'), 'collection');
+	resolver.register(require('./dom/adapter/Node'), 'object');
+	resolver.register(require('./adapter/Object'), 'object');
 
 	return Hub;
 
