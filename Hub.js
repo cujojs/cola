@@ -130,7 +130,7 @@ define(function (require) {
 
 		function findProvider() {
 			var a, i = adapters.length;
-			while(!adapters[--i].provide) {
+			while(a = adapters[--i]) {
 				if(a.provide) return a;
 			}
 		}
@@ -395,8 +395,8 @@ define(function (require) {
 			}
 		}
 
-		return { item: item };
-//		return { item: item, source: adapter };
+		return item && { item: item };
+//		return item && { item: item, source: adapter };
 	}
 
 	function findAdapterForSource (source, adapters) {
