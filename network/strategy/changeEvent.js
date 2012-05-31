@@ -9,7 +9,8 @@ define(function () {
 	};
 	afterEvents = {
 		add: 1,
-		update: 1
+		update: 1,
+		remove: 1
 	};
 
 	/**
