@@ -81,7 +81,7 @@ define(function (require) {
 			node = this._getNode(b.node, name);
 
 			if (node) {
-				prop = 'prop' in b ? b.prop : guess.propFor(node);
+				prop = 'prop' in b ? b.prop : guess.propForNode(node);
 				current = guess.getNodePropOrAttr(node, prop);
 				if (current !== value) {
 					guess.setNodePropOrAttr(node, prop, value);
