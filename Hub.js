@@ -4,7 +4,7 @@ define(function (require) {
 
 	var eventNames,
 		beforePhase, propagatingPhase, afterPhase, canceledPhase,
-		resolver, addPropertyTransforms, simpleStrategy, defaultIdentifier,
+		enqueue, resolver, addPropertyTransforms, simpleStrategy, defaultIdentifier,
 		undef;
 
 	// TODO: make these configurable/extensible
@@ -17,6 +17,7 @@ define(function (require) {
 		remove: 1, // data == item removed
 		update: 1, // data == item updated
 		target: 1, // data == item targeted TODO: rename this to "point"?
+		validate: 1, // data == validation result object with at least a boolean valid prop
 		// mode events
 		abort: 1, // abort the current mode (no data)
 		submit: 1, // finalize the current mode (no data)
@@ -57,6 +58,7 @@ define(function (require) {
 	 */
 	canceledPhase = {};
 
+	enqueue = require('./enqueue');
 	resolver = require('./AdapterResolver');
 	addPropertyTransforms = require('./addPropertyTransforms');
 	simpleStrategy = require('./network/strategy/default');
@@ -226,11 +228,7 @@ define(function (require) {
 			event = eventQueue.shift();
 
 			// if there was an event, process it soon
-			if (event) {
-				setTimeout(function () {
-					processEvent(event.source, event.data, event.type);
-				}, 0);
-			}
+			event && enqueue(processEvent.bind(eventsApi, event.source, event.data, event.type));
 		}
 
 		/*
@@ -298,9 +296,7 @@ define(function (require) {
 		}
 
 		function addApiMethods (eventNames) {
-			for (var name in eventNames) {
-				addApiMethod(name);
-			}
+			Object.keys(eventNames).forEach(addApiMethod);
 		}
 
 		function addApiMethod (name) {
@@ -323,9 +319,7 @@ define(function (require) {
 		}
 
 		function addApiEvents (eventNames) {
-			for (var name in eventNames) {
-				addApiEvent(name);
-			}
+			Object.keys(eventNames).forEach(addApiEvent);
 		}
 
 		function addApiEvent (name) {
@@ -440,8 +434,6 @@ define(function (require) {
 		Begetter.prototype = undef;
 		return obj;
 	}
-
-	function noop () {}
 
 	function camelize (prefix, name) {
 		return prefix + name.charAt(0).toUpperCase() + name.substr(1);

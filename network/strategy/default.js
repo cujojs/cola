@@ -20,24 +20,19 @@ define(function (require) {
 	 * @param options.targetFirstItem {Boolean} if truthy, the strategy
 	 * will automatically target the first item that is added to the network.
 	 * If falsey, it will not automatically target.
+	 * @param options.validator {Function} if provided, will be used
+	 * to validate data items on add and update events
 	 *
 	 * @return {Function} a composite network strategy function
 	 */
 	return function (options) {
 
-		var strategies;
-
-		// configure strategies
-		strategies = [
+		// compose them
+		return compose([
 			validate(options),
 			collectThenDeliver(options),
 			minimal(options)
-		];
-
-//		strategies.push(minimal(options));
-
-		// compose them
-		return compose(strategies);
+		]);
 
 	};
 

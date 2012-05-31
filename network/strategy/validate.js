@@ -20,6 +20,8 @@ define(function () {
 					result = validator(data);
 
 					if(!result.valid) api.cancel();
+
+					api.queueEvent(source, result, 'validate');
 				}
 			}
 		};
