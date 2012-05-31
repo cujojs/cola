@@ -5,10 +5,10 @@
 define(function (require) {
 "use strict";
 
-	var domEvents, classList, watchNode;
+	var guess, domEvents, watchNode;
 
-	domEvents = require('./../events');
-	classList = require('./../classList');
+	guess = require('../guess');
+	domEvents = require('../events');
 	watchNode = domEvents.watchNode;
 
 	/**
@@ -24,9 +24,6 @@ define(function (require) {
 
 		// set options
 		this._options = options || {};
-
-		// keep data values
-		this._values = {};
 
 		// flag to avoid circles when updating from an event
 		this._updating = false;
@@ -45,10 +42,8 @@ define(function (require) {
 		},
 
 		update: function (item) {
-			var p;
-			if (this._updating) return;
 			this._item = item;
-			for (p in item) {
+			for (var p in item) {
 				this._setProperty(p, item[p]);
 			}
 		},
@@ -65,15 +60,31 @@ define(function (require) {
 		 */
 		_setProperty: function (name, value) {
 			var b, node, prop, current;
+
 			b = this._getBindingsFor(name);
-			if(b && b.to) name = b.to;
-			node = b && this._getNode(b.node, name);
-			if (b && node) {
-				prop = 'prop' in b ? b.prop : guessPropFor(node);
-				current = getNodePropOrAttr(node, prop);
-				this._values[name] = current;
+
+			// If there are no bindings for this name, there's
+			// no way to divine what property to set.  Give up.
+			if(!b) {
+				return;
+			} else if(b.to) {
+				// HACK: Until we change the way bindings are done,
+				// this allows binding data props to multiple things.
+
+				// If there's a "to" override, then this binding
+				// actually applies to the data property specified
+				// by it.
+
+				name = b.to;
+			}
+
+			node = this._getNode(b.node, name);
+
+			if (node) {
+				prop = 'prop' in b ? b.prop : guess.propFor(node);
+				current = guess.getNodePropOrAttr(node, prop);
 				if (current !== value) {
-					setNodePropOrAttr(node, prop, value);
+					guess.setNodePropOrAttr(node, prop, value);
 				}
 			}
 		},
@@ -89,36 +100,45 @@ define(function (require) {
 		 */
 		_getBindingsFor: function (name) {
 			var bindings, binding;
+
 			bindings = this._options.bindings;
 			if (bindings && name in bindings) {
 				binding = bindings[name];
 			}
+
 			return binding;
 		},
 
 		_getNode: function (selector, name) {
 			// TODO: cache querySelector lookups?
 			var node;
-			if (isDomNode(selector)) {
+			if (guess.isNode(selector)) {
 				node = selector;
 			}
 			else if (selector) {
 				node = this._options.querySelector(selector, this._rootNode);
 			}
 			if (!node) {
-				node = guessNode(this._rootNode, name) || this._rootNode;
+				node = guess.nodeByName(this._rootNode, name) || this._rootNode;
 			}
 			return node;
 		},
 
 		_watchAllEvents: function () {
 			var name, binding, events, node, prop;
+
 			for (name in this._options.bindings) {
 				binding = this._options.bindings[name];
+
 				if(binding.to) name = binding.to;
-				events = binding.event || binding.events;
+
 				node = this._getNode(binding.node, name);
-				prop = binding.prop || guessPropFor(node);
+				prop = binding.prop || guess.propForNode(node);
+				events = binding.event || binding.events;
+				if(events == null) {
+					events = guess.eventsForNode(node);
+				}
+
 				if (events && node && prop) {
 					this._watchEvents(node, events, name, prop);
 				}
@@ -126,23 +146,16 @@ define(function (require) {
 		},
 
 		_watchEvents: function (node, events, name, prop) {
-			var self, currValues;
-			self = this;
-			currValues = this._values;
-			this._unwatches.push(listenToNode(node, events, function (e) {
-				var prev, curr;//, partial;
-				prev = currValues[name];
-				curr = getNodePropOrAttr(node, prop);
+			var self = this;
+
+			this._unwatches.push(listenToNode(node, events, function () {
+				var prev, curr;
+
+				prev = self._item[name];
+				curr = guess.getNodePropOrAttr(node, prop);
+
 				if (prev !== curr) {
-//					partial = {};
-					self._item[name] = currValues[name] = curr;
-					self._updating = true;
-					try {
-						self.update(self._item);
-					}
-					finally {
-						self._updating = false;
-					}
+					self._item[name] = curr;
 				}
 			}));
 		}
@@ -159,68 +172,6 @@ define(function (require) {
 		// crude test if an object is a node.
 		return obj && obj.tagName && obj.getAttribute && obj.setAttribute;
 	};
-
-	var propUpdatedEvent, attrToProp, customAccessors;
-
-	propUpdatedEvent = 'ColaItemPropUpdated';
-
-	attrToProp = {
-		'class': 'className',
-		'for': 'htmlFor'
-	};
-
-	customAccessors = {
-		classList: {
-			get: classList.getClassList,
-			set: classList.setClassList
-		},
-		classSet: {
-			get: classList.getClassSet,
-			set: classList.setClassSet
-		}
-	};
-
-	/**
-	 * Returns a property or attribute of a node.
-	 * @param node {Node}
-	 * @param name {String}
-	 * @returns the value of the property or attribute
-	 */
-	function getNodePropOrAttr (node, name) {
-		var accessor;
-		accessor = customAccessors[name];
-		if (accessor) {
-			return accessor.get(node);
-		}
-		else if (name in node) {
-			return node[attrToProp[name] || name];
-		}
-		else {
-			// TODO: do we need to cast to lower case?
-			return node.getAttribute(name);
-		}
-	}
-
-	/**
-	 * Sets a property of a node.
-	 * @param node {Node}
-	 * @param name {String}
-	 * @param value
-	 */
-	function setNodePropOrAttr (node, name, value) {
-		var accessor;
-		accessor = customAccessors[name];
-		if (accessor) {
-			return accessor.set(node, value);
-		}
-		else if (name in node) {
-			node[attrToProp[name] || name] = value;
-		}
-		else {
-			// TODO: do we need to cast to lower case?
-			node.setAttribute(name, value);
-		}
-	}
 
 	function listenToNode (node, events, callback) {
 
@@ -251,56 +202,11 @@ define(function (require) {
 		try { unwatch(); } catch (ex) {}
 	}
 
-	/**
-	 * Crude way to find a node under the current node. This is just a
-	 * default implementation. A better one should be injected by
-	 * the environment.
-	 * @private
-	 * @param rootNode
-	 * @param nodeName
-	 */
-	function guessNode (rootNode, nodeName) {
-		// use form.elements if this is a form
-		if (/^form$/i.test(rootNode.tagName)) {
-			return rootNode.elements[nodeName];
-		}
-		// use getElementById, if not a form (yuk!)
-		else {
-			return rootNode.ownerDocument.getElementById(nodeName);
-		}
-	}
-
-	function guessEventsFor (node) {
-		if (/^input$/i.test(node.tagName) || /^select$/i.test(node.tagName)) {
-			return ['change', 'blur'];
-		}
-		else {
-			return [];
-		}
-	}
-
-	function guessPropFor (node) {
-		if (/^input$/i.test(node.tagName) || /^select$/i.test(node.tagName)) {
-			return 'value';
-		}
-		else {
-			return 'innerHTML';
-		}
-	}
-
-	function isDomNode (obj) {
-		return (typeof HTMLElement != 'undefined' && obj instanceof HTMLElement)
-			|| (obj && obj.tagName && obj.getAttribute);
-	}
-
-	function noop () {}
-
 	return NodeAdapter;
 
 });
 }(
 	typeof define == 'function'
 		? define
-		: function (factory) { module.exports = factory(require); },
-	this
+		: function (factory) { module.exports = factory(require); }
 ));

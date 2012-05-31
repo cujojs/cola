@@ -395,8 +395,7 @@ define(function (require) {
 			}
 		}
 
-//		return item && { item: item };
-		return item && { item: item, source: adapter };
+		return item && { item: item };
 	}
 
 	function findAdapterForSource (source, adapters) {

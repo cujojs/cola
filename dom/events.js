@@ -1,28 +1,12 @@
 (function (define, global, document) {
-define(function () {
+define(function (require) {
 "use strict";
 
-	var doWatchNode, fireSimpleEvent, allUnwatches;
+	var has, doWatchNode, fireSimpleEvent, allUnwatches;
+
+	has = require('./has');
 
 	allUnwatches = [];
-
-	function has(feature) {
-		var test = has.cache[feature];
-		if (typeof test == 'function') {
-			// run it now and cache result
-			test = (has.cache[feature] = has.cache[feature]());
-		}
-		return test;
-	}
-
-	has.cache = {
-		"dom-addeventlistener": function () {
-			return document && 'addEventListener' in document || 'addEventListener' in global;
-		},
-		"dom-createevent": function () {
-			return document && 'createEvent' in document;
-		}
-	};
 
 	/**
 	 * Register a callback to be invoked when events with the supplied name
@@ -104,7 +88,7 @@ define(function () {
 }(
 	typeof define == 'function'
 		? define
-		: function (factory) { module.exports = factory(); },
+		: function (factory) { module.exports = factory(require); },
 	this,
 	this.document
 ));
