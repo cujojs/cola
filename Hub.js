@@ -165,9 +165,6 @@ define(function (require) {
 			// TODO: how to detect whether to use 'collection' or 'object' types
 			Adapter = resolver(source, 'collection');
 			adapter = Adapter ? new Adapter(source, options) : source;
-			if (options.bindings) {
-				adapter = makeTransformedProperties(adapter, collectPropertyTransforms(options.bindings));
-			}
 
 			proxy = beget(adapter);
 
@@ -410,20 +407,6 @@ define(function (require) {
 		}
 
 		return found;
-	}
-
-	function collectPropertyTransforms (bindings) {
-		var name, propertyTransforms, transform;
-
-		propertyTransforms = {};
-		for (name in bindings) {
-			transform = bindings[name].transform;
-			if (transform) {
-				propertyTransforms[name] = transform;
-			}
-		}
-
-		return propertyTransforms;
 	}
 
 	function Begetter () {}
