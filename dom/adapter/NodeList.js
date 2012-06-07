@@ -94,9 +94,10 @@ define(function(require) {
 
 			// figure out where to insert into dom
 			if (index >= 0) {
-				this._itemCount++;
+				this._itemCount = (this._itemCount||0) + 1;
 				// insert
 				this._insertNodeAt(adapter._rootNode, index);
+				this._checkBoundState();
 
 				this._itemsById[this.identifier(item)] = item;
 			}
@@ -117,6 +118,7 @@ define(function(require) {
 				adapter.destroy();
 				// remove from dom
 				node.parentNode.removeChild(node);
+				this._checkBoundState();
 
 				delete this._itemsById[this.identifier(item)];
 			}
@@ -128,26 +130,25 @@ define(function(require) {
 			adapter = this._itemData.get(item);
 
 			if (!adapter) {
-				// create adapter
-				adapter = this._createNodeAdapter(item);
+				this.add(item);
 			}
 			else {
 				this._updating = adapter;
 				try {
 					adapter.update(item);
+					this._itemData.remove(item);
+					index = this._itemData.add(item, adapter);
+
+					key = this.identifier(item);
+					this._itemsById[key] = item;
+
+					this._insertNodeAt(adapter._rootNode, index);
 				}
 				finally {
 					delete this._updating;
 				}
 			}
 
-			this._itemData.remove(item);
-			index = this._itemData.add(item, adapter);
-
-			key = this.identifier(item);
-			this._itemsById[key] = item;
-
-			this._insertNodeAt(adapter._rootNode, index);
 		},
 
 		forEach: function (lambda) {
@@ -312,8 +313,6 @@ define(function(require) {
 		}
 		return node;
 	}
-
-	function noop () {}
 
 	return NodeListAdapter;
 
