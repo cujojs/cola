@@ -96,17 +96,18 @@ define(function (require) {
 	 * @returns the value of the property or attribute
 	 */
 	function getNodePropOrAttr (node, name) {
-		var accessor;
+		var accessor, prop;
 		accessor = customAccessors[name];
+		prop = attrToProp[name] || name;
+
 		if (accessor) {
 			return accessor.get(node);
 		}
-		else if (name in node) {
-			return node[attrToProp[name] || name];
+		else if (prop in node) {
+			return node[prop];
 		}
 		else {
-			// TODO: do we need to cast to lower case?
-			return node.getAttribute(name);
+			return node.getAttribute(prop);
 		}
 	}
 
@@ -117,17 +118,23 @@ define(function (require) {
 	 * @param value
 	 */
 	function setNodePropOrAttr (node, name, value) {
-		var accessor = customAccessors[name];
+		var accessor, prop;
+		accessor = customAccessors[name];
+		prop = attrToProp[name] || name;
+
+		// this gets around a nasty IE6 bug with <option> elements
+		if (node.nodeName == 'option' && prop == 'innerText') {
+			prop = 'text';
+		}
 
 		if (accessor) {
 			return accessor.set(node, value);
 		}
-		else if (name in node) {
-			node[attrToProp[name] || name] = value;
+		else if (prop in node) {
+			node[prop] = value;
 		}
 		else {
-			// TODO: do we need to cast to lower case?
-			node.setAttribute(name, value);
+			node.setAttribute(prop, value);
 		}
 
 		return value;
