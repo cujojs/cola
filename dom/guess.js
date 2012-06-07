@@ -2,7 +2,8 @@
 define(function (require) {
 	"use strict";
 
-	var has, classList, formNodeRx, formValueNodeRx, attrToProp, customAccessors;
+	var has, classList, formNodeRx, formValueNodeRx,
+		attrToProp, customAccessors, setter, getter;
 
 	has = require('./has');
 	classList = require('./classList');
@@ -26,6 +27,8 @@ define(function (require) {
 		}
 	};
 
+	getter = setter = initSetGet;
+
 	return {
 		isNode: isDomNode,
 		isFormValueNode: isFormValueNode,
@@ -35,8 +38,8 @@ define(function (require) {
 		eventsForNode: guessEventsFor,
 
 		propForNode: guessPropFor,
-		setNodePropOrAttr: setNodePropOrAttr,
-		getNodePropOrAttr: getNodePropOrAttr
+		setNodePropOrAttr: setter,
+		getNodePropOrAttr: getter
 	};
 
 	/**
@@ -83,7 +86,7 @@ define(function (require) {
 	}
 
 	function guessPropFor (node) {
-		return isFormValueNode(node) ? 'value' : 'innerHTML';
+		return isFormValueNode(node) ? 'value' : 'text';
 	}
 
 	/**
@@ -129,6 +132,27 @@ define(function (require) {
 
 		return value;
 	}
+
+	/**
+	 * Initializes the dom setter and getter at first invocation.
+	 * @private
+	 * @param node
+	 * @param attr
+	 * @param [value]
+	 * @return {*}
+	 */
+	function initSetGet (node, attr, value) {
+		// test for innerText/textContent
+		attrToProp.textContent
+			= ('textContent' in node) ? 'textContent' : 'innerText';
+		// continue normally
+		setter = setNodePropOrAttr;
+		getter = getNodePropOrAttr;
+		return arguments.length == 3
+			? setNodePropOrAttr(node, attr, value)
+			: getNodePropOrAttr(node, attr);
+	}
+
 });
 }(
 	typeof define == 'function'

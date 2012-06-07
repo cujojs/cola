@@ -125,9 +125,5 @@ function(when, propertiesKey, byProperty) {
 })(typeof define == 'function'
 	// use define for AMD if available
 	? define
-	: function(deps, factory) {
-		module.exports = factory.apply(this, deps.map(function(x) {
-			return require(x);
-		}));
-	}
+	: function(deps, factory) { module.exports = factory.apply(this, deps.map(require)); }
 );

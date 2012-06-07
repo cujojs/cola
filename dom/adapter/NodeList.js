@@ -115,7 +115,6 @@ define(function(require) {
 			if (adapter) {
 				this._itemCount--;
 				node = adapter._rootNode;
-				adapter.destroy();
 				// remove from dom
 				node.parentNode.removeChild(node);
 				this._checkBoundState();
@@ -238,7 +237,7 @@ define(function(require) {
 			// create NodeAdapter
 			node = this._templateNode.cloneNode(true);
 			adapter = new NodeAdapter(node, this._options);
-			adapter.update(item);
+			adapter.set(item);
 
 			// label node for quick identification from events
 			if (this.identifier) {

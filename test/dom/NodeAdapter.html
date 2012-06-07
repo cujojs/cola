@@ -18,6 +18,10 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 		return node.querySelector(selector);
 	}
 
+	function nodeFinder (name, form) {
+		return form.elements[name];
+	}
+
 	function simulateEvent (node, type) {
 		if (document.createEvent) {
 			var evt = document.createEvent('HTMLEvents');
@@ -43,7 +47,7 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 
 	doh.register('the basics', [
 		function getOptions (doh) {
-			var bindings = { cake: 'yes' }, adaptedObject;
+			var bindings = { cake: { attr: 'yes' } }, adaptedObject;
 			adaptedObject = new NodeAdapter(getNode('test'), {
 				bindings: bindings,
 				querySelector: querySelector
@@ -69,39 +73,61 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 			adapted = new NodeAdapter(node, {
 				bindings: {
 					// test pre-resolved node
-					first: { events: 'click', prop: 'value', node: first },
-					// test auto-resolved form node (guessNode)
-					last: { events: 'click', prop: 'value' }
+					first: { attr: 'value', selector: 'first' },
+					// TODO: test auto-resolved form node (remove selector)
+					last: { attr: 'value', selector: 'last' }
 				},
-				querySelector: querySelector
+				querySelector: querySelector,
+				nodeFinder: nodeFinder
 			});
-			adapted.update({ first: 'Fred', last: 'Astaire' });
+			adapted.set({ first: 'Fred', last: 'Astaire' });
 			doh.assertEqual('Fred', first.value, 'first name is set');
 			doh.assertEqual('Astaire', last.value, 'last name is set');
 		},
-		function shouldCallUpdateWhenEventFires (doh) {
-			var node, first, adapted, dfd;
+		function shouldUpdatePropertyIntoNode (doh) {
+			var node, first, last, adapted;
 			node = getNode('test');
 			init();
 			first = node.elements.first;
+			last = node.elements.last;
 			adapted = new NodeAdapter(node, {
 				bindings: {
 					// test pre-resolved node
-					first: { events: 'click', prop: 'value', node: first },
-					// test auto-resolved form node (guessNode)
-					last: { events: 'click', prop: 'value' }
+					first: { attr: 'value', selector: 'first' },
+					// TODO: test auto-resolved form node (remove selector)
+					last: { attr: 'value', selector: 'last' }
 				},
-				querySelector: querySelector
+				querySelector: querySelector,
+				nodeFinder: nodeFinder
 			});
-			dfd = new doh.Deferred();
-			// record calls to update
-			adapted.update = function (item) {
-				dfd.callback(item.first == 'Martha');
-			};
-			first.value = 'Martha';
-			simulateEvent(first, 'click');
-			return dfd;
+			adapted.set({ first: 'Fred', last: 'Astaire' });
+			adapted.update({ last: 'Flintstone' });
+			doh.assertEqual('Fred', first.value, 'first name is set');
+			doh.assertEqual('Flintstone', last.value, 'last name is set');
 		},
+//		function shouldCallUpdateWhenEventFires (doh) {
+//			var node, first, adapted, dfd;
+//			node = getNode('test');
+//			init();
+//			first = node.elements.first;
+//			adapted = new NodeAdapter(node, {
+//				bindings: {
+//					// test pre-resolved node
+//					first: { events: 'click', prop: 'value', selector: first },
+//					// test auto-resolved form node
+//					last: { events: 'click', prop: 'value' }
+//				},
+//				querySelector: querySelector
+//			});
+//			dfd = new doh.Deferred();
+//			// record calls to update
+//			adapted.update = function (item) {
+//				dfd.callback(item.first == 'Martha');
+//			};
+//			first.value = 'Martha';
+//			simulateEvent(first, 'click');
+//			return dfd;
+//		},
 		function shouldInsertClassNamesUsingClassSet (doh) {
 			var node, first, adapted;
 			node = getNode('test');
@@ -110,7 +136,7 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 			adapted = new NodeAdapter(node, {
 				bindings: {
 					// test classSet
-					state: { prop: 'classSet' }
+					state: { attr: 'classSet' }
 				},
 				querySelector: querySelector
 			});

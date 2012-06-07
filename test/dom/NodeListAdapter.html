@@ -10,7 +10,7 @@
 <script type="text/javascript">
 require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], function(NodeListAdapter, ObjectAdapter) {
 
-	var rootNode, itemNode;
+	var rootNode, itemNode, baseHtml;
 
 	function getNode (id) {
 		return document.getElementById(id);
@@ -39,6 +39,12 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 		// attempted to preserve form values across a browser reload
 		rootNode = getNode('test');
 		itemNode = 'fieldset';
+		if (baseHtml) {
+			rootNode.innerHTML = baseHtml;
+		}
+		else {
+			baseHtml = rootNode.innerHTML;
+		}
 	}
 
 	doh.register('the basics', [
@@ -73,20 +79,86 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 		function shouldUpdateNode (doh) {
 			var item, adapted, options;
 			init();
+			function lastNameHandler (node, item, info) {
+				node.value = item && item.last || '(unknown)';
+			}
 			options = {
 				querySelector: querySelector,
 				itemTemplateSelector: itemNode,
 				comparator: compareById,
 				identifier: symbolizeById,
 				bindings: {
-					name: { node: '', prop: 'name' }
+					name: { selector: '', attr: 'name' },
+					first: { selector: '[name="first"]' },
+					last: { selector: '[name="last"]', handler: lastNameHandler }
 				}
 			};
 			adapted = new NodeListAdapter(rootNode, options);
 			item = { id: 1, name: 'bar' };
 			adapted.add(item);
-			adapted.update({ id: 1, name: 'foo' });
+			adapted.update({ id: 1, name: 'foo', first: 'Jane' });
 			doh.assertEqual('foo', querySelector(itemNode).name);
+			doh.assertEqual('Jane', querySelector(options.bindings.first.selector).value, rootNode);
+			doh.assertEqual('(unknown)', querySelector(options.bindings.last.selector).value, rootNode);
+		},
+		function shouldUpdateMultipleNodes (doh) {
+			var item, adapted, options;
+			init();
+			function allHandler (nodes, item, info) {
+				nodes.forEach(function (node) {
+					node[item.attr] = item[info.prop];
+				});
+			}
+			function disabledHandler (node, item, info) {
+				node.disabled = !!item.each;
+			}
+			options = {
+				querySelector: querySelector,
+				nodeFinder: querySelectorAll,
+				itemTemplateSelector: itemNode,
+				comparator: compareById,
+				identifier: symbolizeById,
+				bindings: {
+					all: {
+						selector: 'input',
+						attr: 'value',
+						all: allHandler
+					},
+					each: {
+						selector: 'input[name=first]',
+						attr: 'disabled',
+						each: disabledHandler
+					},
+					"each-and-all": {
+						selector: 'input[name=last]',
+						attr: 'value',
+						each: disabledHandler,
+						all: allHandler
+					}
+				}
+			};
+			adapted = new NodeListAdapter(rootNode, options);
+			item = { id: 1, all: 'bar' };
+			adapted.add(item);
+			adapted.add({ id: 2, all: 'bar', each: true });
+			adapted.add({ id: 3, all: 'bar', each: false });
+			var nodes, i;
+			// check "all" binding
+			nodes = querySelectorAll(options.bindings.all.selector, rootNode);
+			for (i = 0; i < nodes.length; i++) {
+				doh.assertEqual('bar', nodes[i].value, 'value');
+			}
+			// check "each" binding
+			nodes = querySelectorAll(options.bindings.each.selector, rootNode);
+			for (i = 0; i < nodes.length; i++) {
+				doh.assertEqual(!!(i % 2), nodes[i].disabled, 'disabled');
+			}
+			// check that "each-and-all" is calling both handlers
+			nodes = querySelectorAll(options.bindings["each-and-all"].selector, rootNode);
+			for (i = 0; i < nodes.length; i++) {
+				doh.assertEqual(!!(i % 2), nodes[i].disabled, 'disabled');
+				doh.assertEqual('bar', nodes[i].value, 'value');
+			}
 		},
 		function shouldRemoveNode (doh) {
 			var item, adapted;
@@ -98,7 +170,6 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 				identifier: symbolizeById
 			};
 			adapted = new NodeListAdapter(rootNode, options);
-			rootNode.innerHTML = ''; // clear out previous tests
 			item = { id: 1 };
 			adapted.add(item);
 			adapted.add({ id: 2 });
