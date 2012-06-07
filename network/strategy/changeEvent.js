@@ -22,7 +22,7 @@ define(function () {
 		return function queueChange (source, dest, data, type, api) {
 			if (api.isBefore() && beforeEvents[type]
 				|| api.isAfter() && afterEvents[type]) {
-				api.queueEvent(source, type, 'change');
+				api.queueEvent(source, data, 'change');
 			}
 		};
 
