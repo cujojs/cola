@@ -22,9 +22,6 @@ define(function (require) {
 
 		// set options
 		if (!options.bindings) options.bindings = {};
-		if (!options.nodeFinder) {
-			options.nodeFinder = options.querySelectorAll || options.querySelector;
-		}
 		this._options = options;
 		this._handlers = {};
 
@@ -57,12 +54,15 @@ define(function (require) {
 		},
 
 		_createItemToDomHandlers: function () {
-			var bindings, creator, b;
+			var bindings, creator;
+
 			bindings = this._options.bindings;
 			creator = bindingHandler(this._rootNode, this._options);
-			for (b in bindings) {
+
+			Object.keys(bindings).forEach(function(b) {
+
 				this._handlers[b] = creator(bindings[b], b);
-			}
+			}, this);
 		}
 
 	};

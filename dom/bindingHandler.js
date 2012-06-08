@@ -59,39 +59,61 @@ define(function (require) {
 	 */
 	return function configureHandlerCreator (rootNode, options) {
 		var nodeFinder;
-		nodeFinder = options.nodeFinder;
+
+		nodeFinder = options.nodeFinder || options.querySelectorAll || options.querySelector;
+
+		if(!nodeFinder) throw new Error('bindingHandler: options.nodeFinder must be provided');
 
 		return function createBindingHandler (binding, prop) {
-			var each, all, info;
 
-			each = binding.each || binding.handler || defaultNodeHandler;
-			all = binding.all;
-			info = Object.create(binding);
-			if (!info.prop) info.prop = prop;
+			var bindingsAsArray = normalizeBinding(binding);
 
 			return function handler (item) {
-				var nodes;
 
-				// get all affected nodes
-				if (!binding.selector) {
-					nodes = [rootNode];
-				}
-				else {
-					nodes = toArray(nodeFinder(binding.selector, rootNode));
-				}
+				bindingsAsArray.forEach(function(binding) {
+					var each, all, info, nodes;
 
-				// run handler for entire nodelist, if any
-				if (all) all(nodes, item, info, defaultNodeListHandler);
+					each = binding.each || binding.handler || defaultNodeHandler;
+					all = binding.all;
+					info = Object.create(binding);
+					if (!info.prop) info.prop = prop;
 
-				// run custom or default handler for each node
-				nodes.forEach(function (node) {
-					each(node, item, info, defaultNodeHandler);
+					// get all affected nodes
+					if (!binding.selector) {
+						nodes = [rootNode];
+					}
+					else {
+						nodes = toArray(nodeFinder(binding.selector, rootNode));
+					}
+
+					// run handler for entire nodelist, if any
+					if (all) all(nodes, item, info, defaultNodeListHandler);
+
+					// run custom or default handler for each node
+					nodes.forEach(function (node) {
+						each(node, item, info, defaultNodeHandler);
+					});
+
 				});
 
 			};
 		};
 
 	};
+
+	function normalizeBinding(binding) {
+		var normalized;
+
+		if(typeof binding == 'string') {
+			normalized = [{ selector: binding }];
+		} else if(Array.isArray(binding)) {
+			normalized = binding;
+		} else {
+			normalized = [binding];
+		}
+
+		return normalized;
+	}
 
 	function defaultNodeListHandler (nodes, data, info) {
 		nodes.forEach(function (node) {

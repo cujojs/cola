@@ -86,7 +86,7 @@ define(function (require) {
 	}
 
 	function guessPropFor (node) {
-		return isFormValueNode(node) ? 'value' : 'text';
+		return isFormValueNode(node) ? 'value' : 'textContent';
 	}
 
 	/**
