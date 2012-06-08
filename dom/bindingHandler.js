@@ -8,6 +8,15 @@ define(function (require) {
 	guess = require('./guess');
 
 	/*
+	TODO: inverse bind handler:
+	1. create "on!" wire reference resolver
+	2. look for inverse property in spec that acts as an each.inverse
+	3. look for inverse on "each" handler
+	4. provide an inverse function for our defaultNodeHandler
+	5. use guess.js to guess events
+	 */
+
+	/*
 	bind: {
 		to: { $ref: 'colaThing' },
 		map: {
