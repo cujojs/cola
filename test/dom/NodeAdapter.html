@@ -18,14 +18,25 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 		return root.querySelector(selector);
 	}
 
+	function querySelectorAll (selector, root) {
+		return root.querySelectorAll(selector);
+	}
+
 	function nodeFinder (name, form) {
 		return form.elements[name];
 	}
 
 	function simulateEvent (node, type) {
+		var evt;
 		if (document.createEvent) {
-			var evt = document.createEvent('HTMLEvents');
-			evt.initEvent(type, false, true);
+			if (/click|mouse/.test(type)) {
+				evt = document.createEvent('MouseEvents');
+				evt.initMouseEvent(type, true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+			}
+			else {
+				evt = document.createEvent('HTMLEvents');
+				evt.initEvent(type, false, true);
+			}
 			node.dispatchEvent(evt);
 		}
 		else {
@@ -34,10 +45,36 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 		}
 	}
 
-	function on (node, event, handler) {
-		node.addEventListener(event, handler, false);
+	// quick and dirty on() implementation
+	function on (node, event, handler, selector) {
+		function filter (e) {
+			var target, matches, i, len, match;
+			// if e.target matches the selector, call the handler
+			target = e.target;
+			matches = querySelectorAll(selector, node);
+			for (i = 0, len = matches.length; i < len; i++) {
+				match = matches[i];
+				if (target == match || contains(match, target)) {
+					e.selectorTarget = match;
+					return handler(e);
+				}
+			}
+		}
+		node.addEventListener(event, filter, false);
 		return function () {
-			node.removeEventListener(event, handler, false);
+			node.removeEventListener(event, filter, false);
+		}
+	}
+
+	var contains;
+	if (document && document.compareDocumentPosition) {
+		contains = function w3cContains (refNode, testNode) {
+			return (refNode.compareDocumentPosition(testNode) & 16) == 16;
+		}
+	}
+	else {
+		contains = function oldContains (refNode, testNode) {
+			return refNode.contains(testNode);
 		}
 	}
 
@@ -115,29 +152,32 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 			doh.assertEqual('Fred', first.value, 'first name is set');
 			doh.assertEqual('Flintstone', last.value, 'last name is set');
 		},
-//		function shouldCallUpdateWhenEventFires (doh) {
-//			var node, first, adapted, dfd;
-//			node = getNode('test');
-//			init();
-//			first = node.elements.first;
-//			adapted = new NodeAdapter(node, {
-//				bindings: {
-//					// test pre-resolved node
-//					first: { events: 'click', prop: 'value', selector: first },
-//					// test auto-resolved form node
-//					last: { events: 'click', prop: 'value' }
-//				},
-//				querySelector: querySelector
-//			});
-//			dfd = new doh.Deferred();
-//			// record calls to update
-//			adapted.update = function (item) {
-//				dfd.callback(item.first == 'Martha');
-//			};
-//			first.value = 'Martha';
-//			simulateEvent(first, 'click');
-//			return dfd;
-//		},
+		function shouldCallUpdateWhenEventFires (doh) {
+			var node, checked, adapted, item;
+			function inverseHandler (node, item, binding) {
+				item[binding.prop] = node[binding.attr];
+			}
+			node = getNode('test');
+			init();
+			checked = node.elements.checked;
+			adapted = new NodeAdapter(node, {
+				bindings: {
+					checked: { attr: 'checked', selector: '[name=checked]'/*, inverse: inverseHandler*/ },
+					first: { attr: 'value', selector: '[name=first]'},
+					last: { attr: 'value', selector: '[name=last]' }
+				},
+				querySelector: querySelector,
+				on: on,
+				// need to use qSA with our simplified on() implementation
+				nodeFinder: querySelectorAll
+			});
+			item = { first: 'Fred', last: 'Astaire' };
+			adapted.set(item);
+			checked.checked = false;
+			checked.click();
+			//simulateEvent(checked, 'click');
+			doh.assertEqual(item.checked, true);
+		},
 		function shouldInsertClassNamesUsingClassSet (doh) {
 			var node, first, adapted;
 			node = getNode('test');
@@ -174,6 +214,7 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 <form id="test">
 	<input name="first" value="Fred"/>
 	<input name="last" value="Flinstone"/>
+	<label><input type="checkbox" name="checked"/>check me</label>
 </form>
 
 </body>

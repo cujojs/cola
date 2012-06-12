@@ -7,6 +7,8 @@ define(function (require) {
 	slice = Array.prototype.slice;
 	guess = require('./guess');
 
+	defaultNodeHandler.inverse = defaultInverseNodeHandler;
+
 	/*
 	TODO: inverse bind handler:
 	V create "on!" wire reference resolver
@@ -121,7 +123,7 @@ define(function (require) {
 				return bindingsAsArray.reduce(function (unlisteners, binding) {
 					var inverse, events;
 					function doInverse (e) {
-						inverse.apply(this, currItem, e);
+						inverse.call(this, currItem, e);
 					}
 					// grab some nodes to use to guess events to watch
 					events = guess.eventsForNode(nodeFinder(binding.selector, rootNode));
@@ -176,12 +178,19 @@ define(function (require) {
 		}
 	}
 
+	function defaultInverseNodeHandler (node, data, info) {
+		var attr, value;
+		attr = info.attr || guess.propForNode(node);
+		value = guess.getNodePropOrAttr(node, attr);
+		data[info.prop] = value;
+	}
+
 	function createInverseHandler (binding, propToDom) {
 		var domToProp = binding.inverse || binding.each.inverse;
 		return function (item, e) {
-			var node = this || e.selectorTarget;
+			var node = e.target;
 			// update item
-			if (item) item[binding.prop] = domToProp(node, item, binding);
+			if (item) domToProp(node, item, binding);
 			// is there any other way to know which binding.each/binding.all to execute?
 			propToDom(item);
 		}
