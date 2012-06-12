@@ -13,11 +13,13 @@
 define(['when', './relational/propertiesKey', './comparator/byProperty'],
 function(when, propertiesKey, byProperty) {
 
-	var defaultComparator, defaultQuerySelector, defaultQuerySelectorAll, excludeOptions;
+	var defaultComparator, defaultQuerySelector, defaultQuerySelectorAll,
+		defaultOn, excludeOptions;
 
 	defaultComparator = byProperty('id');
 	defaultQuerySelector = { $ref: 'dom.first!' };
 	defaultQuerySelectorAll = { $ref: 'dom.all!' };
+	defaultOn = { $ref: 'on!' };
 
 	function initBindOptions(incomingOptions, pluginOptions) {
 		var options, identifier, comparator;
@@ -30,6 +32,10 @@ function(when, propertiesKey, byProperty) {
 
 		if(!options.querySelectorAll) {
 			options.querySelectorAll = defaultQuerySelectorAll;
+		}
+
+		if(!options.on) {
+			options.on = defaultOn;
 		}
 
 		// TODO: Extend syntax for identifier and comparator
