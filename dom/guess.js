@@ -2,8 +2,8 @@
 define(function (require) {
 "use strict";
 
-	var has, classList, formValueNodeRx, formClickableRx,
-		attrToProp, customAccessors, setter, getter;
+	var guess, has, classList, formValueNodeRx, formClickableRx,
+		attrToProp, customAccessors;
 
 	has = require('./has');
 	classList = require('./classList');
@@ -28,19 +28,19 @@ define(function (require) {
 		}
 	};
 
-	getter = setter = initSetGet;
-
-	return {
+	guess = {
 		isFormValueNode: isFormValueNode,
 
 		eventsForNode: guessEventsFor,
 
 		propForNode: guessPropFor,
 
-		getNodePropOrAttr: getter,
+		getNodePropOrAttr: initSetGet,
 
-		setNodePropOrAttr: setter
+		setNodePropOrAttr: initSetGet
 	};
+
+	return guess;
 
 	function isFormValueNode (node) {
 		return formValueNodeRx.test(node.tagName);
@@ -130,8 +130,8 @@ define(function (require) {
 		attrToProp.textContent
 			= ('textContent' in node) ? 'textContent' : 'innerText';
 		// continue normally
-		setter = setNodePropOrAttr;
-		getter = getNodePropOrAttr;
+		guess.setNodePropOrAttr = setNodePropOrAttr;
+		guess.getNodePropOrAttr = getNodePropOrAttr;
 		return arguments.length == 3
 			? setNodePropOrAttr(node, attr, value)
 			: getNodePropOrAttr(node, attr);
