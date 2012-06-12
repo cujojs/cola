@@ -1,19 +1,20 @@
 (function (define) {
 define(function (require) {
-	"use strict";
+"use strict";
 
-	var has, classList, formNodeRx, formValueNodeRx,
+	var has, classList, formValueNodeRx, formClickableRx,
 		attrToProp, customAccessors, setter, getter;
 
 	has = require('./has');
 	classList = require('./classList');
 
-	formNodeRx = /^form$/i;
 	formValueNodeRx = /^(input|select|textarea)$/i;
+	formClickableRx = /^(checkbox|radio)/i;
 
 	attrToProp = {
 		'class': 'className',
 		'for': 'htmlFor'
+		// textContent is added to this list if necessary
 	};
 
 	customAccessors = {
@@ -30,56 +31,32 @@ define(function (require) {
 	getter = setter = initSetGet;
 
 	return {
-		isNode: isDomNode,
 		isFormValueNode: isFormValueNode,
-
-		nodeByName: guessNode,
 
 		eventsForNode: guessEventsFor,
 
 		propForNode: guessPropFor,
-		setNodePropOrAttr: setter,
-		getNodePropOrAttr: getter
+
+		getNodePropOrAttr: getter,
+
+		setNodePropOrAttr: setter
 	};
 
-	/**
-	 * Returns true if obj is a Node
-	 * @param obj {*}
-	 * @return {Boolean}
-	 */
-	function isDomNode (obj) {
-		return (typeof HTMLElement != 'undefined' && obj instanceof HTMLElement)
-			|| (obj && obj.tagName && obj.getAttribute);
-	}
-
-	/**
-	 * Crude way to find a node under the current node. This is just a
-	 * default implementation. A better one should be injected by
-	 * the environment.
-	 * @private
-	 * @param rootNode
-	 * @param nodeName
-	 */
-	function guessNode (rootNode, nodeName) {
-		// use form.elements if this is a form
-		if (formNodeRx.test(rootNode.tagName)) {
-			return rootNode.elements[nodeName];
-		}
-		// use getElementById, if not a form (yuk!)
-		else {
-			return rootNode.ownerDocument.getElementById(nodeName);
-		}
-	}
-
-	function isFormValueNode(node) {
+	function isFormValueNode (node) {
 		return formValueNodeRx.test(node.tagName);
 	}
 
 	function guessEventsFor (node) {
-		if (isFormValueNode(node)) {
-			return !has('dom-addeventlistener') && /^(checkbox|radio)/i.test(node.tagName)
-				? ['click', 'blur']
-				: ['change', 'blur'];
+		if (Array.isArray(node)) {
+			// get unique list of events
+			return node.reduce(function (events, node) {
+				return guessEventsFor(node).filter(function (event) {
+					return event && events.indexOf(event) < 0;
+				})
+			},[]);
+		}
+		else if (isFormValueNode(node)) {
+			return [formClickableRx.test(node.tagName) ? 'click' : 'change', 'focusout'];
 		}
 
 		return null;

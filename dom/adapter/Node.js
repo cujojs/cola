@@ -45,6 +45,12 @@ define(function (require) {
 			this._itemToDom(item, item);
 		},
 
+		destroy: function () {
+			this._handlers.forEach(function (handler) {
+				if (handler.unlisten) handler.unlisten();
+			});
+		},
+
 		_itemToDom: function (item, hash) {
 			var p, handler;
 			for (p in hash) {
@@ -59,8 +65,7 @@ define(function (require) {
 			bindings = this._options.bindings;
 			creator = bindingHandler(this._rootNode, this._options);
 
-			Object.keys(bindings).forEach(function(b) {
-
+			Object.keys(bindings).forEach(function (b) {
 				this._handlers[b] = creator(bindings[b], b);
 			}, this);
 		}

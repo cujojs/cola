@@ -9,7 +9,7 @@ define(function (require) {
 
 	/*
 	TODO: inverse bind handler:
-	1. create "on!" wire reference resolver
+	V create "on!" wire reference resolver
 	2. look for inverse property in spec that acts as an each.inverse
 	3. look for inverse on "each" handler
 	4. provide an inverse function for our defaultNodeHandler
@@ -67,25 +67,28 @@ define(function (require) {
 	 *   normalized. function (binding, prop) { return handler; }
 	 */
 	return function configureHandlerCreator (rootNode, options) {
-		var nodeFinder;
+		var nodeFinder, eventBinder;
 
 		nodeFinder = options.nodeFinder || options.querySelectorAll || options.querySelector;
+		eventBinder = options.on;
 
 		if(!nodeFinder) throw new Error('bindingHandler: options.nodeFinder must be provided');
 
 		return function createBindingHandler (binding, prop) {
+			var bindingsAsArray, unlisteners, currItem;
 
-			var bindingsAsArray = normalizeBinding(binding);
+			bindingsAsArray = normalizeBindings(binding, prop);
+			unlisteners = addEventListeners();
 
-			return function handler (item) {
+			function handler (item) {
 
-				bindingsAsArray.forEach(function(binding) {
-					var each, all, info, nodes;
+				currItem = item;
 
-					each = binding.each || binding.handler || defaultNodeHandler;
+				bindingsAsArray.forEach(function (binding) {
+					var each, all, nodes;
+
+					each = binding.each;
 					all = binding.all;
-					info = Object.create(binding);
-					if (!info.prop) info.prop = prop;
 
 					// get all affected nodes
 					if (!binding.selector) {
@@ -96,21 +99,50 @@ define(function (require) {
 					}
 
 					// run handler for entire nodelist, if any
-					if (all) all(nodes, item, info, defaultNodeListHandler);
+					if (all) all(nodes, item, binding, defaultNodeListHandler);
 
 					// run custom or default handler for each node
 					nodes.forEach(function (node) {
-						each(node, item, info, defaultNodeHandler);
+						each(node, item, binding, defaultNodeHandler);
 					});
 
 				});
 
-			};
+			}
+
+			handler.unlisten = unlistenAll;
+
+			return handler;
+
+			function unlistenAll () {
+				unlisteners.forEach(function (unlisten) {
+					unlisten();
+				});
+			}
+
+			function addEventListeners () {
+				return bindingsAsArray.reduce(function (unlisteners, binding) {
+					var inverse, events;
+					function doInverse (e) {
+						inverse.apply(this, currItem, e);
+					}
+					// grab some nodes to use to guess events to watch
+					events = guess.eventsForNode(toArray(nodeFinder(binding.selector, rootNode)));
+					if (events.length > 0) {
+						inverse = createInverseHandler(binding, handler);
+						events.forEach(function (event) {
+							unlisteners.push(eventBinder(rootNode, event, doInverse, binding.selector));
+						});
+					}
+					return unlisteners;
+				}, []);
+			}
+
 		};
 
 	};
 
-	function normalizeBinding(binding) {
+	function normalizeBindings (binding, defaultProp) {
 		var normalized;
 
 		if(typeof binding == 'string') {
@@ -121,7 +153,13 @@ define(function (require) {
 			normalized = [binding];
 		}
 
-		return normalized;
+		return normalized.map(function (binding) {
+			var norm;
+			norm = Object.create(binding);
+			norm.each = binding.each || binding.handler || defaultNodeHandler;
+			if (!norm.prop) norm.prop = defaultProp;
+			return norm;
+		});
 	}
 
 	function defaultNodeListHandler (nodes, data, info) {
@@ -138,6 +176,17 @@ define(function (require) {
 		current = guess.getNodePropOrAttr(node, attr);
 		if (current !== value) {
 			guess.setNodePropOrAttr(node, attr, value);
+		}
+	}
+
+	function createInverseHandler (binding, propToDom) {
+		var domToProp = binding.inverse || binding.each.inverse;
+		return function (item, e) {
+			var node = this || e.selectorTarget;
+			// update item
+			if (item) item[binding.prop] = domToProp(node, item, binding);
+			// is there any other way to know which binding.each/binding.all to execute?
+			propToDom(item);
 		}
 	}
 
