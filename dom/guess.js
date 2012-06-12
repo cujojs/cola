@@ -59,7 +59,7 @@ define(function (require) {
 			return [formClickableRx.test(node.tagName) ? 'click' : 'change', 'focusout'];
 		}
 
-		return null;
+		return [];
 	}
 
 	function guessPropFor (node) {

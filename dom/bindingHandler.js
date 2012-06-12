@@ -74,6 +74,8 @@ define(function (require) {
 
 		if(!nodeFinder) throw new Error('bindingHandler: options.nodeFinder must be provided');
 
+		nodeFinder = createSafeNodeFinder(nodeFinder);
+
 		return function createBindingHandler (binding, prop) {
 			var bindingsAsArray, unlisteners, currItem;
 
@@ -91,12 +93,7 @@ define(function (require) {
 					all = binding.all;
 
 					// get all affected nodes
-					if (!binding.selector) {
-						nodes = [rootNode];
-					}
-					else {
-						nodes = toArray(nodeFinder(binding.selector, rootNode));
-					}
+					nodes = nodeFinder(binding.selector, rootNode);
 
 					// run handler for entire nodelist, if any
 					if (all) all(nodes, item, binding, defaultNodeListHandler);
@@ -127,7 +124,7 @@ define(function (require) {
 						inverse.apply(this, currItem, e);
 					}
 					// grab some nodes to use to guess events to watch
-					events = guess.eventsForNode(toArray(nodeFinder(binding.selector, rootNode)));
+					events = guess.eventsForNode(nodeFinder(binding.selector, rootNode));
 					if (events.length > 0) {
 						inverse = createInverseHandler(binding, handler);
 						events.forEach(function (event) {
@@ -187,6 +184,13 @@ define(function (require) {
 			if (item) item[binding.prop] = domToProp(node, item, binding);
 			// is there any other way to know which binding.each/binding.all to execute?
 			propToDom(item);
+		}
+	}
+
+	function createSafeNodeFinder (nodeFinder) {
+		return function (selector, rootNode) {
+			if (!selector) return [rootNode];
+			else return toArray(nodeFinder.apply(this, arguments));
 		}
 	}
 
