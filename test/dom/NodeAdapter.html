@@ -14,8 +14,8 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 		return document.getElementById(id);
 	}
 
-	function querySelector (node, selector) {
-		return node.querySelector(selector);
+	function querySelector (selector, root) {
+		return root.querySelector(selector);
 	}
 
 	function nodeFinder (name, form) {
@@ -34,6 +34,13 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 		}
 	}
 
+	function on (node, event, handler) {
+		node.addEventListener(event, handler, false);
+		return function () {
+			node.removeEventListener(event, handler, false);
+		}
+	}
+
 	function init () {
 		// this function has to run to ensure that the browser hasn't
 		// attempted to preserve form values across a browser reload
@@ -47,10 +54,11 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 
 	doh.register('the basics', [
 		function getOptions (doh) {
-			var bindings = { cake: { attr: 'yes' } }, adaptedObject;
+			var bindings = { cake: { attr: 'yes', selector: 'foo' } }, adaptedObject;
 			adaptedObject = new NodeAdapter(getNode('test'), {
 				bindings: bindings,
-				querySelector: querySelector
+				querySelector: querySelector,
+				on: on
 			});
 			doh.assertEqual(bindings.cake, adaptedObject.getOptions().bindings.cake);
 		},
@@ -78,6 +86,7 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 					last: { attr: 'value', selector: 'last' }
 				},
 				querySelector: querySelector,
+				on: on,
 				nodeFinder: nodeFinder
 			});
 			adapted.set({ first: 'Fred', last: 'Astaire' });
@@ -98,6 +107,7 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 					last: { attr: 'value', selector: 'last' }
 				},
 				querySelector: querySelector,
+				on: on,
 				nodeFinder: nodeFinder
 			});
 			adapted.set({ first: 'Fred', last: 'Astaire' });
@@ -138,7 +148,8 @@ require(['cola/dom/adapter/Node', 'domReady!'], function(NodeAdapter) {
 					// test classSet
 					state: { attr: 'classSet' }
 				},
-				querySelector: querySelector
+				querySelector: querySelector,
+				on: on
 			});
 			adapted.update({
 				state: {

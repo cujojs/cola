@@ -32,7 +32,12 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 	function symbolizeById (a) { return a.id; }
 	function querySelector (selector, node) { return (node||document).querySelector(selector); }
 	function querySelectorAll (selector, node) { return (node||document).querySelectorAll(selector); }
-
+	function on (node, event, handler) {
+		node.addEventListener(event, handler, false);
+		return function () {
+			node.removeEventListener(event, handler, false);
+		}
+	}
 
 	function init () {
 		// this function has to run to ensure that the browser hasn't
@@ -65,6 +70,7 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 			init();
 			options = {
 				querySelector: querySelector,
+				on: on,
 				itemTemplateSelector: itemNode,
 				comparator: compareById,
 				identifier: symbolizeById
@@ -84,6 +90,7 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 			}
 			options = {
 				querySelector: querySelector,
+				on: on,
 				itemTemplateSelector: itemNode,
 				comparator: compareById,
 				identifier: symbolizeById,
@@ -106,7 +113,7 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 			init();
 			function allHandler (nodes, item, info) {
 				nodes.forEach(function (node) {
-					node[item.attr] = item[info.prop];
+					node[info.attr] = item[info.prop];
 				});
 			}
 			function disabledHandler (node, item, info) {
@@ -114,14 +121,15 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 			}
 			options = {
 				querySelector: querySelector,
+				on: on,
 				nodeFinder: querySelectorAll,
 				itemTemplateSelector: itemNode,
 				comparator: compareById,
 				identifier: symbolizeById,
 				bindings: {
 					all: {
-						selector: 'input',
-						attr: 'value',
+						selector: 'label',
+						attr: 'data-value',
 						all: allHandler
 					},
 					each: {
@@ -129,7 +137,7 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 						attr: 'disabled',
 						each: disabledHandler
 					},
-					"each-and-all": {
+					"both": {
 						selector: 'input[name=last]',
 						attr: 'value',
 						each: disabledHandler,
@@ -138,26 +146,28 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 				}
 			};
 			adapted = new NodeListAdapter(rootNode, options);
-			item = { id: 1, all: 'bar' };
+			item = { id: 1, all: 'bar', both: 'both' };
 			adapted.add(item);
-			adapted.add({ id: 2, all: 'bar', each: true });
-			adapted.add({ id: 3, all: 'bar', each: false });
+			adapted.add({ id: 2, all: 'bar', each: true, both: 'both' });
+			adapted.add({ id: 3, all: 'bar', each: false, both: 'both' });
 			var nodes, i;
 			// check "all" binding
 			nodes = querySelectorAll(options.bindings.all.selector, rootNode);
 			for (i = 0; i < nodes.length; i++) {
-				doh.assertEqual('bar', nodes[i].value, 'value');
+				doh.assertEqual('bar', nodes[i]['data-value'], 'value ' + i);
 			}
 			// check "each" binding
 			nodes = querySelectorAll(options.bindings.each.selector, rootNode);
 			for (i = 0; i < nodes.length; i++) {
-				doh.assertEqual(!!(i % 2), nodes[i].disabled, 'disabled');
+				// every other data item is disabled
+				doh.assertEqual(!!(i % 2), nodes[i].disabled, 'disabled ' + i);
 			}
 			// check that "each-and-all" is calling both handlers
-			nodes = querySelectorAll(options.bindings["each-and-all"].selector, rootNode);
+			nodes = querySelectorAll(options.bindings.both.selector, rootNode);
 			for (i = 0; i < nodes.length; i++) {
-				doh.assertEqual(!!(i % 2), nodes[i].disabled, 'disabled');
-				doh.assertEqual('bar', nodes[i].value, 'value');
+				// every other data item is disabled
+				doh.assertEqual(!!(i % 2), nodes[i].disabled, 'disabled ' + i);
+				doh.assertEqual('both', nodes[i].value, 'value '  + i);
 			}
 		},
 		function shouldRemoveNode (doh) {
@@ -165,6 +175,7 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 			init();
 			options = {
 				querySelector: querySelector,
+				on: on,
 				itemTemplateSelector: itemNode,
 				comparator: compareById,
 				identifier: symbolizeById
@@ -188,7 +199,9 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 
 <form id="test">
 	<fieldset style="display:none">
-		<input name="first" value=""/>
+		<label>
+			<input name="first" value=""/>
+		</label>
 		<input name="last" value=""/>
 	</fieldset>
 </form>
