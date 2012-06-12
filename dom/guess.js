@@ -46,6 +46,10 @@ define(function (require) {
 		return formValueNodeRx.test(node.tagName);
 	}
 
+	function isClickableFormNode (node) {
+		return isFormValueNode(node) && formClickableRx.test(node.type);
+	}
+
 	function guessEventsFor (node) {
 		if (Array.isArray(node)) {
 			// get unique list of events
@@ -56,14 +60,16 @@ define(function (require) {
 			},[]);
 		}
 		else if (isFormValueNode(node)) {
-			return [formClickableRx.test(node.tagName) ? 'click' : 'change', 'focusout'];
+			return [isClickableFormNode(node) ? 'click' : 'change', 'focusout'];
 		}
 
 		return [];
 	}
 
 	function guessPropFor (node) {
-		return isFormValueNode(node) ? 'value' : 'textContent';
+		return isFormValueNode(node)
+			? isClickableFormNode(node) ? 'checked' : 'value'
+			: 'textContent';
 	}
 
 	/**
