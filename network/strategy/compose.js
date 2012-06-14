@@ -16,9 +16,15 @@ define(function (require) {
 	return function composeStrategies (strategies) {
 		return function (source, dest, data, type, api) {
 
-			when.reduce(strategies, function(result, strategy) {
-				return strategy(source, dest, data, type, api)
-			}, data);
+			when.reduce(strategies,
+				function(result, strategy) {
+					var strategyResult = strategy(source, dest, data, type, api);
+					return api.isCanceled()
+						? when.reject(strategyResult)
+						: strategyResult;
+				},
+				data
+			).always(function(result) { return result });
 
 		}
 
