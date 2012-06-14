@@ -144,17 +144,17 @@ define(function (require) {
 	function normalizeBindings (binding, defaultProp) {
 		var normalized;
 
-		if(typeof binding == 'string') {
-			normalized = [{ selector: binding }];
-		} else if(Array.isArray(binding)) {
-			normalized = binding;
-		} else {
-			normalized = [binding];
-		}
+		normalized = [].concat(binding);
 
 		return normalized.map(function (binding) {
 			var norm;
-			norm = Object.create(binding);
+
+			if (typeof binding == 'string') {
+				norm = { selector: binding };
+			} else {
+				norm = Object.create(binding);
+			}
+
 			norm.each = binding.each || binding.handler || defaultNodeHandler;
 			if (!norm.prop) norm.prop = defaultProp;
 			return norm;
