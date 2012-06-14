@@ -1,6 +1,8 @@
 (function (define) {
-define(function () {
+define(function (require) {
 "use strict";
+
+	var when = require('when');
 
 	/**
 	 * Returns a network strategy that is a composition of two or more
@@ -12,13 +14,11 @@ define(function () {
 	 * @return {Function} a composite network strategy function
 	 */
 	return function composeStrategies (strategies) {
-		var len = strategies.length;
-
 		return function (source, dest, data, type, api) {
-			var i = 0;
 
-			do strategies[i](source, dest, data, type, api);
-			while (!api.isCanceled() && ++i < len);
+			when.reduce(strategies, function(result, strategy) {
+				return strategy(source, dest, data, type, api)
+			}, data);
 
 		}
 
@@ -28,5 +28,5 @@ define(function () {
 }(
 	typeof define == 'function' && define.amd
 		? define
-		: function (factory) { module.exports = factory(); }
+		: function (factory) { module.exports = factory(require); }
 ));

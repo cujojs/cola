@@ -5,7 +5,9 @@ define(function (require) {
 	var eventNames,
 		beforePhase, propagatingPhase, afterPhase, canceledPhase,
 		enqueue, resolver, makeTransformedProperties, simpleStrategy, defaultIdentifier,
-		undef;
+		when, undef;
+	var inflight;
+
 
 	// TODO: make these configurable/extensible
 	eventNames = {
@@ -64,6 +66,7 @@ define(function (require) {
 	makeTransformedProperties = require('./adapter/makeTransformedProperties');
 	simpleStrategy = require('./network/strategy/default');
 	defaultIdentifier = require('./identifier/default');
+	when = require('when');
 
 	/**
 	 * @constructor
@@ -220,13 +223,20 @@ define(function (require) {
 		}
 
 		function processNextEvent () {
-			var event;
+			var event, deferred;
 
 			// get the next event, if any
 			event = eventQueue.shift();
 
 			// if there was an event, process it soon
-			event && enqueue(processEvent.bind(eventsApi, event.source, event.data, event.type));
+			deferred = when.defer();
+			event && enqueue(function() {
+				when.chain(processEvent(event.source, event.data, event.type), deferred);
+			});
+
+			deferred.promise.always(processNextEvent);
+
+			return deferred.promise;
 		}
 
 		/*
@@ -236,39 +246,50 @@ define(function (require) {
 			3. if not canceled, call events.XXX(data)
 		 */
 		function processEvent (source, data, type) {
-			var context, strategyApi, i, adapter;
+			var context, strategyApi;//, i, adapter;
 
 			context = {};
 
-			// give public api a chance to see (and possibly cancel) event
-			context.canceled = false === callEventsApi(data, camelize('before', type));
-
-			// if public api cancels, the network never sees the event at all
-			if (!context.canceled) {
-
-				context.phase = beforePhase;
-				strategyApi = createStrategyApi(context);
-
-				strategy(source, undef, data, type, strategyApi);
-				i = adapters.length;
-
-				context.phase = propagatingPhase;
-				while (!context.canceled && (adapter = adapters[--i])) {
-					if (source != adapter) {
-						strategy(source, adapter, data, type, strategyApi);
-					}
+			inflight = when(inflight).always(
+				function() {
+					return callEventsApi(data, camelize('before', type));
 				}
+			).then(
+				function(result) {
+					context.canceled = result === false;
+					if(context.canceled) return when.reject(context);
 
-				context.phase = context.canceled ? canceledPhase : afterPhase;
-				strategy(source, undef, data, type, strategyApi);
+					context.phase = beforePhase;
+					strategyApi = createStrategyApi(context);
 
-			}
+					return strategy(source, undef, data, type, strategyApi);
+				}
+			).then(
+				function() {
+					context.phase = propagatingPhase;
+					return when.map(adapters, function(adapter) {
+						if (source != adapter) {
+							return strategy(source, adapter, data, type, strategyApi);
+						}
+					});
+				}
+			).then(
+				function() {
+					context.phase = context.canceled ? canceledPhase : afterPhase;
+					return strategy(source, undef, data, type, strategyApi);
+				}
+			).then(
+				function(result) {
+					context.canceled = result === false;
+					if(context.canceled) return when.reject(context);
 
-			if (!context.canceled) callEventsApi(data, camelize('on', type));
-
-			processNextEvent();
-
-			return context.canceled;
+					return callEventsApi(data, camelize('on', type));
+				}
+			).then(
+				function() {
+					return context;
+				}
+			);
 		}
 
 		function createStrategyApi (context) {
@@ -288,7 +309,7 @@ define(function (require) {
 
 		function observeAdapterMethod (adapter, type, origMethod) {
 			return adapter[type] = function (data) {
-				processEvent(adapter, data, type);
+				queueEvent(adapter, data, type);
 				return origMethod.call(adapter, data);
 			};
 		}
@@ -311,7 +332,7 @@ define(function (require) {
 						};
 					}
 
-					return processEvent(sourceInfo.source, sourceInfo.item, name);
+					return queueEvent(sourceInfo.source, sourceInfo.item, name);
 				};
 			}
 		}
