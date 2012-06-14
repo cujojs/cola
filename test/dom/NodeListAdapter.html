@@ -17,14 +17,22 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 	}
 
 	function simulateEvent (node, type) {
-		if (document.createEvent) {
-			var evt = document.createEvent('HTMLEvents');
-			evt.initEvent(type, false, true);
+		var evt = createEvent(type);
+		if (node.dispatchEvent) {
 			node.dispatchEvent(evt);
 		}
 		else {
-			var evt = document.createEventObject();
 			node.fireEvent('on' + type, evt);
+		}
+	}
+
+	function createEvent (type) {
+		if (document.createEvent) {
+			var evt = document.createEvent('HTMLEvents');
+			evt.initEvent(type, false, true);
+		}
+		else {
+			var evt = document.createEventObject();
 		}
 	}
 
@@ -171,7 +179,7 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 			}
 		},
 		function shouldRemoveNode (doh) {
-			var item, adapted;
+			var item, adapted, options;
 			init();
 			options = {
 				querySelector: querySelector,
@@ -186,7 +194,48 @@ require(['cola/dom/adapter/NodeList', 'cola/adapter/Object', 'domReady!'], funct
 			adapted.add({ id: 2 });
 			adapted.add({ id: 3 });
 			adapted.remove(item);
-			doh.assertEqual(2, querySelectorAll(itemNode, rootNode).length, 'two items remain in list')
+			doh.assertEqual(2, querySelectorAll(itemNode, rootNode).length, 'two items remain in list');
+		},
+		function shouldFindItemByNode (doh) {
+			var last, item, adapted, options;
+			init();
+			options = {
+				querySelector: querySelector,
+				on: on,
+				itemTemplateSelector: itemNode,
+				comparator: compareById,
+				identifier: symbolizeById
+			};
+			adapted = new NodeListAdapter(rootNode, options);
+			last = { id: 3 };
+			adapted.add({ id: 1 });
+			adapted.add({ id: 2 });
+			adapted.add(last);
+			item = adapted.findItem(querySelector('[data-cola-id="3"] [name="last"]', rootNode));
+			doh.assertEqual(item.id, last.id, 'last item in list');
+		},
+		function shouldFindNodeByXXX (doh) {
+			var last, node, adapted, options;
+			init();
+			options = {
+				querySelector: querySelector,
+				on: on,
+				itemTemplateSelector: itemNode,
+				comparator: compareById,
+				identifier: symbolizeById
+			};
+			adapted = new NodeListAdapter(rootNode, options);
+			last = { id: 3 };
+			adapted.add({ id: 1 });
+			adapted.add({ id: 2 });
+			adapted.add(last);
+			// find by item
+			node = adapted.findNode(last);
+			doh.assertEqual(node.getAttribute('data-cola-id'), last.id, 'last node in list');
+			// find by id
+			node = adapted.findNode(3);
+			doh.assertTrue(!!node, 'node is not undefined');
+			doh.assertEqual(node.getAttribute('data-cola-id'), '3', 'last node in list');
 		}
 	]);
 

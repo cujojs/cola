@@ -62,6 +62,28 @@ buster.testCase('cola/Hub', {
 		// check for method on hub api
 		assert.isFunction(h.onCrazyNewEvent);
 	},
+	'should call findItem on each adapter': function () {
+		var e = {}, h = new Hub({
+			events: e
+		});
+		var adapter = new ArrayAdapter([]);
+		adapter.findItem = this.spy();
+		var a = h.addSource(adapter, {});
+		h.findItem();
+		// check that findItem was called
+		assert.calledOnce(adapter.findItem);
+	},
+	'should call findNode on each adapter': function () {
+		var e = {}, h = new Hub({
+			events: e
+		});
+		var adapter = new ArrayAdapter([]);
+		adapter.findNode = this.spy();
+		var a = h.addSource(adapter, {});
+		h.findNode();
+		// check that findItem was called
+		assert.calledOnce(adapter.findNode);
+	},
 
 	'should call strategy to join adapter and add item': function () {
 		var strategy = this.spy();

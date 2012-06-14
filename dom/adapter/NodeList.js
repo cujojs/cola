@@ -167,7 +167,7 @@ define(function(require) {
 			return this._options;
 		},
 
-		get: function (eventOrElement) {
+		findItem: function (eventOrElement) {
 			var node, idAttr, id;
 
 			// using feature sniffing to detect if this is an event object
@@ -191,6 +191,29 @@ define(function(require) {
 			while (id == null && (node = node.parentNode) && node.nodeType == 1);
 
 			return id != null && this._itemsById[id];
+		},
+
+		findNode: function (thing) {
+			var item, data;
+
+			if (!thing) return;
+
+			// what is this thing?
+			if (typeof thing == 'string' || typeof thing == 'number') {
+				item = this._itemsById[thing];
+			}
+			else {
+				// try this.get in case thing is an event or node
+				// otherwise, assume it's a data item
+				item = this.findItem(thing) || thing;
+			}
+
+			if (item != null) {
+				// determine if this data item is ours
+				data = this._itemData.get(item);
+			}
+
+			return data && data._rootNode;
 		},
 
 		/**
