@@ -85,47 +85,35 @@ buster.testCase('cola/Hub', {
 		assert.calledOnce(adapter.findNode);
 	},
 
-	'should call strategy to join adapter and add item': function () {
+	'should call strategy to join adapter': function () {
 		var strategy = this.spy();
 		var h = new Hub({
 			strategy: strategy
 		});
 
 		h.onJoin = this.spy();
-		h.onAdd = this.spy();
-		h.beforeAdd = this.spy();
 
-		var primary = h.addSource([]);
+		h.addSource([]);
 
 		// strategy should be called to join primary into network
 		assert.calledOnce(h.onJoin);
-
-		primary.name = 'primary'; // debug
-		primary.add({ id: 1 });
-
-		// event hub event should be called
-		assert.calledOnce(h.onAdd);
-		assert.calledOnce(h.beforeAdd);
-		assert.callOrder(h.beforeAdd, h.onAdd)
 	},
-	'should not call events if strategy cancels event': function () {
+	'should not call events if strategy cancels event': function (done) {
 		var h = new Hub({
 			strategy: strategy
 		});
 		var primary = h.addSource([]);
 		var isAfterCanceled;
 
-		h.onAdd = this.spy();
 		h.beforeAdd = this.spy();
+		h.onAdd = function() {
+			assert.calledOnce(h.beforeAdd);
+			done();
+		};
 
 		primary.name = 'primary'; // debug
 		primary.add({ id: 1 });
 
-		// event hub add should not be called
-		refute.calledOnce(h.onAdd);
-		// event hub beforeAdd should be called
-		assert.calledOnce(h.beforeAdd);
-		// last strategy call should have api.isAfterCanceled() == true;
 		assert(isAfterCanceled, 'last event should be canceled');
 
 		function strategy (source, dest, data, type, api) {
