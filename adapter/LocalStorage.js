@@ -84,7 +84,8 @@ define(function (require) {
 		},
 
 		clear: function() {
-			this._storage.removeItem(this._namespace);
+			this._data = {};
+//			this._storage.removeItem(this._namespace);
 		},
 
 		_sync: function() {

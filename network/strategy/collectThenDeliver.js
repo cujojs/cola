@@ -37,7 +37,7 @@ define(function () {
 		collProp = options.collectionProperty || defaultCollectionProperty;
 		preserve = options.preserveCollection || defaultPreserveCollection;
 
-		return function collectThenDeliver (source, dest, data, type, api) {
+		return function collectThenDeliver (source, dest, data, type, api, options) {
 
 			// if we're currently collecting
 			if (collector) {
@@ -60,7 +60,7 @@ define(function () {
 					}
 					// watch for "submit" events
 					else if ('submit' == type) {
-						api.queueEvent(source, collector, 'deliver');
+						api.queueEvent(source, collector, options, 'deliver');
 						stopCollecting();
 					}
 					// watch for cancel events

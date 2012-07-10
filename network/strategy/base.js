@@ -9,13 +9,13 @@ define(function () {
 	 */
 	return function (options) {
 
-		return function baseStrategy (source, dest, data, type, api) {
+		return function baseStrategy (source, dest, data, type, api, options) {
 			if (api.isPropagating() && type in dest) {
 				if (api.isHandled()) return;
 				if (typeof dest[type] != 'function') {
 					throw new Error('baseStrategy: ' + type + ' is not a function.');
 				}
-				return dest[type](data);
+				return dest[type](data, options);
 			}
 		};
 

@@ -13,7 +13,7 @@ define(function () {
 
 		var validator = (options && options.validator) || defaultValidator;
 
-		return function validate (source, dest, data, type, api) {
+		return function validate (source, dest, data, type, api, options) {
 			// Run validator on items before add or update
 			var result;
 
@@ -22,7 +22,7 @@ define(function () {
 
 				if (!result.valid) api.cancel();
 
-				api.queueEvent(source, result, 'validate');
+				api.queueEvent(source, result, options, 'validate');
 			}
 		};
 

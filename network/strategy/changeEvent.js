@@ -19,10 +19,10 @@ define(function () {
 	 */
 	return function configure () {
 
-		return function queueChange (source, dest, data, type, api) {
+		return function queueChange (source, dest, data, type, api, options) {
 			if (api.isBefore() && beforeEvents[type]
 				|| api.isAfter() && afterEvents[type]) {
-				api.queueEvent(source, data, 'change');
+				api.queueEvent(source, data, options, 'change');
 			}
 		};
 

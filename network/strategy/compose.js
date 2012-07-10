@@ -14,11 +14,11 @@ define(function (require) {
 	 * @return {Function} a composite network strategy function
 	 */
 	return function composeStrategies (strategies) {
-		return function (source, dest, data, type, api) {
+		return function (source, dest, data, type, api, options) {
 
 			when.reduce(strategies,
 				function(result, strategy) {
-					var strategyResult = strategy(source, dest, data, type, api);
+					var strategyResult = strategy(source, dest, data, type, api, options);
 					return api.isCanceled()
 						? when.reject(strategyResult)
 						: strategyResult;

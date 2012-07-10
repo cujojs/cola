@@ -214,17 +214,17 @@ define(function (require) {
 			};
 		}
 
-		function queueEvent (source, data, type) {
+		function queueEvent (source, data, options, type) {
 			var queueNeedsRestart;
 
 			// if queue length is zero, we need to start processing it again
 			queueNeedsRestart = eventQueue.length == 0;
 
 			// enqueue event
-			eventQueue.push({ source: source, data: data, type: type });
+			eventQueue.push({ source: source, data: data, options:options, type: type });
 
 			// start processing, if necessary
-			if (queueNeedsRestart) processNextEvent();
+			if (queueNeedsRestart) return processNextEvent();
 		}
 
 		function processNextEvent () {
@@ -236,7 +236,7 @@ define(function (require) {
 			// if there was an event, process it soon
 			deferred = when.defer();
 			event && enqueue(function() {
-				when.chain(processEvent(event.source, event.data, event.type), deferred);
+				when.chain(processEvent(event.source, event.data, event.options, event.type), deferred);
 			});
 
 			deferred.promise.always(processNextEvent);
@@ -250,14 +250,14 @@ define(function (require) {
 		 - cancel iteration if any strategy returns false for any pair
 		 3. if not canceled, call events.XXX(data)
 		 */
-		function processEvent (source, data, type) {
+		function processEvent (source, data, options, type) {
 			var context, strategyApi;
 
 			context = {};
 
 			inflight = when(inflight).always(
 				function() {
-					return callEventsApi(data, camelize('before', type));
+					return callEventsApi(data, options, camelize('before', type));
 				}
 			).then(
 				function(result) {
@@ -267,28 +267,28 @@ define(function (require) {
 					context.phase = beforePhase;
 					strategyApi = createStrategyApi(context);
 
-					return strategy(source, undef, data, type, strategyApi);
+					return strategy(source, undef, data, type, strategyApi, options);
 				}
 			).then(
 				function() {
 					context.phase = propagatingPhase;
 					return when.map(adapters, function(adapter) {
 						if (source != adapter) {
-							return strategy(source, adapter, data, type, strategyApi);
+							return strategy(source, adapter, data, type, strategyApi, options);
 						}
 					});
 				}
 			).then(
 				function() {
 					context.phase = context.canceled ? canceledPhase : afterPhase;
-					return strategy(source, undef, data, type, strategyApi);
+					return strategy(source, undef, data, type, strategyApi, options);
 				}
 			).then(
 				function(result) {
 					context.canceled = result === false;
 					if(context.canceled) return when.reject(context);
 
-					return callEventsApi(data, camelize('on', type));
+					return callEventsApi(data, options, camelize('on', type));
 				}
 			).then(
 				function() {
@@ -313,9 +313,9 @@ define(function (require) {
 		}
 
 		function observeAdapterMethod (adapter, type, origMethod) {
-			return adapter[type] = function (data) {
-				queueEvent(adapter, data, type);
-				return origMethod.call(adapter, data);
+			return adapter[type] = function (data, options) {
+				queueEvent(adapter, data, options, type);
+				return origMethod.apply(adapter, arguments);
 			};
 		}
 
@@ -325,7 +325,7 @@ define(function (require) {
 
 		function addApiMethod (name) {
 			if (!publicApi[name]) {
-				publicApi[name] = function (anything) {
+				publicApi[name] = function (anything, options) {
 					var sourceInfo;
 
 					sourceInfo = findItemFor(anything, adapters);
@@ -337,7 +337,7 @@ define(function (require) {
 						};
 					}
 
-					return queueEvent(sourceInfo.source, sourceInfo.item, name);
+					return queueEvent(sourceInfo.source, sourceInfo.item, options, name);
 				};
 			}
 		}
@@ -350,18 +350,18 @@ define(function (require) {
 			var eventName = camelize('on', name);
 			// add function stub to api
 			if (!eventsApi[eventName]) {
-				eventsApi[eventName] = function (data) {};
+				eventsApi[eventName] = function (data, options) {};
 			}
 			// add beforeXXX stub, too
 			eventName = camelize('before', name);
 			if (!eventsApi[eventName]) {
-				eventsApi[eventName] = function (data) {};
+				eventsApi[eventName] = function (data, options) {};
 			}
 		}
 
-		function callEventsApi (data, name) {
+		function callEventsApi (data, options, name) {
 			try {
-				return eventsApi[name](data);
+				return eventsApi[name](data, options);
 			}
 			catch (ex) {
 				// TODO: do something with this exception

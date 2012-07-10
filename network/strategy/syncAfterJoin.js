@@ -22,17 +22,17 @@ define(function () {
 
 		isProvider = options.isProvider || defaultIsProvider;
 
-		return function syncAfterJoin (source, dest, data, type, api) {
+		return function syncAfterJoin (source, dest, data, type, api, options) {
 
 			// process this strategy after sending to network
 			if ('join' == type && api.isAfter()) {
 				if (isProvider(source)) {
 					// request to sync *from* source (provide)
-					api.queueEvent(source, true, 'sync');
+					api.queueEvent(source, true, options, 'sync');
 				}
 				else {
 					// request to sync *to* source (consume)
-					api.queueEvent(source, false, 'sync');
+					api.queueEvent(source, false, options, 'sync');
 				}
 			}
 
