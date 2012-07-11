@@ -44,17 +44,22 @@ define(function(require) {
 		};
 
 		filtered.filter = function(query) {
-			if(!query) query = {};
+			if(typeof query == 'function') {
+				matchFilter = query;
 
-			var queryKeys = Object.keys(query);
+			} else {
+				if(!query) query = {};
 
-			matchFilter = queryKeys.length == 0
-				? alwaysInclude
-				: function(item) {
+				var queryKeys = Object.keys(query);
+
+				matchFilter = queryKeys.length == 0
+					? alwaysInclude
+					: function(item) {
 					return queryKeys.every(function(key) {
 						return key in item && query[key] == item[key];
 					});
 				};
+			}
 
 			callOrig = false;
 			when(adapter.forEach(function(item) {
