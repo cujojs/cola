@@ -8,48 +8,101 @@ define(function (require) {
 
 	"use strict";
 
-	var when, methods, undef;
+	var Base, ArrayAdapter, when, arrayAdapterPrototype, methods, undef;
+	Base = require('./Base');
 	when = require('when');
+
+	methods = {
+
+		forEach: function(lambda) {
+			var i, data, len;
+
+			i = 0;
+			data = this._data;
+			len = data.length;
+
+			for(; i < len; i++) {
+				// TODO: Should we catch exceptions here?
+				lambda(data[i]);
+			}
+		},
+
+		add: function(item) {
+			var key, index;
+
+			key = this.identifier(item);
+			index = this._index;
+
+			if(key in index) return null;
+
+			item = index[key] = this._data.push(item) - 1;
+
+			this.onAdd(item);
+
+			return item;
+		},
+
+		remove: function(itemOrId) {
+			var key, at, index, data, item;
+
+			key = this.identifier(itemOrId);
+			index = this._index;
+
+			if(!(key in index)) return null;
+
+			data = this._data;
+
+			at = index[key];
+			item = data[at];
+			data.splice(at, 1);
+
+			// Rebuild index
+			this._index = buildIndex(data, this.identifier);
+
+			if(item) this.onRemove(item);
+
+			return at;
+		},
+
+		update: function (item) {
+			var key, at, index;
+
+			key = this.identifier(item);
+			index = this._index;
+
+			at = index[key];
+
+			if (at >= 0) {
+				this._data[at] = item;
+				this.onUpdate(item);
+			}
+//			else {
+//				index[key] = this._data.push(item) - 1;
+//			}
+//
+//			this.onUpdate(item);
+
+			return at;
+		},
+
+		clear: function() {
+			this._data = [];
+			this._index = {};
+
+			this.onClear();
+		}
+	};
 
 	/**
 	 * Manages a collection of objects taken from the supplied dataArray
-	 * @param dataArray {Array} array of data objects to use as the initial
+	 * @param dataArray {ArrayAdapter} array of data objects to use as the initial
 	 * population
 	 * @param options.identifier {Function} function that returns a key/id for
 	 * a data item.
 	 * @param options.comparator {Function} comparator function that will
 	 * be propagated to other adapters as needed
 	 */
-	function ArrayAdapter(dataArray, options) {
-
-		if(!options) options = {};
-
-		this._options = options;
-
-		// Use the default comparator if none provided.
-		// The consequences of this are that the default comparator will
-		// be propagated to downstream adapters *instead of* an upstream
-		// adapter's comparator
-		this.comparator = options.comparator || this._defaultComparator;
-
-		this.identifier = options.identifier || defaultIdentifier;
-
-		if('provide' in options) {
-			this.provide = options.provide;
-		}
-
-		this._array = dataArray;
-		this.clear();
-
-		var self = this;
-		when(dataArray, function(array) {
-			mixin(self, methods);
-			self._init(array);
-		});
-	}
-
-	ArrayAdapter.prototype = {
-
+	arrayAdapterPrototype = {
 		provide: true,
 
 		_init: function(dataArray) {
@@ -85,120 +138,53 @@ define(function (require) {
 		// just stubs for now
 		getOptions: function () {
 			return this._options;
-		},
-
-		forEach: function(lambda) { return this._forEach(lambda); },
-
-		add: function(item) { return this._add(item); },
-
-		remove: function(item) { return this._remove(item); },
-
-		update: function(item) { return this._update(item); },
-
-		clear: function() { return this._clear(); }
-	};
-
-	methods = {
-
-		_forEach: function(lambda) {
-			var i, data, len;
-
-			i = 0;
-			data = this._data;
-			len = data.length;
-
-			for(; i < len; i++) {
-				// TODO: Should we catch exceptions here?
-				lambda(data[i]);
-			}
-		},
-
-		_add: function(item) {
-			var key, index;
-
-			key = this.identifier(item);
-			index = this._index;
-
-			if(key in index) return null;
-
-			index[key] = this._data.push(item) - 1;
-
-			return index[key];
-		},
-
-		_remove: function(itemOrId) {
-			var key, at, index, data;
-
-			key = this.identifier(itemOrId);
-			index = this._index;
-
-			if(!(key in index)) return null;
-
-			data = this._data;
-
-			at = index[key];
-			data.splice(at, 1);
-
-			// Rebuild index
-			this._index = buildIndex(data, this.identifier);
-
-			return at;
-		},
-
-		_update: function (item) {
-			var key, at, index;
-
-			key = this.identifier(item);
-			index = this._index;
-
-			at = index[key];
-
-			if (at >= 0) {
-				this._data[at] = item;
-			}
-			else {
-				index[key] = this._data.push(item) - 1;
-			}
-
-			return at;
-		},
-
-		_clear: function() {
-			this._data = [];
-			this._index = {};
 		}
 
 	};
 
-	mixin(ArrayAdapter.prototype, methods, makePromiseAware);
-
-	/**
-	 *
-	 * @param to
-	 * @param from
-	 * @param [transform]
-	 */
-	function mixin(to, from, transform) {
-		var name, func;
-		for(name in from) {
-			if(from.hasOwnProperty(name)) {
-				func = from[name];
-				to[name] = transform ? transform(func) : func;
-			}
-		}
-
-		return to;
+	for(var p in methods) {
+		arrayAdapterPrototype[p] = promiseAware(methods[p]);
 	}
 
-	/**
-	 * Returns a new function that will delay execution of the supplied
-	 * function until this._resultSetPromise has resolved.
-	 *
-	 * @param func {Function} original function
-	 * @return {Promise}
-	 */
-	function makePromiseAware(func) {
-		return function promiseAware() {
+	ArrayAdapter = Base.extend(function ArrayAdapter(dataArray, options) {
+
+		if (!options) options = {};
+
+		this._options = options;
+
+		// Use the default comparator if none provided.
+		// The consequences of this are that the default comparator will
+		// be propagated to downstream adapters *instead of* an upstream
+		// adapter's comparator
+		this.comparator = options.comparator || this._defaultComparator;
+
+		this.identifier = options.identifier || defaultIdentifier;
+
+		if ('provide' in options) {
+			this.provide = options.provide;
+		}
+
+		this._array = dataArray;
+		this.clear();
+
+		var self = this;
+		when(dataArray, function (array) {
+			for (var p in methods) {
+				self[p] = methods[p];
+			}
+
+			self._init(array);
+		});
+	}, arrayAdapterPrototype);
+
+	ArrayAdapter.canHandle = function(it) {
+		return it && (when.isPromise(it) || Object.prototype.toString.call(it) == '[object Array]');
+	};
+
+	return ArrayAdapter;
+
+	function promiseAware(func) {
+		return function() {
 			var self, args;
 
 			self = this;
@@ -207,12 +193,8 @@ define(function (require) {
 			return when(this._array, function() {
 				return func.apply(self, args);
 			});
-		}
+		};
 	}
-
-	ArrayAdapter.canHandle = function(it) {
-		return it && (when.isPromise(it) || Object.prototype.toString.call(it) == '[object Array]');
-	};
 
 	function defaultIdentifier(item) {
 		return typeof item == 'object' ? item.id : item;
@@ -242,7 +224,6 @@ define(function (require) {
 		return index;
 	}
 
-	return ArrayAdapter;
 });
 
 })(

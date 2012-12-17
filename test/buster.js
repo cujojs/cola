@@ -1,4 +1,5 @@
-exports['shared tests'] = {
+exports['node tests'] = {
+	environment: 'node',
 	tests: [
 		'cola.js',
 		'SortedMap.js',
@@ -13,9 +14,4 @@ exports['shared tests'] = {
 		'validation/**/*.js',
 		'dom/**/*.js'
 	]
-};
-
-exports['node tests'] = {
-	environment: 'node',
-	extends: 'shared tests'
 };

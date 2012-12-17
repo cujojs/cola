@@ -287,7 +287,6 @@ buster.testCase('adapter/Array', {
 
 				spy = this.spy();
 
-
 				when(pa.update({ id: 2, success: false }),
 					function() {
 						return pa.forEach(spy);
