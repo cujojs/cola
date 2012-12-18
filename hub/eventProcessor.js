@@ -12,6 +12,14 @@ define(function(require) {
 
 	return {
 
+		makeBeforeEventName: function (name) {
+			return makeEventName('before', name);
+		},
+
+		makeEventName: function(name) {
+			return makeEventName('on', name);
+		},
+
 		/**
 		 * Queue an event for processing later
 		 * @param source
@@ -39,9 +47,12 @@ define(function(require) {
 		 */
 		processEvent: function(source, data, type) {
 			var self = this;
-			this.inflight = when(this.inflight).always(function(){
+
+			this.inflight = when(this.inflight).always(function() {
 				return self.eventProcessor(source, data, type);
 			});
+
+			return this.inflight;
 		},
 
 		_dispatchNextEvent: function () {
@@ -55,7 +66,8 @@ define(function(require) {
 			// if there was an event, process it soon
 			deferred = when.defer();
 			event && enqueue(function () {
-				when.chain(self._dispatchEvent(event), deferred);
+				var inflight = self.processEvent(event.source, event.data, event.type);
+				deferred.resolve(inflight);
 			});
 
 			deferred.promise.always(function() {
@@ -63,13 +75,12 @@ define(function(require) {
 			});
 
 			return deferred.promise;
-		},
-
-		_dispatchEvent: function(e) {
-			return this.processEvent(e.source, e.data, e.type);
 		}
-
 	};
+
+	function makeEventName (prefix, name) {
+		return prefix + name.charAt(0).toUpperCase() + name.substr(1);
+	}
 
 });
 }(typeof define === 'function' ? define : function(factory) { module.exports = factory(require); }));

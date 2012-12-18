@@ -134,7 +134,7 @@ define(function(require) {
 			adapters = this.adapters;
 
 			return when(
-				self.dispatchEvent(makeEventName('before', type), data)
+				self.dispatchEvent(eventProcessor.makeBeforeEventName(type), data)
 			).then(
 				function (result) {
 					context.canceled = result === false;
@@ -166,7 +166,7 @@ define(function(require) {
 					context.canceled = result === false;
 					if (context.canceled) return when.reject(context);
 
-					return self.dispatchEvent(makeEventName('on', type), data);
+					return self.dispatchEvent(eventProcessor.makeEventName(type), data);
 				}
 			).then(
 				function () {
@@ -193,7 +193,7 @@ define(function(require) {
 		},
 
 		_createAdapterProxy: function (adapter, options) {
-			var eventFinder, method, proxy;
+			var eventFinder, name, method, proxy;
 
 			proxy = Object.create(adapter);
 
@@ -206,14 +206,15 @@ define(function(require) {
 			eventFinder = this.configureEventFinder(options.eventNames);
 
 			// override methods that require event hooks
-			for (method in adapter) {
-				if (typeof adapter[method] == 'function' && eventFinder(method)) {
+			for (name in adapter) {
+				method = adapter[name];
+				if (typeof method == 'function' && eventFinder(name)) {
 					// store original method on proxy (to stop recursion)
-					proxy[method] = callOrigAdapterMethod(adapter, adapter[method]);
+					proxy[name] = callOriginalMethod(adapter, method);
 					// change public api of adapter to call back into hub
-					observeAdapterMethod(this.eventProcessor, adapter, method, adapter[method]);
+					observeMethod(this.eventProcessor, adapter, name, method);
 					// ensure hub has a public method of the same name
-					this.addApi(method);
+					this.addApi(name);
 				}
 			}
 
@@ -228,9 +229,10 @@ define(function(require) {
 		},
 
 		_addApiMethod: function (name) {
-			var adapters, self;
+			var adapters, self, eventProcessor;
 
 			adapters = this.adapters;
+			eventProcessor = this.eventProcessor;
 			self = this;
 
 			if (!this[name]) {
@@ -246,19 +248,19 @@ define(function(require) {
 						};
 					}
 
-					return self.eventProcessor.queueEvent(sourceInfo.source, sourceInfo.item, name);
+					return eventProcessor.queueEvent(sourceInfo.source, sourceInfo.item, name);
 				};
 			}
 		},
 
 		_addApiEvent: function (name) {
-			var eventName = makeEventName('on', name);
+			var eventName = this.eventProcessor.makeEventName(name);
 			// add function stub to api
 			if (!this[eventName]) {
 				this[eventName] = function (data) {};
 			}
 			// add beforeXXX stub, too
-			eventName = makeEventName('before', name);
+			eventName = this.eventProcessor.makeBeforeEventName(name);
 			if (!this[eventName]) {
 				this[eventName] = function (data) {};
 			}
@@ -304,13 +306,13 @@ define(function(require) {
 		}
 	}
 
-	function callOrigAdapterMethod (adapter, orig) {
+	function callOriginalMethod (adapter, orig) {
 		return function () {
 			return orig.apply(adapter, arguments);
 		};
 	}
 
-	function observeAdapterMethod (queue, adapter, type, origMethod) {
+	function observeMethod (queue, adapter, type, origMethod) {
 		return adapter[type] = function (data) {
 			queue.queueEvent(adapter, data, type);
 			return origMethod.call(adapter, data);
@@ -329,10 +331,6 @@ define(function(require) {
 		}
 
 		return found;
-	}
-
-	function makeEventName (prefix, name) {
-		return prefix + name.charAt(0).toUpperCase() + name.substr(1);
 	}
 
 });
