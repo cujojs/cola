@@ -34,7 +34,7 @@ define(function(require) {
 			this.queue.push({ source: source, data: data, type: type });
 
 			// start processing, if necessary
-			if (queueNeedsRestart) return this._dispatchNextEvent();
+			return queueNeedsRestart && this._dispatchNextEvent();
 		},
 
 		/**

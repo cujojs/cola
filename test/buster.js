@@ -1,8 +1,8 @@
 exports['shared tests'] = {
 	tests: [
+		'**/*-test.js',
 		'cola.js',
 		'SortedMap.js',
-		'Hub.js',
 		'adapter/*.js',
 		'network/strategy/*.js',
 		'transform/*.js',

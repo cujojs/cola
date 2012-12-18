@@ -1,16 +1,15 @@
 /**
- * CollectionHub
- * @author: brian
+ * Collection
  */
 (function(define) {
 define(function(require) {
 
-	var BaseHub, resolver, eventTypes;
+	var Base, resolver, eventTypes;
 
-	BaseHub = require('./hub/Base');
+	Base = require('./hub/Base');
 	resolver = require('./collectionAdapterResolver');
 
-	eventTypes = extend(BaseHub.prototype.eventTypes, {
+	eventTypes = extend(Base.prototype.eventTypes, {
 		// collection item events. most of these come with data. devs can
 		// decide to use these events for their own purposes or send
 		// different data than described here, the following list outlines
@@ -26,11 +25,11 @@ define(function(require) {
 		deliver: 1 // collected items (data = batch purpose with collected items array as property)
 	});
 
-	function CollectionHub(options) {
-		BaseHub.call(this, options);
+	function Collection(options) {
+		Base.call(this, options);
 	}
 
-	CollectionHub.prototype = Object.create(BaseHub.prototype, {
+	Collection.prototype = Object.create(Base.prototype, {
 
 		eventTypes: { value: eventTypes },
 
@@ -87,7 +86,7 @@ define(function(require) {
 
 	});
 
-	return CollectionHub;
+	return Collection;
 
 	function extend(base, mixin) {
 		var extended = Object.create(base);

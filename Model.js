@@ -1,26 +1,26 @@
 /**
- * ObjectHub
+ * Model
  * @author: brian
  */
 (function(define) {
 define(function(require) {
 
-	var BaseHub, resolver;
+	var Base, resolver;
 
-	BaseHub = require('./hub/Base');
+	Base = require('./hub/Base');
 	resolver = require('./objectAdapterResolver');
 
-	function ObjectHub(options) {
-		BaseHub.call(this, options);
+	function Model(options) {
+		Base.call(this, options);
 	}
 
-	ObjectHub.prototype = Object.create(BaseHub.prototype, {
+	Model.prototype = Object.create(Base.prototype, {
 
 		resolver: { value: resolver }
 
 	});
 
-	return ObjectHub;
+	return Model;
 
 });
 }(typeof define === 'function' ? define : function(factory) { module.exports = factory(require); }));

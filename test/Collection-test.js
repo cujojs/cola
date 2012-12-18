@@ -1,14 +1,14 @@
 (function (buster, require) {
 
-var assert, refute, undef;
+var assert, refute;
 
 assert = buster.assert;
 refute = buster.refute;
 
-var CollectionHub = require('../CollectionHub');
+var CollectionHub = require('../Collection');
 var ArrayAdapter = require('../adapter/Array');
 
-buster.testCase('cola/Hub', {
+buster.testCase('cola/Collection', {
 
 	'should not fail if not given any constructor params': function () {
 		refute.exception(function () {
