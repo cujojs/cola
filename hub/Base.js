@@ -31,7 +31,7 @@ define(function(require) {
 		// network-level events (not to be used by adapters)
 		join: 1, // an adapter has joined (data == adapter)
 		sync: 1, // adapters need to sync (data == boolean. true == provider)
-		leave: 1 // an adpater has left (data == adapter)
+		leave: 1 // an adapter has left (data == adapter)
 	};
 
 	/**

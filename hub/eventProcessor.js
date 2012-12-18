@@ -36,7 +36,7 @@ define(function(require) {
 			this.queue.push({ source: source, data: data, type: type });
 
 			// start processing, if necessary
-			if (queueNeedsRestart) this._dispatchNextEvent();
+			if (queueNeedsRestart) return this._dispatchNextEvent();
 		},
 
 		/**
@@ -65,16 +65,20 @@ define(function(require) {
 
 			// if there was an event, process it soon
 			deferred = when.defer();
-			event && enqueue(function () {
-				var inflight = self.processEvent(event.source, event.data, event.type);
+
+			// Ensure resolution is next turn, even if no event
+			// is actually dispatched.
+			enqueue(function () {
+				var inflight = event && self.processEvent(event.source, event.data, event.type);
 				deferred.resolve(inflight);
 			});
 
 			deferred.promise.always(function() {
-				self._dispatchNextEvent();
+				return self._dispatchNextEvent();
 			});
 
 			return deferred.promise;
+
 		}
 	};
 
