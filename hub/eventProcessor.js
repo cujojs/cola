@@ -27,10 +27,8 @@ define(function(require) {
 		 * @param type
 		 */
 		queueEvent: function (source, data, type) {
-			var queueNeedsRestart;
-
 			// if queue length is zero, we need to start processing it again
-			queueNeedsRestart = this.queue.length == 0;
+			var queueNeedsRestart = this.queue.length == 0;
 
 			// enqueue event
 			this.queue.push({ source: source, data: data, type: type });
@@ -56,26 +54,28 @@ define(function(require) {
 		},
 
 		_dispatchNextEvent: function () {
-			var event, deferred, self;
+			var event, remaining, deferred, self;
 
 			self = this;
 
 			// get the next event, if any
 			event = this.queue.shift();
-
-			// if there was an event, process it soon
-			deferred = when.defer();
+			remaining = this.queue.length;
 
 			// Ensure resolution is next turn, even if no event
 			// is actually dispatched.
+			deferred = when.defer();
 			enqueue(function () {
 				var inflight = event && self.processEvent(event.source, event.data, event.type);
 				deferred.resolve(inflight);
 			});
 
-			deferred.promise.always(function() {
-				self._dispatchNextEvent();
-			});
+			// Only continue processing the queue if it's not empty
+			if(remaining) {
+				deferred.promise.always(function() {
+					self._dispatchNextEvent();
+				});
+			}
 
 			return deferred.promise;
 
