@@ -5,18 +5,18 @@ var assert, refute, undef;
 assert = buster.assert;
 refute = buster.refute;
 
-var Hub = require('../Hub');
+var CollectionHub = require('../CollectionHub');
 var ArrayAdapter = require('../adapter/Array');
 
 buster.testCase('cola/Hub', {
 
 	'should not fail if not given any constructor params': function () {
 		refute.exception(function () {
-			new Hub();
+			new CollectionHub();
 		});
 	},
 	'should add methods for eventNames': function () {
-		var h = new Hub();
+		var h = new CollectionHub();
 		// this isn't a complete list, but proves the mechanism basically works
 		assert.isObject(h);
 		assert.isFunction(h.add);
@@ -30,28 +30,28 @@ buster.testCase('cola/Hub', {
 		assert.isFunction(h.onRemove);
 	},
 	'should return an adapter when calling addSource with a non-adapter': function () {
-		var h = new Hub();
+		var h = new CollectionHub();
 		var a = h.addSource([]);
 		// sniff for an adapter
 		assert.isObject(a);
 		assert.isFunction(a.add);
 	},
 	'should pass through an adapter when calling addSource with an adapter': function () {
-		var h = new Hub();
+		var h = new CollectionHub();
 		var adapter = new ArrayAdapter([], {});
 		var a = h.addSource(adapter);
 		// sniff for an adapter
 		assert.same(a, adapter);
 	},
 	'should override adapter default provide via options': function() {
-		var h = new Hub();
+		var h = new CollectionHub();
 		var defaultProvide = true;
 		var a = h.addSource([], { provide: false });
 		// sniff for an adapter
 		refute.equals(a.provide, defaultProvide);
 	},
 	'should find and add new event types from adapter': function () {
-		var e = {}, h = new Hub({
+		var e = {}, h = new CollectionHub({
 			events: e
 		});
 		var adapter = new ArrayAdapter([]);
@@ -63,7 +63,7 @@ buster.testCase('cola/Hub', {
 		assert.isFunction(h.onCrazyNewEvent);
 	},
 	'should call findItem on each adapter': function () {
-		var e = {}, h = new Hub({
+		var e = {}, h = new CollectionHub({
 			events: e
 		});
 		var adapter = new ArrayAdapter([]);
@@ -74,7 +74,7 @@ buster.testCase('cola/Hub', {
 		assert.calledOnce(adapter.findItem);
 	},
 	'should call findNode on each adapter': function () {
-		var e = {}, h = new Hub({
+		var e = {}, h = new CollectionHub({
 			events: e
 		});
 		var adapter = new ArrayAdapter([]);
@@ -87,7 +87,7 @@ buster.testCase('cola/Hub', {
 
 	'should call strategy to join adapter': function () {
 		var strategy = this.spy();
-		var h = new Hub({
+		var h = new CollectionHub({
 			strategy: strategy
 		});
 
@@ -99,7 +99,7 @@ buster.testCase('cola/Hub', {
 		assert.calledOnce(h.onJoin);
 	},
 	'should not call events if strategy cancels event': function (done) {
-		var h = new Hub({
+		var h = new CollectionHub({
 			strategy: strategy
 		});
 		var primary = h.addSource([]);
@@ -122,7 +122,7 @@ buster.testCase('cola/Hub', {
 		}
 	},
 	'should run queued event in next turn': function (done) {
-		var h = new Hub({ strategy: strategy });
+		var h = new CollectionHub({ strategy: strategy });
 		var primary = h.addSource([]);
 		var removeDetected;
 
