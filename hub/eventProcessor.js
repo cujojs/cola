@@ -74,7 +74,7 @@ define(function(require) {
 			});
 
 			deferred.promise.always(function() {
-				return self._dispatchNextEvent();
+				self._dispatchNextEvent();
 			});
 
 			return deferred.promise;
