@@ -2,10 +2,11 @@
 define(function (require) {
 "use strict";
 
-	var slice, guess;
+	var slice, guess, form;
 
 	slice = Array.prototype.slice;
 	guess = require('./guess');
+	form = require('./form');
 
 	defaultNodeHandler.inverse = defaultInverseNodeHandler;
 
@@ -169,20 +170,34 @@ define(function (require) {
 
 	function defaultNodeHandler (node, data, info) {
 		var attr, value, current;
-		attr = info.attr || guess.propForNode(node);
-		value = data[info.prop];
-		// always compare first to try to prevent unnecessary IE reflow/repaint
-		current = guess.getNodePropOrAttr(node, attr);
-		if (current !== value) {
-			guess.setNodePropOrAttr(node, attr, value);
+		if(node.form) {
+			form.setValues(node.form, data, function(_, name) {
+				return name === info.prop;
+			});
+		} else {
+			attr = info.attr || guess.propForNode(node);
+			value = data[info.prop];
+			// always compare first to try to prevent unnecessary IE reflow/repaint
+			current = guess.getNodePropOrAttr(node, attr);
+			if (current !== value) {
+				guess.setNodePropOrAttr(node, attr, value);
+			}
 		}
 	}
 
 	function defaultInverseNodeHandler (node, data, info) {
 		var attr, value;
-		attr = info.attr || guess.propForNode(node);
-		value = guess.getNodePropOrAttr(node, attr);
-		data[info.prop] = value;
+
+		if(node.form) {
+			value = form.getValues(node.form, function(el) {
+				return el === node || el.name === node.name;
+			});
+		} else {
+			attr = info.attr || guess.propForNode(node);
+			value = guess.getNodePropOrAttr(node, attr);
+		}
+
+		data[info.prop] = value[info.prop];
 	}
 
 	function createInverseHandler (binding, propToDom) {

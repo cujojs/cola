@@ -17,9 +17,15 @@ define(function (require) {
 		this._obj = obj;
 		this._options = options;
 
+		if('provide' in options) {
+			this.provide = options.provide;
+		}
+
 	}
 
 	ObjectAdapter.prototype = {
+
+		provide: true,
 
 		update: function (item) {
 			var self = this;
@@ -37,6 +43,18 @@ define(function (require) {
 				return updateSynchronously(item);
 			});
 
+		},
+
+		properties: function(lambda) {
+			var self = this;
+			return when(this._obj, function(obj) {
+				function properties(l) {
+					l(obj);
+				}
+				self.properties = properties;
+
+				return properties(lambda);
+			});
 		},
 
 		getOptions: function () {

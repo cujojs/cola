@@ -54,9 +54,9 @@ define(function (require) {
 		if (Array.isArray(node)) {
 			// get unique list of events
 			return node.reduce(function (events, node) {
-				return guessEventsFor(node).filter(function (event) {
+				return events.concat(guessEventsFor(node).filter(function (event) {
 					return event && events.indexOf(event) < 0;
-				})
+				}));
 			},[]);
 		}
 		else if (isFormValueNode(node)) {

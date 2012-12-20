@@ -64,9 +64,6 @@ define(function(require) {
 
 		if (!options) options = {};
 
-		this.strategy = options.strategy;
-		if (!this.strategy) this.strategy = simpleStrategy(options.strategyOptions);
-
 		this.identifier = options.identifier || defaultIdentifier;
 
 		this.eventProcessor = Object.create(eventProcessor, {

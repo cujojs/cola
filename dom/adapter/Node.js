@@ -5,9 +5,10 @@
 define(function (require) {
 "use strict";
 
-	var bindingHandler;
+	var bindingHandler, guess;
 
 	bindingHandler = require('../bindingHandler');
+	guess = require('../guess');
 
 	/**
 	 * Creates a cola adapter for interacting with dom nodes.  Be sure to
@@ -21,12 +22,12 @@ define(function (require) {
 		this._rootNode = rootNode;
 
 		// set options
-		if (!options.bindings) options.bindings = {};
+		options.bindings = guessBindingsFromDom(this._rootNode, options);
+
 		this._options = options;
 		this._handlers = {};
 
-		this._createItemToDomHandlers();
-
+		this._createItemToDomHandlers(options.bindings);
 	}
 
 	NodeAdapter.prototype = {
@@ -51,6 +52,10 @@ define(function (require) {
 			});
 		},
 
+		properties: function(lambda) {
+			lambda(this._item);
+		},
+
 		_itemToDom: function (item, hash) {
 			var p, handler;
 			for (p in hash) {
@@ -59,10 +64,9 @@ define(function (require) {
 			}
 		},
 
-		_createItemToDomHandlers: function () {
-			var bindings, creator;
+		_createItemToDomHandlers: function (bindings) {
+			var creator;
 
-			bindings = this._options.bindings;
 			creator = bindingHandler(this._rootNode, this._options);
 
 			Object.keys(bindings).forEach(function (b) {
@@ -84,6 +88,29 @@ define(function (require) {
 	};
 
 	return NodeAdapter;
+
+	function guessBindingsFromDom(rootNode, options) {
+		var nodeFinder, nodes, bindings;
+
+		bindings = options.bindings || {};
+		nodeFinder = options.nodeFinder || options.querySelectorAll || options.querySelector;
+
+		nodes = nodeFinder('[name],[data-cola-binding]', rootNode);
+
+		if(nodes) {
+			Array.prototype.forEach.call(nodes, function(n) {
+				var name, attr;
+
+				attr = n.name ? 'name' : 'data-cola-binding';
+				name = guess.getNodePropOrAttr(n, attr);
+				if(name && !(name in bindings)) {
+					bindings[name] = '[' + attr + '="' + name + '"]';
+				}
+			});
+		}
+
+		return bindings;
+	}
 
 });
 }(

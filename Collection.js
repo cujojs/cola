@@ -4,10 +4,11 @@
 (function(define) {
 define(function(require) {
 
-	var Base, resolver, eventTypes;
+	var Base, resolver, eventTypes, simpleStrategy;
 
 	Base = require('./hub/Base');
 	resolver = require('./collectionAdapterResolver');
+	simpleStrategy = require('./network/strategy/default');
 
 	eventTypes = extend(Base.prototype.eventTypes, {
 		// collection item events. most of these come with data. devs can
@@ -27,6 +28,14 @@ define(function(require) {
 
 	function Collection(options) {
 		Base.call(this, options);
+
+		if(!options) {
+			options = {};
+		}
+
+		this.strategy = options.strategy;
+		if (!this.strategy) this.strategy = simpleStrategy(options.strategyOptions);
+
 	}
 
 	Collection.prototype = Object.create(Base.prototype, {
