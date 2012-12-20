@@ -192,12 +192,11 @@ define(function (require) {
 			value = form.getValues(node.form, function(el) {
 				return el === node || el.name === node.name;
 			});
+			data[info.prop] = value[info.prop];
 		} else {
 			attr = info.attr || guess.propForNode(node);
-			value = guess.getNodePropOrAttr(node, attr);
+			data[info.prop] = guess.getNodePropOrAttr(node, attr);
 		}
-
-		data[info.prop] = value[info.prop];
 	}
 
 	function createInverseHandler (binding, propToDom) {
