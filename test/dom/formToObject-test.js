@@ -5,9 +5,9 @@ var assert, refute, undef;
 assert = buster.assert;
 refute = buster.refute;
 
-var formToObject, fakeForm;
+var form, fakeForm;
 
-formToObject = require('../../dom/formToObject');
+form = require('../../dom/form');
 
 fakeForm = {
 	// name, value, type, checked, multiple, options
@@ -65,7 +65,7 @@ buster.testCase('cola/dom/formToObject', {
 
 	'formToObject': {
 		'should extract values from non-grouped form inputs': function () {
-			var obj = formToObject(fakeForm);
+			var obj = form.getValues(fakeForm);
 			assert.equals('text value', obj.text, 'text input');
 			assert.equals('checkbox value 1', obj.checkbox1, 'checked checkbox');
 			assert.equals(false, obj.checkbox2, 'unchecked checkbox');
@@ -76,7 +76,7 @@ buster.testCase('cola/dom/formToObject', {
 			assert.equals('select value', obj.select, 'select');
 		},
 		'should extract arrays from grouped form inputs': function () {
-			var obj = formToObject(fakeForm);
+			var obj = form.getValues(fakeForm);
 			assert.equals('rgroup value 2', obj.radioGroup1, 'radio group');
 			assert.equals(['group value 2'], obj.checkboxGroup1, 'checkbox group with one checked');
 			assert.equals(['group value 1', 'group value 2'], obj.checkboxGroup2, 'checkbox group with multiple checked A');
@@ -86,7 +86,7 @@ buster.testCase('cola/dom/formToObject', {
 			assert.equals(['option value 1', 'option value 2'], obj.multiselect3, 'multiple select with many items selected B');
 		},
 		'should skip over un-named and non-value elements': function () {
-			var obj = formToObject(fakeForm);
+			var obj = form.getValues(fakeForm);
 			refute('no-value' in obj);
 			refute('no-name' in obj);
 			refute('' in obj);

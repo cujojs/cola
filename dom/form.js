@@ -3,9 +3,10 @@
 (function (define) {
 define(function () {
 
-	var forEach;
+	var forEach, slice;
 
 	forEach = Array.prototype.forEach;
+	slice = Array.prototype.slice;
 
 	return {
 		getValues: formToObject,
@@ -145,6 +146,11 @@ define(function () {
 						: [value];
 				}
 			}
+			else if (el.type == 'file') {
+				if (!(name in seen)) {
+					obj[name] = getFileInputValue(el);
+				}
+			}
 			else if (el.multiple && el.options) {
 				// grab all selected options
 				obj[name] = getMultiSelectValue(el);
@@ -157,6 +163,14 @@ define(function () {
 		}
 
 		return obj;
+	}
+
+	function getFileInputValue (fileInput) {
+		if ('files' in fileInput) {
+			return fileInput.multiple ? slice.call(fileInput.files) : fileInput.files[0];
+		} else {
+			return fileInput.value;
+		}
 	}
 
 	function getMultiSelectValue (select) {
