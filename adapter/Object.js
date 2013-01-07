@@ -17,7 +17,7 @@ define(function (require) {
 		if(!options) {
 			options = {};
 		}
-		
+
 		this._obj = obj;
 		this._options = options;
 
