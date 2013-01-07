@@ -57,7 +57,7 @@ define(function () {
 			if(isCheckable(el)) {
 				el.checked = getBooleanValue(value, el);
 			} else {
-				el.value = value[i];
+				el.value = textValue(value[i]);
 			}
 		});
 	}
@@ -71,13 +71,13 @@ define(function () {
 		} else if(el.multiple && el.options) {
 
 			if(!Array.isArray(value)) {
-				el.value = value;
+				el.value = textValue(value);
 			} else {
 				setMultiSelectValue(el, value);
 			}
 
 		} else {
-			el.value = value;
+			el.value = textValue(value);
 		}
 	}
 
@@ -90,6 +90,10 @@ define(function () {
 				option.selected = true;
 			}
 		}
+	}
+
+	function textValue(value) {
+		return value == null ? '' : value;
 	}
 
 	function isCheckable(el) {
