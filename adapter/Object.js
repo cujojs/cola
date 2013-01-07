@@ -14,6 +14,10 @@ define(function (require) {
 	 */
 	function ObjectAdapter(obj, options) {
 
+		if(!options) {
+			options = {};
+		}
+		
 		this._obj = obj;
 		this._options = options;
 
