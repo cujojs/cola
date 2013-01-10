@@ -14,20 +14,19 @@ curl({
 	},
 	packages: {
 		cola: { location: '.', main: 'cola' },
-		when: { location: 'test/when', main: 'when' }
+		when: { location: 'support/when', main: 'when' }
 	}
 });
 curl(
 	[
-		'cola/mediator/syncCollections',
-		'cola/ArrayAdapter',
-		'cola/dom/NodeListAdapter',
-		'cola/dom/NodeAdapter',
-		'cola/ObjectAdapter',
-		'cola/AdapterResolver',
+		'cola/Collection',
+        'cola/adapter/Object',
+		'cola/adapter/Array',
+		'cola/dom/adapter/NodeList',
+		'cola/dom/adapter/Node',
 		'when'
 	],
-	function (syncCollections, ArrayAdapter, NodeListAdapter, NodeAdapter, ObjectAdapter, AdapterResolver, when) {
+	function (Collection, ObjectAdapter, ArrayAdapter, NodeListAdapter, NodeAdapter, when) {
 	"use strict";
 
 		var itemNode, data, sortDirection;
@@ -59,46 +58,23 @@ curl(
 			return byLast == 0 ? compareByFirst(a, b) : byLast;
 		}
 
-		function symbolizeById (o) { return o && o.id; }
+		function byId (o) { return o && o.id; }
 
 		function querySelector (selector, node) {
 			return node.querySelector(selector);
 		}
 
-		function createAdapter(obj, type, options) {
-			// FIXME: This is just for initial testing
-			var Adapter, adapter, propertyTransforms;
-			Adapter = AdapterResolver(obj, type);
-			// if (!Adapter) throw new Error('wire/cola: could not find Adapter constructor for ' + type);
-
-			adapter = Adapter ? new Adapter(obj, options) : obj;
-
-//			if (options.bindings && type == 'object') {
-//				propertyTransforms = createTransformers(options.bindings);
-//				if (propertyTransforms) {
-//					adapter = addPropertyTransforms(adapter, propertyTransforms);
-//				}
-//			}
-			return adapter;
-		}
-
 		function init () {
-			var source, dest;
-
-			// register adapter constructors
-			AdapterResolver.register(ArrayAdapter, 'collection');
-			AdapterResolver.register(NodeListAdapter, 'collection');
-			AdapterResolver.register(NodeAdapter, 'object');
-			AdapterResolver.register(ObjectAdapter, 'object');
+			var source, dest, people;
 
 			// create adapters
 			source = new ArrayAdapter(data, {
 				comparator: compareByLast,
-				symbolizer: symbolizeById
+				identifier: byId
 			});
 			dest = new NodeListAdapter(getNode('test'), {
 				comparator: compareByLastThenFirst,
-				symbolizer: symbolizeById,
+				identifier: byId,
 				querySelector: querySelector,
 				bindings: {
 					first: { node: '[name=first]', prop: 'value' },
@@ -109,7 +85,9 @@ curl(
 
 			console.log("START");
 
-			syncCollections(source, dest, createAdapter, { sync: true });
+			people = new Collection();
+            people.addSource(source);
+            people.addSource(dest);
 
 			console.log("BEFORE");
 
