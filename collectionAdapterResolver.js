@@ -5,7 +5,7 @@
 (function(define) {
 define(function(require) {
 
-	var adapterResolver = require('./AdapterResolver');
+	var adapterResolver = require('./adapterResolver');
 
 	return Object.create(adapterResolver, {
 		adapters: { value: [
