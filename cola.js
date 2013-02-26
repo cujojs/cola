@@ -89,7 +89,7 @@ function(when, propertiesKey, byProperty) {
 			}
 
 			function bindFacet(resolver, facet, wire) {
-				when.chain(doBind(facet, options, wire), resolver);
+				resolver.resolve(doBind(facet, options, wire));
 			}
 
 			return {
