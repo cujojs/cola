@@ -22,7 +22,7 @@ buster.testCase('cola', {
 			assert.isFunction(plugin.facets.bind.ready);
 		},
 
-		'should fail if "to" not provided': function() {
+		'should fail if "to" not provided': function(done) {
 			var plugin, bind, wire, rejected;
 
 			plugin = cola.wire$plugin(null, null, {});
@@ -32,9 +32,12 @@ buster.testCase('cola', {
 
 			rejected = this.spy();
 
-			bind(resolver(null, rejected), { target: {} }, wire);
+			bind(resolver(function(p) {
+				p.then(fail, rejected).then(function() {
+					assert.calledOnce(rejected);
+				}).then(done, done);
+			}), { target: {} }, wire);
 
-			assert.calledOnce(rejected);
 		},
 
 		'should wire options': function() {
