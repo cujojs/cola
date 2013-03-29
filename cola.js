@@ -78,7 +78,7 @@ function(when, propertiesKey, byProperty) {
 	};
 
 	return {
-		wire$plugin: function(ready, destroyed, pluginOptions) {
+		wire$plugin: function(pluginOptions) {
 
 			var options = {};
 

@@ -37,7 +37,6 @@ buster.testCase('cola', {
 					assert.calledOnce(rejected);
 				}).then(done, done);
 			}), { target: {} }, wire);
-
 		},
 
 		'should wire options': function() {
