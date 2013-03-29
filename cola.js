@@ -80,11 +80,17 @@ function(when, propertiesKey, byProperty) {
 	return {
 		wire$plugin: function(pluginOptions) {
 
-			var options = {};
+			var options, p;
 
-			for(var p in pluginOptions) {
-				if(!(p in excludeOptions)) {
-					options[p] = pluginOptions[p];
+			options = {};
+
+			if(arguments.length) {
+				pluginOptions = arguments[arguments.length-1];
+
+				for(p in pluginOptions) {
+					if(!(p in excludeOptions)) {
+						options[p] = pluginOptions[p];
+					}
 				}
 			}
 
