@@ -23,18 +23,18 @@ buster.testCase('cola', {
 		},
 
 		'should fail if "to" not provided': function() {
-			var plugin, bind, wire, rejected;
+			var plugin, bind, wire, resolve;
 
 			plugin = cola.wire$plugin(null, null, {});
 			bind = plugin.facets.bind.ready;
 
 			wire = this.stub().returns({});
 
-			rejected = this.spy();
+			resolve = this.spy();
 
-			bind(resolver(null, rejected), { target: {} }, wire);
+			bind(resolver(resolve), { target: {} }, wire);
 
-			assert.calledOnce(rejected);
+			assert.calledOnce(resolve);
 		},
 
 		'should wire options': function() {

@@ -78,7 +78,7 @@ function(when, propertiesKey, byProperty) {
 	};
 
 	return {
-		wire$plugin: function(ready, destroyed, pluginOptions) {
+		wire$plugin: function(pluginOptions) {
 
 			var options = {};
 
@@ -89,7 +89,8 @@ function(when, propertiesKey, byProperty) {
 			}
 
 			function bindFacet(resolver, facet, wire) {
-				when.chain(doBind(facet, options, wire), resolver);
+				console.log(resolver);
+				resolver.resolve(doBind(facet, options, wire));
 			}
 
 			return {
