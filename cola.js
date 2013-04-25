@@ -21,9 +21,12 @@ function(when, propertiesKey, byProperty) {
 	defaultQuerySelectorAll = { $ref: 'dom.all!' };
 	defaultOn = { $ref: 'on!' };
 
-	function initBindOptions(incomingOptions, pluginOptions) {
+	function initBindOptions(incomingOptions, pluginOptions, resolver) {
 		var options, identifier, comparator;
 
+		if(resolver.isRef(incomingOptions)) {
+			incomingOptions = { to: incomingOptions };
+		}
 		options = copyOwnProps(incomingOptions, pluginOptions);
 
 		if(!options.querySelector) {
@@ -56,7 +59,7 @@ function(when, propertiesKey, byProperty) {
 	function doBind(facet, options, wire) {
 		var target = facet.target;
 
-		return when(wire(initBindOptions(facet.options, options)),
+		return when(wire(initBindOptions(facet.options, options, wire.resolver)),
 			function(options) {
 				var to = options.to;
 				if (!to) throw new Error('wire/cola: "to" must be specified');
