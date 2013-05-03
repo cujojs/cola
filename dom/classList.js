@@ -5,6 +5,10 @@ define(function (require, exports) {
 
 	var splitClassNameRx = /\s+/;
 
+	var classRx = '(\\s+|^)(classNames)(\\b(?![\\-_])|$)';
+	var trimLeadingRx = /^\s+/;
+	var splitClassNamesRx = /(\b\s+\b)|(\s+)/g;
+
 	/**
 	 * Returns the list of class names on a node as an array.
 	 * @param node {HTMLElement}
@@ -135,7 +139,41 @@ define(function (require, exports) {
 		return str.replace(outerSpacesRx, '');
 	}
 
+
+	function addClass (className, str) {
+		var newClass = removeClass(className, str);
+		if(newClass && className) {
+			newClass += ' ';
+		}
+
+		return newClass + className;
+	}
+
+	function removeClass (removes, tokens) {
+		var rx;
+
+		if (!removes) {
+			return tokens;
+		}
+
+		// convert space-delimited tokens with bar-delimited (regexp `or`)
+		removes = removes.replace(splitClassNamesRx, function (m, inner, edge) {
+			// only replace inner spaces with |
+			return edge ? '' : '|';
+		});
+
+		// create one-pass regexp
+		rx = new RegExp(classRx.replace('classNames', removes), 'g');
+
+		// remove all tokens in one pass (wish we could trim leading
+		// spaces in the same pass! at least the trim is not a full
+		// scan of the string)
+		return tokens.replace(rx, '').replace(trimLeadingRx, '');
+	}
+
 	return {
+		addClass: addClass,
+		removeClass: removeClass,
 		getClassList: getClassList,
 		setClassList: setClassList,
 		getClassSet: getClassSet,

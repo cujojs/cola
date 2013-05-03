@@ -4,7 +4,7 @@ define(function(require) {
 
 	var SortedMap, classList, NodeAdapter,
 		defaultIdAttribute, defaultTemplateSelector, listElementsSelector,
-		colaListBindingStates, undef;
+		colaListBindingStates, allBindingStates, undef;
 
 	SortedMap = require('../../SortedMap');
 	classList = require('../classList');
@@ -20,12 +20,17 @@ define(function(require) {
 		unbound: 'cola-list-unbound'
 	};
 
+	allBindingStates = Object.keys(colaListBindingStates).map(function(key) {
+		return colaListBindingStates[key];
+	}).join(' ');
+
 	/**
 	 * Manages a collection of dom trees that are synced with a data
 	 * collection.
 	 * @constructor
 	 * @param rootNode {Node} node to serve as a template for items
 	 * in the collection / list.
+	 * @param {object} options
 	 * @param options.comparator {Function} comparator function to use for
 	 *  ordering nodes
 	 * @param [options.containerNode] {Node} optional parent to all itemNodes. If
@@ -295,14 +300,24 @@ define(function(require) {
 		},
 
 		_checkBoundState: function () {
-			var state, isBound, isEmpty;
-			state = {};
+			var states, isBound, isEmpty;
+			states = [];
 			isBound = this._itemCount != null;
 			isEmpty = this._itemCount == 0;
-			state[colaListBindingStates.unbound] = !isBound;
-			state[colaListBindingStates.empty] = isEmpty;
-			state[colaListBindingStates.bound] = isBound && !isEmpty;
-			classList.setClassSet(this._rootNode, state);
+
+			if(!isBound) {
+				states.push(colaListBindingStates.unbound);
+			}
+
+			if(isEmpty) {
+				states.push(colaListBindingStates.empty);
+			}
+
+			if(isBound && !isEmpty) {
+				states.push(colaListBindingStates.bound);
+			}
+
+			setBindingStates(states.join(' '), this._rootNode);
 		}
 
 	};
@@ -311,6 +326,10 @@ define(function(require) {
 		// crude test if an object is a node.
 		return obj && obj.tagName && obj.insertBefore && obj.removeChild;
 	};
+
+	function setBindingStates(states, node) {
+		node.className = classList.addClass(states, classList.removeClass(allBindingStates, node.className));
+	}
 
 	function findTemplateNode (root, options) {
 		var useBestGuess, node;

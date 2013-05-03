@@ -1,18 +1,22 @@
 (function(buster, when, cola) {
 "use strict";
 
-var assert, refute, fail;
+var assert, refute, fail, refResolver;
 
 assert = buster.assert;
 refute = buster.refute;
 fail = buster.assertions.fail;
 
-function resolver(resolve, reject) {
+function makeResolver(resolve, reject) {
 	return {
 		resolve: resolve,
 		reject: reject
 	}
 }
+
+refResolver = {
+	isRef: function() { return false; }
+};
 
 buster.testCase('cola', {
 
@@ -29,10 +33,11 @@ buster.testCase('cola', {
 			bind = plugin.facets.bind.ready;
 
 			wire = this.stub().returns({});
+			wire.resolver = refResolver;
 
 			rejected = this.spy();
 
-			bind(resolver(function(p) {
+			bind(makeResolver(function(p) {
 				p.then(fail, rejected).then(function() {
 					assert.calledOnce(rejected);
 				}).then(done, done);
@@ -48,10 +53,11 @@ buster.testCase('cola', {
 			wire = this.stub().returns({
 				to: { addSource: this.spy() }
 			});
+			wire.resolver = refResolver;
 
 			resolved = this.spy();
 
-			bind(resolver(resolved), { target: {} }, wire);
+			bind(makeResolver(resolved), { target: {} }, wire);
 
 			assert.calledOnce(wire);
 			assert.calledOnce(resolved);
@@ -67,9 +73,10 @@ buster.testCase('cola', {
 			wire = this.stub().returns({
 				to: { addSource: addSource }
 			});
+			wire.resolver = refResolver;
 
 			target = {};
-			bind(resolver(this.spy()), { target: target }, wire);
+			bind(makeResolver(this.spy()), { target: target }, wire);
 
 			assert.calledOnceWith(addSource, target);
 		},
@@ -81,10 +88,11 @@ buster.testCase('cola', {
 			bind = plugin.facets.bind.ready;
 
 			wire = function(s) { wired = s; };
+			wire.resolver = refResolver;
 
 			resolved = this.spy();
 
-			bind(resolver(resolved), { target: {} }, wire);
+			bind(makeResolver(resolved), { target: {} }, wire);
 
 			assert.isFunction(wired.comparator);
 		}
