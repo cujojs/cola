@@ -16,7 +16,7 @@ define(function (require) {
 	return function composeStrategies (strategies) {
 		return function (source, dest, data, type, api) {
 
-			when.reduce(strategies,
+			return when.reduce(strategies,
 				function(result, strategy) {
 					var strategyResult = strategy(source, dest, data, type, api);
 					return api.isCanceled()
@@ -24,11 +24,15 @@ define(function (require) {
 						: strategyResult;
 				},
 				data
-			).always(function(result) { return result });
+			).then(propagateSuccess, propagateSuccess);
 
 		}
 
 	};
+
+	function propagateSuccess(x) {
+		return x;
+	}
 
 });
 }(
