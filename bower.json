@@ -1,5 +1,5 @@
 {
-	"name": "",
+	"name": "cola",
 	"version": "0.1.2",
 	"dependencies": {
 		"when": "~1"
