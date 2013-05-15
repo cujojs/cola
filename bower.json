@@ -1,0 +1,16 @@
+{
+	"name": "",
+	"version": "",
+	"dependencies": {
+		"when": "~1"
+	},
+	"devDependencies": {
+		"buster": "~0.5"
+	},
+	"ignore": [
+		".idea/",
+		"node_modules",
+		"test/curl",
+		"test/util"
+	]
+}
