@@ -9,8 +9,6 @@
 	},
 	"ignore": [
 		".idea/",
-		"node_modules",
-		"test/curl",
-		"test/util"
+		"node_modules"
 	]
 }
