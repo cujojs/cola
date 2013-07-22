@@ -8,7 +8,7 @@
 	}
 
 	var doc, head, scripts, script, i, baseUrl, baseUrlSuffix,
-		selfName, selfRegex, loaders, loader, loaderName, loaderPath, loaderConfig;
+		selfName, selfRegex, loaderPath, loaderConfig;
 
 	selfName = 'test-config.js';
 	selfRegex = new RegExp(selfName + '$');
@@ -20,7 +20,9 @@
 	function addPackage(pkgInfo) {
 		var cfg;
 
-		if(!loaderConfig.packages) loaderConfig.packages = [];
+		if(!loaderConfig.packages) {
+			loaderConfig.packages = [];
+		}
 
 		cfg = loaderConfig.packages;
 		pkgInfo.main = pkgInfo.main || pkgInfo.name;
