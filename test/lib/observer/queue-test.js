@@ -8,7 +8,7 @@ queue = require('../../../lib/observer/queue');
 
 sentinel = {};
 
-buster.testCase('tx/queue', {
+buster.testCase('lib/observer/queue', {
 	'should execute task': function() {
 		var q = queue();
 
