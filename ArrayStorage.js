@@ -13,7 +13,7 @@ define(function(require) {
 
 	var updateArray, id;
 
-	updateArray = require('.lib/datasource/updateArray');
+	updateArray = require('./lib/datasource/updateArray');
 	id = require('./lib/id');
 
 	function ArrayStorage(array, options) {
