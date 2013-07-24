@@ -14,7 +14,7 @@ define(function(require) {
 	var curry, toList, classes, addClass, removeClass, undef;
 
 	curry = require('./lib/fn').curry;
-	toList = require('./lib/list').from;
+	toList = require('./lib/iterator');
 	classes = require('./lib/classes');
 	addClass = classes.add;
 	removeClass = classes.remove;
@@ -30,11 +30,11 @@ define(function(require) {
 	};
 
 	function sequence() {
-		var fs = toList(arguments);
-		return  curry(function (v, initial) {
-			return fs.reduce(function (state, f) {
+		var funcs = iterator(arguments);
+		return curry(function (v, initial) {
+			return iterator.reduce(function (state, f) {
 				return f(state[0], state[1]);
-			}, [v, initial]);
+			}, [v, initial], funcs);
 		});
 	}
 
