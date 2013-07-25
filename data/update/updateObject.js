@@ -9,21 +9,25 @@
  */
 
 (function(define) { 'use strict';
-define(function(require) {
+define(function() {
 
-	var update = require('./update');
-
-	return update({
+	var updater = require('./updater')({
 		new: setProperty,
 		updated: setProperty,
-		deleted: function(object, property) {
-			delete object[property];
-		}
+		deleted: deleteProperty
 	});
+
+	return function updateObject(object, changes) {
+		return updater(object || {}, changes);
+	};
 
 	function setProperty(object, property, value) {
 		object[property] = value;
 	}
 
+	function deleteProperty(object, property) {
+		delete object[property];
+	}
+
 });
-}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
+}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));

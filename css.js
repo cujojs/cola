@@ -11,10 +11,10 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var curry, toList, classes, addClass, removeClass, undef;
+	var curry, iterator, classes, addClass, removeClass, undef;
 
 	curry = require('./lib/fn').curry;
-	toList = require('./lib/iterator');
+	iterator = require('./lib/iterator');
 	classes = require('./lib/classes');
 	addClass = classes.add;
 	removeClass = classes.remove;

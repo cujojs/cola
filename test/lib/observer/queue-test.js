@@ -4,7 +4,7 @@ buster = require('buster');
 assert = buster.assert;
 refute = buster.refute;
 
-queue = require('../../../lib/observer/queue');
+queue = require('../../../lib/queue');
 
 sentinel = {};
 

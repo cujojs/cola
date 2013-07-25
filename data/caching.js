@@ -13,7 +13,7 @@ define(function(require) {
 
 	var when, updateArray;
 
-	updateArray = require('./updateArray');
+	updateArray = require('./update/updateArray');
 	when = require('when');
 
 	return function caching(datasource, options) {
@@ -47,7 +47,7 @@ define(function(require) {
 			}
 
 			cacheInfo.value = when(cacheInfo.value, function(value) {
-				return updater(value, changes);
+				return updater(value, changes, datasource.id);
 			});
 
 			if(!cacheInfo.changes) {

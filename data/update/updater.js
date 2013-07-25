@@ -11,21 +11,22 @@
 (function(define) { 'use strict';
 define(function() {
 
-	return function(handlers) {
-		return function update(object, changes) {
+	return function createUpdater(handlers) {
+		return function update(target, changes, identify) {
 			if(!changes) {
-				return;
+				return target;
 			}
 
 			return changes.reduce(function(object, change) {
 				var handler = handlers[change.type];
 
 				if(handler) {
-					handler(object, change.name, change.object[change.name]);
+					handler(object, change.name,
+						change.object[change.name], identify);
 				}
 
 				return object;
-			}, object);
+			}, target);
 		};
 	};
 

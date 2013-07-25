@@ -5,7 +5,7 @@ assert = buster.assert;
 refute = buster.refute;
 fail = buster.assertions.fail;
 
-validating = require('../../../lib/datasource/validating');
+validating = require('../../../data/validating');
 
 sentinel = { value: 'sentinel' };
 

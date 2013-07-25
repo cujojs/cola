@@ -14,7 +14,7 @@ define(function(require) {
 	var when, id;
 
 	when = require('when');
-	id = require('./lib/id');
+	id = require('./../lib/id');
 
 	function RestStorage(client, options) {
 		this._client = client;

@@ -13,8 +13,8 @@ define(function(require) {
 
 	var updateArray, id;
 
-	updateArray = require('./lib/datasource/updateArray');
-	id = require('./lib/id');
+	updateArray = require('./update/updateArray');
+	id = require('../lib/id');
 
 	function ArrayStorage(array, options) {
 		this._array = array || [];
