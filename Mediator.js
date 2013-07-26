@@ -11,20 +11,16 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when, meld, id, createObserver, injectArgument,
-		diffArray, diffObject, transactional;
+	var when, meld, createObserver, injectArgument, transactional;
 
 	when = require('when');
 	meld = require('meld');
-	id = require('./lib/id');
 	injectArgument = require('./mediator/injectArgument');
 	createObserver = require('./data/observe/changeObserver');
-	diffArray = require('./data/diff/array');
-	diffObject = require('./data/diff/object');
 	transactional = require('./data/transactional');
 
 	function Mediator(datasource, controller, options) {
-		var observer, diff, updaters, pointcut, injector, aspect;
+		var observer, updaters, pointcut, injector, aspect;
 
 		if(!options) {
 			options = {};
@@ -37,11 +33,12 @@ define(function(require) {
 		// TODO: Instead of pointcut, accept a capability mapping object
 		// TODO: New name for datasource.id function
 		// TODO: Option for optimistic view update
-		diff = options.diff || diffArray(id(datasource.id), diffObject);
-		injector = options.injector || injectArg();
+		injector = options.injector || injectArgument();
 		pointcut = options.pointcut || /^[^_]/;
 
-		observer = createObserver(diff, handleCommit);
+		observer = createObserver(function(data) {
+			return datasource.metadata.diff(data);
+		}, handleCommit);
 
 		aspect = meld.around(controller, pointcut, transactionAdvice);
 
@@ -64,7 +61,7 @@ define(function(require) {
 		}
 
 		function transactionAdvice(joinpoint) {
-			return datasource.begin(function(model) {
+			return datasource.transaction(function(model) {
 				var after = injector(observer, model,
 					joinpoint.target, joinpoint.args);
 
@@ -81,8 +78,10 @@ define(function(require) {
 		notify: function(view) {
 			var updaters = this.updaters;
 			// TODO: Make this initial fetch optional
-			return when(this.datasource.fetch(), view.set.bind(view))
-				.then(addView);
+			return when(this.datasource.fetch(), function(data) {
+				return view.set(data);
+			})
+				.then(addView).otherwise(console.error.bind(console));
 
 			function addView(result) {
 				updaters.push(view);

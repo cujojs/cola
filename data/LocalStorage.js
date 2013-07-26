@@ -10,10 +10,10 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var updateArray, id;
+	var ArrayMetadata, ObjectMetadata;
 
-	updateArray = require('./update/updateArray');
-	id = require('../lib/id');
+	ArrayMetadata = require('./metadata/ArrayMetadata');
+	ObjectMetadata = require('./metadata/ObjectMetadata');
 
 	function LocalStorage(namespace, options) {
 		if(!options) {
@@ -22,8 +22,7 @@ define(function(require) {
 
 		this._namespace = namespace;
 		this._storage = options.localStorage || window.localStorage;
-		this.id = id(options.id);
-		this._update = updateArray(this.id);
+		this.metadata = new ArrayMetadata(new ObjectMetadata(options.id));
 	}
 
 	LocalStorage.prototype = {
@@ -33,7 +32,7 @@ define(function(require) {
 		},
 
 		update: function(changes) {
-			var data = this._update(this.fetch(), changes);
+			var data = this.metadata.patch(this.fetch(), changes);
 			this._storage.setItem(this._namespace, JSON.stringify(data));
 		}
 

@@ -11,19 +11,14 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when, updateArray;
-
-	updateArray = require('./update/updateArray');
-	when = require('when');
+	var when = require('when');
 
 	return function caching(datasource, options) {
-		var cacheInfo, updater;
+		var cacheInfo;
 
 		if(!options) {
 			options = {};
 		}
-
-		updater = options.updater || updateArray(datasource.id);
 
 		return Object.create(datasource, {
 			fetch: { value: fetch },
@@ -47,7 +42,7 @@ define(function(require) {
 			}
 
 			cacheInfo.value = when(cacheInfo.value, function(value) {
-				return updater(value, changes, datasource.id);
+				return patch(value, changes);
 			});
 
 			if(!cacheInfo.changes) {
@@ -59,10 +54,19 @@ define(function(require) {
 			return cacheInfo.value;
 		}
 
-		function sync() {
+		function patch(data, changes) {
+			return datasource.metadata.patch(data, changes);
+		}
+
+		function sync(forceRefetch) {
 			if(cacheInfo) {
-				var result = datasource.update(cacheInfo.changes);
-				cacheInfo = null;
+				var result = datasource.update(cacheInfo.changes.slice());
+
+				if(forceRefetch) {
+					cacheInfo = null;
+				} else {
+					cacheInfo.changes = null;
+				}
 
 				return result;
 			}

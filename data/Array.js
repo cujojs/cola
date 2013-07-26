@@ -11,15 +11,15 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var updateArray, id;
+	var ArrayMetadata, ObjectMetadata;
 
-	updateArray = require('./update/updateArray');
-	id = require('../lib/id');
+	ArrayMetadata = require('./metadata/ArrayMetadata');
+	ObjectMetadata = require('./metadata/ObjectMetadata');
 
 	function ArrayStorage(array, options) {
 		this._array = array || [];
-		this.id = id(options && options.id);
-		this._update = updateArray(this.id);
+		this.metadata = new ArrayMetadata(
+			new ObjectMetadata(options && options.id));
 	}
 
 	ArrayStorage.prototype = {
@@ -28,7 +28,7 @@ define(function(require) {
 		},
 
 		update: function(changes) {
-			this._array = this._update(this._array, changes);
+			this._array = this.patch(this._array, changes);
 		}
 	};
 

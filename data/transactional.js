@@ -18,7 +18,7 @@ define(function(require) {
 	txBegin = require('./observe/begin');
 
 	return function transactional(datasource, begin) {
-		if(typeof datasource.begin === 'function') {
+		if(typeof datasource.transaction === 'function') {
 			return datasource;
 		}
 
@@ -27,7 +27,7 @@ define(function(require) {
 		}
 
 		return Object.create(datasource, {
-			begin: {
+			transaction: {
 				value: transaction
 			}
 		});

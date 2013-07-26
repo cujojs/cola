@@ -11,14 +11,11 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when, id;
+	var when = require('when');
 
-	when = require('when');
-	id = require('./../lib/id');
-
-	function RestStorage(client, options) {
+	function RestStorage(client, metadata) {
 		this._client = client;
-		this.id = id(options && options.id);
+		this.metadata = metadata;
 	}
 
 	RestStorage.prototype = {
@@ -30,7 +27,7 @@ define(function(require) {
 			var client, id;
 
 			client = this._client;
-			id = this.id;
+			id = this.metadata.model.id;
 
 			return when.reduce(changes, function(_, change) {
 				var entity;
