@@ -145,7 +145,8 @@ define(function() {
 							type: 'updated',
 							object: a2,
 							name: index,
-							changes: diff
+							changes: diff,
+							oldValue: s.item
 						});
 					}
 				} else if (s.item !== item) {
