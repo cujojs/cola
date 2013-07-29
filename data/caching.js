@@ -14,7 +14,7 @@ define(function(require) {
 	var when = require('when');
 
 	return function caching(datasource, options) {
-		var cacheInfo;
+		var cached;
 
 		if(!options) {
 			options = {};
@@ -27,49 +27,31 @@ define(function(require) {
 		});
 
 		function fetch(options) {
-			if(!cacheInfo) {
-				cacheInfo = {
-					value: datasource.fetch(options)
-				};
+			if(!cached) {
+				cached = datasource.fetch(options)
 			}
 
-			return cacheInfo.value;
+			return cached;
 		}
 
 		function update(changes) {
-			if(!cacheInfo) {
-				cacheInfo = {};
+			if(!cached) {
+				cached = fetch();
 			}
 
-			cacheInfo.value = when(cacheInfo.value, function(value) {
+			return when(cached, function(value) {
 				return patch(value, changes);
+			}).then(function() {
+				return datasource.update(changes);
 			});
-
-			if(!cacheInfo.changes) {
-				cacheInfo.changes = changes.slice();
-			} else {
-				cacheInfo.changes = cacheInfo.changes.concat(changes);
-			}
-
-			return cacheInfo.value;
 		}
 
 		function patch(data, changes) {
 			return datasource.metadata.patch(data, changes);
 		}
 
-		function sync(forceRefetch) {
-			if(cacheInfo) {
-				var result = datasource.update(cacheInfo.changes.slice());
-
-				if(forceRefetch) {
-					cacheInfo = null;
-				} else {
-					cacheInfo.changes = null;
-				}
-
-				return result;
-			}
+		function sync() {
+			cached = null;
 		}
 	};
 
