@@ -45,9 +45,9 @@ define(function(require) {
 		this.aspects.push(aspect);
 
 		function notifyAll(changes) {
-			return when.settle(when.map(updaters, function(updater) {
+			return when.map(updaters, function(updater) {
 				return updater.update(changes);
-			}));
+			});
 		}
 
 		function transactionAdvice(joinpoint) {
@@ -88,7 +88,7 @@ define(function(require) {
 	return Mediator;
 
 //	function pessimistic(datasource, notify, changes, tx) {
-//		if(changes) {
+//		if(changes && changes.length) {
 //			return tx.then(function() {
 //				return datasource.update(changes);
 //			}).then(function() {
@@ -98,7 +98,7 @@ define(function(require) {
 //	}
 
 	function optimistic(datasource, notify, changes, tx) {
-		if(changes) {
+		if(changes && changes.length) {
 			return notify(changes).then(function() {
 				return tx.then(function() {
 					return datasource.update(changes);
