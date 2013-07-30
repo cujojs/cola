@@ -20,7 +20,7 @@ define(function(require) {
 	transactional = require('./data/transactional');
 
 	function Mediator(datasource, controller, options) {
-		var observer, updaters, pointcut, injector, aspect;
+		var observer, updaters, pointcut, injector, handleCommit, aspect;
 
 		if(!options) {
 			options = {};
@@ -35,6 +35,7 @@ define(function(require) {
 		injector = options.injector || injectArgument();
 		pointcut = options.pointcut || /^[^_]/;
 
+		handleCommit = optimistic.bind(void 0, datasource, notifyAll);
 		observer = createObserver(function(data) {
 			return datasource.metadata.diff(data);
 		}, handleCommit);
@@ -43,20 +44,10 @@ define(function(require) {
 
 		this.aspects.push(aspect);
 
-		function handleCommit(changes, tx) {
-			if(changes) {
-				return tx.then(function() {
-					return datasource.update(changes);
-				}).then(function() {
-					return notifyAll(changes);
-				});
-			}
-		}
-
 		function notifyAll(changes) {
-			return when.map(updaters, function(updater) {
+			return when.settle(when.map(updaters, function(updater) {
 				return updater.update(changes);
-			});
+			}));
 		}
 
 		function transactionAdvice(joinpoint) {
@@ -79,8 +70,7 @@ define(function(require) {
 			// TODO: Make this initial fetch optional
 			return when(this.datasource.fetch(), function(data) {
 				return view.set(data);
-			})
-				.then(addView).otherwise(console.error.bind(console));
+			}).then(addView);
 
 			function addView(result) {
 				updaters.push(view);
@@ -96,6 +86,66 @@ define(function(require) {
 	};
 
 	return Mediator;
+
+//	function pessimistic(datasource, notify, changes, tx) {
+//		if(changes) {
+//			return tx.then(function() {
+//				return datasource.update(changes);
+//			}).then(function() {
+//				return notify(changes);
+//			});
+//		}
+//	}
+
+	function optimistic(datasource, notify, changes, tx) {
+		if(changes) {
+			return notify(changes).then(function() {
+				return tx.then(function() {
+					return datasource.update(changes);
+				}).otherwise(function() {
+					// TODO: Allow partial changes??
+					return notify(rollback(changes));
+				});
+			});
+		}
+	}
+
+	function rollback(changes) {
+		return changes.reduce(function(inverted, change) {
+			if(change.type === 'new') {
+				inverted.push({
+					type: 'deleted',
+					name: change.name,
+					object: change.object,
+					oldValue: change.object[change.name]
+				});
+			} else if(change.type === 'deleted') {
+				var object = {};
+				object[change.name] = change.oldValue;
+				inverted.push({
+					type: 'new',
+					name: change.name,
+					object: object
+				});
+			} else if(change.type === 'updated') {
+				var invertedChange = {
+					type: 'updated',
+					name: change.name,
+					object: change.object,
+					oldValue: change.object[change.name]
+				};
+
+				if('changes' in change) {
+					invertedChange.changes = rollback(changes.change);
+				}
+
+				inverted.push(invertedChange);
+			}
+
+			return inverted;
+
+		}, []);
+	}
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
