@@ -17,7 +17,20 @@ define(function(require) {
 	queue = require('../lib/queue');
 	txBegin = require('./observe/begin');
 
+	/**
+	 * Extends a datasource to provide lightweight transactional behavior.
+	 * Adds a transaction() method to the datasource to execute a function
+	 * on a transacted copy of the data in the datasource.
+	 * NOTE: This decorator is idempotent. transactional(transactional(datasource))
+	 *  is equivalent to transactional(datasource)
+	 * @param {object} datasource datasource to decorate
+	 * @param {function?} begin transaction executor function. Transactional
+	 *  datasources whose transactions need to be non-overlapping should use
+	 *  the same transaction executor.
+	 * @returns {object} decorated datasource with additional transaction() API
+	 */
 	return function transactional(datasource, begin) {
+		// If the datasource is already transactional, skip
 		if(typeof datasource.transaction === 'function') {
 			return datasource;
 		}
@@ -27,9 +40,7 @@ define(function(require) {
 		}
 
 		return Object.create(datasource, {
-			transaction: {
-				value: transaction
-			}
+			transaction: { value: transaction }
 		});
 
 		function transaction(run) {

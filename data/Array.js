@@ -16,6 +16,14 @@ define(function(require) {
 	ArrayMetadata = require('./metadata/ArrayMetadata');
 	ObjectMetadata = require('./metadata/ObjectMetadata');
 
+	/**
+	 * A simple Array-backed datasource.  Data is only stored
+	 * in memory and will not survive a VM restart.
+	 * @param {array?} array starting data
+	 * @param {object?} options
+	 * @param {function?} options.id identifier function for data items
+	 * @constructor
+	 */
 	function ArrayStorage(array, options) {
 		this._array = array || [];
 		this.metadata = new ArrayMetadata(

@@ -109,11 +109,16 @@ define(function(require) {
 	}
 
 	function getProperty(object, property) {
-		return object[property];
+		if(object != null) {
+			return object[property];
+		}
 	}
 
 	function setProperty(object, property, value) {
-		object[property] = value;
+		if(object != null) {
+			object[property] = value;
+		}
+
 		return object;
 	}
 

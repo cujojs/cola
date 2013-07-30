@@ -15,6 +15,17 @@ define(function(require) {
 	ArrayMetadata = require('./metadata/ArrayMetadata');
 	ObjectMetadata = require('./metadata/ObjectMetadata');
 
+	/**
+	 * A LocalStorage datasource
+	 * @param {string} namespace namespace to use to store data in localstorage
+	 * @param {object?} options
+	 * @param {object?} options.localStorage LocalStorage API to use, defaults to
+	 *  window.localStorage
+	 * @param {function?} options.init function used to initialize localStorage
+	 *  namespace when it's found to be non-existent
+	 * @param {function?} options.id identifier function for data items
+	 * @constructor
+	 */
 	function LocalStorage(namespace, options) {
 		if(!options) {
 			options = {};
@@ -22,13 +33,15 @@ define(function(require) {
 
 		this._namespace = namespace;
 		this._storage = options.localStorage || window.localStorage;
+		this._initStorage = options.init || initWithArray;
+
 		this.metadata = new ArrayMetadata(new ObjectMetadata(options.id));
 	}
 
 	LocalStorage.prototype = {
 		fetch: function(/*options*/) {
 			var data = this._storage.getItem(this._namespace);
-			return data == null ? [] : JSON.parse(data);
+			return data == null ? this._initStorage() : JSON.parse(data);
 		},
 
 		update: function(changes) {
@@ -39,6 +52,10 @@ define(function(require) {
 	};
 
 	return LocalStorage;
+
+	function initWithArray() {
+		return [];
+	}
 
 });
 })(typeof define == 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }

@@ -9,21 +9,28 @@
 */
 
 (function(define) { 'use strict';
-define(function() {
+define(function(require) {
 
+	var Backbone = require('backbone');
 
-	var modelMetadata = {
-		id: function(model) {
-			return model.get(model._idAttribute);
-		},
+	return {
+		model: {
+			id: function(model) {
+				return model.get(model._idAttribute);
+			},
 
-		get: function(model, name) {
-			return model.get(name);
-		},
-		set: function(model, name, value) {
-			return mode.set(name, value);
+			get: function(model, name) {
+				return model.get(name);
+			},
+			set: function(model, name, value) {
+				if(model instanceof Backbone.Model) {
+					model.set(name, value);
+				} else {
+					model[name] = value;
+				}
+			}
 		}
-	};
+	}
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

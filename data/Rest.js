@@ -13,6 +13,20 @@ define(function(require) {
 
 	var when = require('when');
 
+	/**
+	 * A rest.js (cujoJS/rest) based datasource.
+	 * @param {function} client configured rest client to use to fetch and
+	 *  store data.
+	 * @param {{
+	 *  model: {id: function, get:function, set:function}
+	 *  diff: function
+	 *  patch: function
+	 * }} metadata metadata description of data. metadata.model must provide
+	 *  id, get, and set functions to get the identity of data items,
+	 *  and to get/set properties, and diff/patch functions to compute
+	 *  changes in data items and patch (update) them using a set of changes
+	 * @constructor
+	 */
 	function RestStorage(client, metadata) {
 		this._client = client;
 		this.metadata = metadata;

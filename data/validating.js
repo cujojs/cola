@@ -13,6 +13,17 @@ define(function(require) {
 
 	var when = require('when');
 
+	/**
+	 * Decorates a datasource with validation functionality.  Applies a
+	 * validator function to all changes passed to datasource.update.  If
+	 * the validator returns successfully, datasource.update is called.  If
+	 * the validator throws or returns a rejected promise, datasource.update
+	 * is *not* called.
+	 * @param {object} datasource datasource to decorate
+	 * @param {function} validator validation function. Receives a diff and
+	 *  datasource's metadata
+	 * @returns {object} decorated datasource
+	 */
 	return function validating(datasource, validator) {
 
 		return Object.create(datasource, {
@@ -20,7 +31,11 @@ define(function(require) {
 		});
 
 		function update(changes) {
-			return when(changes, validator).then(function() {
+			var metadata = datasource.metadata;
+
+			return when(changes, function(changes) {
+				return validator(changes, metadata);
+			}).then(function() {
 				return datasource.update(changes);
 			});
 		}

@@ -13,17 +13,22 @@ define(function(require) {
 
 	var when = require('when');
 
-	return function caching(datasource, options) {
+	/**
+	 * Decorates a datasource with *simple* write-through caching behavior.
+	 * Adds a sync() method to the datasource to flush the cache such a
+	 * subsequent fetch() will fetch fresh data from the underlying datasource.
+	 * NOTE: This is primarily intended to avoid fetch()ing unnecessarily, and not
+	 * as a large scale caching solution.
+	 * @param {object} datasource datasource to decorate
+	 * @returns {object} decorated datasource with additional sync() API
+	 */
+	return function caching(datasource) {
 		var cached;
 
-		if(!options) {
-			options = {};
-		}
-
 		return Object.create(datasource, {
-			fetch: { value: fetch },
+			fetch:  { value: fetch },
 			update: { value: update },
-			sync: { value: sync }
+			sync:   { value: sync }
 		});
 
 		function fetch(options) {
