@@ -31,7 +31,6 @@ define(function(require) {
 		this.datasource = datasource = transactional(datasource);
 
 		// TODO: Instead of pointcut, accept a capability mapping object
-		// TODO: New name for datasource.id function
 		// TODO: Option for optimistic view update
 		injector = options.injector || injectArgument();
 		pointcut = options.pointcut || /^[^_]/;
