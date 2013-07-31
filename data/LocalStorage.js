@@ -35,7 +35,7 @@ define(function(require) {
 		this._storage = options.localStorage || window.localStorage;
 		this._initStorage = options.init || initWithArray;
 
-		this.metadata = new ArrayMetadata(new ObjectMetadata(options.id));
+		this.metadata = options.metadata || createDefaultMetadata(options.id);
 	}
 
 	LocalStorage.prototype = {
@@ -55,6 +55,10 @@ define(function(require) {
 
 	function initWithArray() {
 		return [];
+	}
+
+	function createDefaultMetadata(id) {
+		return new ArrayMetadata(new ObjectMetadata(id))
 	}
 
 });

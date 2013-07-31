@@ -12,11 +12,10 @@
 define(function() {
 
 	return function injectProperty(name) {
-		return function(observer, model, target) {
-			var after = observer(model);
+		return function(model, target) {
 			target[name] = model;
 			return function() {
-				return after.bind(null, target[name]);
+				return target[name];
 			}
 		};
 	};

@@ -11,53 +11,58 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when, meld, createObserver, injectArgument, transactional;
+	var when, meld, injectArgument, transaction, queue;
 
 	when = require('when');
 	meld = require('meld');
 	injectArgument = require('./mediator/injectArgument');
-	createObserver = require('./data/observe/changeObserver');
-	transactional = require('./data/transactional');
+	transaction = require('./data/transaction');
+	queue = require('./lib/queue');
 
-	function Mediator(datasource, controller, options) {
-		var observer, updaters, pointcut, injector, handleCommit, aspect;
+	function Mediator(datasource, controller, observer, options) {
+		var begintx, pointcut, injector, handleCommit, aspect;
 
 		if(!options) {
 			options = {};
 		}
-
-		this.aspects = [];
-		this.updaters = updaters = [];
-		this.datasource = datasource = transactional(datasource);
 
 		// TODO: Instead of pointcut, accept a capability mapping object
 		// TODO: Option for optimistic view update
 		injector = options.injector || injectArgument();
 		pointcut = options.pointcut || /^[^_]/;
 
-		handleCommit = optimistic.bind(void 0, datasource, notifyAll);
-		observer = createObserver(function(data) {
-			return datasource.metadata.diff(data);
-		}, handleCommit);
+		handleCommit = options.update || optimistic;
 
+		begintx = transaction(options.queue || queue());
 		aspect = meld.around(controller, pointcut, transactionAdvice);
 
-		this.aspects.push(aspect);
+		this.destroy = aspect.remove;
 
-		function notifyAll(changes) {
-			return when.map(updaters, function(updater) {
-				return updater.update(changes);
+		this.refresh = refresh;
+
+		function refresh() {
+			return when(datasource.fetch(), function(data) {
+				return observer.set(data);
 			});
 		}
 
+		function notify(changes) {
+			return observer.update(changes);
+		}
+
 		function transactionAdvice(joinpoint) {
-			return datasource.transaction(function(model) {
-				var after = injector(observer, model,
-					joinpoint.target, joinpoint.args);
+			var state = begintx(datasource);
+
+			return when.all(state).spread(function(model, commit) {
+				var after = injector(model, joinpoint.target, joinpoint.args);
 
 				return when(joinpoint.proceedApply(joinpoint.args),
 					function(result) {
-						return [result, after(result)];
+						return commit(after(result));
+					}
+				).then(
+					function(commitResult) {
+						return handleCommit(notify, commitResult[0], commitResult[1]);
 					}
 				);
 			});
@@ -65,24 +70,9 @@ define(function(require) {
 	}
 
 	Mediator.prototype = {
-		notify: function(view) {
-			var updaters = this.updaters;
-			// TODO: Make this initial fetch optional
-			return when(this.datasource.fetch(), function(data) {
-				return view.set(data);
-			}).then(addView);
+		destroy: function() {},
 
-			function addView(result) {
-				updaters.push(view);
-				return result;
-			}
-		},
-
-		destroy: function() {
-			this.aspects.forEach(function(aspect) {
-				aspect.remove();
-			});
-		}
+		refresh: function() {}
 	};
 
 	return Mediator;
@@ -90,19 +80,15 @@ define(function(require) {
 //	function pessimistic(datasource, notify, changes, tx) {
 //		if(changes && changes.length) {
 //			return tx.then(function() {
-//				return datasource.update(changes);
-//			}).then(function() {
 //				return notify(changes);
 //			});
 //		}
 //	}
 
-	function optimistic(datasource, notify, changes, tx) {
+	function optimistic(notify, changes, tx) {
 		if(changes && changes.length) {
-			return notify(changes).then(function() {
-				return tx.then(function() {
-					return datasource.update(changes);
-				}).otherwise(function() {
+			return when(notify(changes), function() {
+				return tx.otherwise(function() {
 					// TODO: Allow partial changes??
 					return notify(rollback(changes));
 				});

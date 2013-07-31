@@ -59,7 +59,7 @@ define(function(require) {
 				type: 'updated',
 				name: model.cid,
 				object: modelWrapper,
-				oldValue: model.previousAttributes()
+				oldValue: createPreviousValueProxy(model)
 			});
 		}
 
@@ -72,6 +72,15 @@ define(function(require) {
 			});
 		}
 	};
+
+	function createPreviousValueProxy(model) {
+		return Object.create(model, {
+			get: { value: function(name) {
+					return this.previous(name);
+				}
+			}
+		});
+	}
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

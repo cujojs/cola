@@ -16,17 +16,24 @@ define(function() {
 			choose = preferResult;
 		}
 
-		return function(observer, model, target, args) {
-			var after = observer(model);
+		return function(model, target, args) {
 			args.unshift(model);
 			return function(result) {
-				return after.bind(null, choose(model, result));
+				return choose(model, result);
 			};
 		};
 	};
 
 	function preferResult(model, result) {
-		return typeof model === typeof result ? result : model;
+		var shouldPreferResult;
+
+		if(model === Object(model) && typeof model.constructor === 'function') {
+			shouldPreferResult = result instanceof model.constructor;
+		} else {
+			shouldPreferResult = typeof result === typeof model;
+		}
+
+		return shouldPreferResult ? result : model;
 	}
 
 });
