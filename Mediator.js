@@ -53,19 +53,19 @@ define(function(require) {
 		function transactionAdvice(joinpoint) {
 			var state = begintx(datasource);
 
-			return when.all(state).spread(function(model, commit) {
+			return when(state).spread(function(model, commit) {
 				var after = injector(model, joinpoint.target, joinpoint.args);
 
-				return when(joinpoint.proceedApply(joinpoint.args),
-					function(result) {
-						return commit(after(result));
-					}
-				).then(
-					function(commitResult) {
-						return handleCommit(notify, commitResult[0], commitResult[1]);
-					}
-				);
+				return when(joinpoint.proceedApply(joinpoint.args), commitTransaction);
+
+				function commitTransaction(result) {
+					return commit(after(result)).then(postCommit).yield(result);
+				}
 			});
+		}
+
+		function postCommit(commitResult) {
+			return handleCommit(notify, commitResult[0], commitResult[1]);
 		}
 	}
 

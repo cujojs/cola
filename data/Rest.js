@@ -13,6 +13,33 @@ define(function(require) {
 
 	var when = require('when');
 
+	var entityUpdaters = {
+		put: function(change, entity, id) {
+			return {
+				method: 'PUT',
+				path: id,
+				entity: entity
+			};
+		},
+
+		patch: function(change, entity, id) {
+			var entity, patch;
+
+			entity = change.object[change.name];
+
+			patch = change.changes.reduce(function(patch, change) {
+				patch[change.name] = entity[change.name];
+				return patch;
+			}, {});
+
+			return {
+				method: 'PATCH',
+				path: id,
+				entity: patch
+			}
+		}
+	}
+
 	/**
 	 * A rest.js (cujoJS/rest) based datasource.
 	 * @param {function} client configured rest client to use to fetch and
@@ -25,11 +52,13 @@ define(function(require) {
 	 *  id, get, and set functions to get the identity of data items,
 	 *  and to get/set properties, and diff/patch functions to compute
 	 *  changes in data items and patch (update) them using a set of changes
+	 * @param {{ patch: boolean }} options
 	 * @constructor
 	 */
-	function RestStorage(client, metadata) {
+	function RestStorage(client, metadata, options) {
 		this._client = client;
 		this.metadata = metadata;
+		this._options = options || {};
 	}
 
 	RestStorage.prototype = {
@@ -38,13 +67,15 @@ define(function(require) {
 		},
 
 		update: function(changes) {
-			var client, id;
+			var client, id, updateMethod;
 
 			client = this._client;
 			id = this.metadata.model.id;
+			updateMethod = this._options.updateMethod || 'put';
+			updateMethod = updateMethod.toLowerCase();
 
 			return when.reduce(changes, function(_, change) {
-				var entity;
+				var entity, entityId;
 
 				if(change.type === 'new') {
 					entity = change.object[change.name];
@@ -56,11 +87,9 @@ define(function(require) {
 
 				if(change.type === 'updated') {
 					entity = change.object[change.name];
-					return client({
-						method: 'PUT',
-						path: id(entity),
-						entity: entity
-					});
+					entityId = id(entity);
+
+					return client(entityUpdaters[updateMethod](change, entity, entityId));
 				}
 
 				if(change.type === 'deleted') {
