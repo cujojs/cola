@@ -24,10 +24,10 @@ define(function(require) {
 	 *  datasource's metadata
 	 * @returns {object} decorated datasource
 	 */
-	return function validating(datasource, validator) {
+	return function validate(datasource, validator) {
 
 		return Object.create(datasource, {
-			update: { value: update }
+			update: { value: update, writable: true, configurable: true }
 		});
 
 		function update(changes) {

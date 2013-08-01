@@ -26,8 +26,8 @@ define(function(require) {
 	return function transforming(datasource, onFetch, onUpdate) {
 
 		return Object.create(datasource, {
-			fetch:  { value: fetch },
-			update: { value: update }
+			fetch:  { value: fetch, writable: true, configurable: true  },
+			update: { value: update, writable: true, configurable: true  }
 		});
 
 		/**

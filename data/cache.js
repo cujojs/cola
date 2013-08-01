@@ -22,13 +22,13 @@ define(function(require) {
 	 * @param {object} datasource datasource to decorate
 	 * @returns {object} decorated datasource with additional sync() API
 	 */
-	return function caching(datasource) {
+	return function cache(datasource) {
 		var cached;
 
 		return Object.create(datasource, {
-			fetch:  { value: fetch },
-			update: { value: update },
-			sync:   { value: sync }
+			fetch:  { value: fetch, writable: true, configurable: true },
+			update: { value: update, writable: true, configurable: true },
+			sync:   { value: sync, writable: true, configurable: true }
 		});
 
 		function fetch(options) {
