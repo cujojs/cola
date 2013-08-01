@@ -35,7 +35,7 @@ define(function(require) {
 		 * @returns {*} transformed data from datasource
 		 */
 		function fetch() {
-			return when(datasource.fetch.apply(this, arguments), onFetch);
+			return when(datasource.fetch.apply(datasource, arguments), onFetch);
 		}
 
 		/**
@@ -44,7 +44,7 @@ define(function(require) {
 		 * @returns {*} result of datasource.update
 		 */
 		function update(changes) {
-			return when(onUpdate(changes), datasource.update.bind(this));
+			return when(onUpdate(changes), datasource.update.bind(datasource));
 		}
 	};
 

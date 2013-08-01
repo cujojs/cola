@@ -61,6 +61,8 @@ define(function(require) {
 				return when(joinpoint.proceedApply(joinpoint.args), commitTransaction);
 
 				function commitTransaction(result) {
+					// FIXME: This propagates errors, but throws away the
+					// success result from postCommit. Not sure if we need it
 					return commit(after(result)).then(postCommit).yield(result);
 				}
 			});
