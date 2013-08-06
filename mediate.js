@@ -11,13 +11,13 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when, meld, transaction, injectArgument, pessimistic, queue;
+	var when, meld, transaction, injectArgument, optimistic, queue;
 
 	when = require('when');
 	meld = require('meld');
 	transaction = require('./data/transaction');
 	injectArgument = require('./data/mediator/injectArgument');
-	pessimistic = require('./data/mediator/pessimisticObserver');
+	optimistic = require('./data/mediator/optimisticObserver');
 	queue = require('./lib/queue');
 
 	return function mediate(datasource, controller, observer, options) {
@@ -28,11 +28,10 @@ define(function(require) {
 		}
 
 		// TODO: Instead of pointcut, accept a capability mapping object
-		// TODO: Option for optimistic view update
 		injector = options.injector || injectArgument();
 		pointcut = options.pointcut || /^[^_]/;
 
-		observe = options.observe || pessimistic;
+		observe = options.observe || optimistic;
 
 		begintx = transaction(options.queue || queue());
 		aspect = meld.around(controller, pointcut, transactionAdvice);
@@ -63,12 +62,12 @@ define(function(require) {
 				function commitTransaction(result) {
 					// FIXME: This propagates errors, but throws away the
 					// success result from postCommit. Not sure if we need it
-					return commit(after(result)).then(postCommit).yield(result);
+					return commit(after(result)).then(observeCommit).yield(result);
 				}
 			});
 		}
 
-		function postCommit(commitResult) {
+		function observeCommit(commitResult) {
 			return observe(notify, commitResult[0], commitResult[1]);
 		}
 	}

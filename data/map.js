@@ -11,42 +11,33 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when = require('when');
+	var mapFetch, mapUpdate, curry;
+
+	mapFetch = require('./mapFetch');
+	mapUpdate = require('./mapUpdate');
+	curry = require('../lib/fn').curry;
 
 	/**
-	 * Decorates a datasource by applying transformations to data that
-	 * is retrieved via fetch() and saved via update().
+	 * Decorates a datasource by applying both fetch and update transformations
+	 * to data that is retrieved via fetch() and changes saved via update().
+	 * @param {{ fetch:function?, update:function? }} options transforms to
+	 * apply to data as it is fetched from datasource, and to changes as they
+	 * are sent to the datasource
 	 * @param {object} datasource datasource to decorate
-	 * @param {function} onFetch transform to apply to data
-	 *  returned by datasource.fetch
-	 * @param {function} onUpdate transform to apply to changes
-	 *  passed to datasource.update
 	 * @returns {object} decorated datasource
 	 */
-	return function transforming(datasource, onFetch, onUpdate) {
+	return curry(function(options, datasource) {
 
-		return Object.create(datasource, {
-			fetch:  { value: fetch, writable: true, configurable: true  },
-			update: { value: update, writable: true, configurable: true  }
-		});
-
-		/**
-		 * Fetch data from datasource and apply onFetch transform
-		 * @returns {*} transformed data from datasource
-		 */
-		function fetch() {
-			return when(datasource.fetch.apply(datasource, arguments), onFetch);
+		if(typeof options.fetch === 'function') {
+			datasource = mapFetch(options.fetch, datasource);
 		}
 
-		/**
-		 * Apply onUpdate transform, then forward changes to datasource
-		 * @param {array} changes diff
-		 * @returns {*} result of datasource.update
-		 */
-		function update(changes) {
-			return when(onUpdate(changes), datasource.update.bind(datasource));
+		if(typeof options.update === 'function') {
+			datasource = mapUpdate(options.update, datasource);
 		}
-	};
+
+		return datasource;
+	});
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

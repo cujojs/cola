@@ -17,8 +17,9 @@ define(function (require) {
 
 		this.rootNode = rootNode;
 		this.sectionNode = topSection;
-		this.binder = options.binder;
 		this.options = options;
+		this.binder = options.binder;
+		this.proxy = options.proxy;
 
 		this.binding = {
 			model: null,
@@ -61,7 +62,7 @@ define(function (require) {
 		 * @return {Object}
 		 */
 		getModel: function () {
-			if (!this.binding.model) this.binding.model = {};
+			if (!this.binding.model) this.binding.model = this.proxy.create();
 			if (!this.binding.pull) {
 				this.createAccessors(this.binding, this.options);
 			}

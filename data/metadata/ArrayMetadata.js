@@ -45,6 +45,13 @@ define(function() {
 	}
 
 	ArrayMetadata.prototype = {
+		map: function(array, f) {
+			var model = this.model;
+			return array.map(function(item) {
+				return f(item, model);
+			});
+		},
+
 		/**
 		 * Creates a snapshot of an array, returns a function that
 		 * accepts another array which will be diff'd against the

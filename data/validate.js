@@ -11,7 +11,10 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when = require('when');
+	var when, curry;
+
+	when = require('when');
+	curry = require('../lib/fn').curry;
 
 	/**
 	 * Decorates a datasource with validation functionality.  Applies a
@@ -19,12 +22,12 @@ define(function(require) {
 	 * the validator returns successfully, datasource.update is called.  If
 	 * the validator throws or returns a rejected promise, datasource.update
 	 * is *not* called.
-	 * @param {object} datasource datasource to decorate
 	 * @param {function} validator validation function. Receives a diff and
 	 *  datasource's metadata
+	 * @param {object} datasource datasource to decorate
 	 * @returns {object} decorated datasource
 	 */
-	return function validate(datasource, validator) {
+	return curry(function(validator, datasource) {
 
 		return Object.create(datasource, {
 			update: { value: update, writable: true, configurable: true }
@@ -39,7 +42,7 @@ define(function(require) {
 				return datasource.update(changes);
 			});
 		}
-	};
+	});
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

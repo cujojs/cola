@@ -17,7 +17,10 @@ define(function(require) {
 
 	objectProxy = {
 		get: getProperty,
-		set: setProperty
+		set: setProperty,
+		has: hasProperty,
+		delete: deleteProperty,
+		create: createObject
 	}
 
 	patchHandlers = {
@@ -27,12 +30,15 @@ define(function(require) {
 	};
 
 	function ObjectMetadata(identify) {
-		this.model = Object.create(objectProxy, {
-			id: { value: id(identify) }
-		});
+		this.model = Object.create(objectProxy);
+		this.model.id = id(identify);
 	}
 
 	ObjectMetadata.prototype = {
+		map: function(object, f) {
+			return f(object, this.model);
+		},
+
 		diff: function(before) {
 			var snapshot = Object.keys(before).reduce(function(snapshot, key) {
 				snapshot[key] = before[key];
@@ -108,6 +114,10 @@ define(function(require) {
 			: false;
 	}
 
+	function createObject() {
+		return {};
+	}
+
 	function getProperty(object, property) {
 		if(object != null) {
 			return object[property];
@@ -120,6 +130,10 @@ define(function(require) {
 		}
 
 		return object;
+	}
+
+	function hasProperty(object, property) {
+		return object && 'property' in object;
 	}
 
 	function deleteProperty(object, property) {

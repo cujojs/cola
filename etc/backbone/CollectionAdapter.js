@@ -10,18 +10,20 @@
 (function(define) {
 define(function(require) {
 
-	var when, metadata, diffCollection;
+	var when, Metadata, iterator;
 
 	when = require('when');
-	metadata = require('./metadata');
-	diffCollection = require('./diffCollection');
+	Metadata = require('./Metadata');
+	iterator = require('../../lib/iterator');
 
 	function CollectionAdapter(collection) {
-		this._collection = collection;
-		this.metadata = Object.create(metadata, {
-			diff: { value: diffCollection },
-			patch: { value: patchCollection }
+		this._collection = Object.create(collection, {
+			iterator: { value: function() {
+				return iterator(collection.models.slice());
+			}}
 		});
+
+		this.metadata = new Metadata(this._collection);
 	}
 
 	CollectionAdapter.prototype = {
@@ -31,24 +33,22 @@ define(function(require) {
 				.yield(collection);
 		},
 
-		update: function() {}
+		update: function(changes) {
+			return when.reduce(changes, function(_, change) {
+
+				if(change.type === 'new' || change.type === 'updated') {
+					var model = change.object[change.name];
+					if(model.changedAttributes()) {
+						return model.save();
+					}
+				}
+
+			}, void 0);
+		}
 	};
 
 	return CollectionAdapter;
 
-	function patchCollection(collection, changes) {
-		return changes.reduce(function(collection, change) {
-
-			if(change.type === 'new') {
-				collection.add(change.object[change.name]);
-			} else if(change.type === 'updated') {
-				collection.add(change.object[change.name], { merge: true });
-			} else if(change.type === 'deleted') {
-				collection.remove(change.name);
-			}
-
-		}, collection);
-	}
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

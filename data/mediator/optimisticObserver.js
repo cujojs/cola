@@ -9,8 +9,9 @@
  */
 
 (function(define) { 'use strict';
-define(function() {
+define(function(require) {
 
+	var when = require('when');
 
 	return function optimistic(notify, changes, tx) {
 		if(changes && changes.length) {
@@ -61,4 +62,4 @@ define(function() {
 	}
 
 });
-}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
+}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

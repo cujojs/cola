@@ -45,9 +45,10 @@ define(function (require) {
 
 		this.rootNode = rootNode;
 		this.sectionNode = topSection;
-		this.binder = options.binder;
 		this.modelNode = modelNode;
 		this.options = options;
+		this.binder = options.binder;
+		this.proxy = options.proxy;
 
 		this.bindings = [];
 		// binding = { model, node, push, pull }
@@ -56,9 +57,8 @@ define(function (require) {
 
 	NodeCollection.prototype = {
 
-		setCollection: function (iterable, proxy) {
+		setCollection: function (iterable) {
 			var self = this;
-			this.proxy = proxy;
 			iterator.reduce(function (_, model) {
 				self.insertModel(model);
 			}, null, iterator(iterable));

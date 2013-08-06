@@ -55,13 +55,13 @@ define(function(require) {
 	 * @param {{ patch: boolean }} options
 	 * @constructor
 	 */
-	function RestStorage(client, metadata, options) {
+	function Rest(client, metadata, options) {
 		this._client = client;
 		this.metadata = metadata;
 		this._options = options || {};
 	}
 
-	RestStorage.prototype = {
+	Rest.prototype = {
 		fetch: function(options) {
 			return this._client(options);
 		},
@@ -103,7 +103,7 @@ define(function(require) {
 		}
 	};
 
-	return RestStorage;
+	return Rest;
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
