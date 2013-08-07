@@ -11,17 +11,15 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when, meld, transaction, injectArgument, optimistic, queue;
+	var when, meld, injectArgument, observe;
 
 	when = require('when');
 	meld = require('meld');
-	transaction = require('./data/transaction');
-	injectArgument = require('./data/mediator/injectArgument');
-	optimistic = require('./data/mediator/optimisticObserver');
-	queue = require('./lib/queue');
+	injectArgument = require('./data/transaction/injectArgument');
+	observe = require('./data/transaction/observe');
 
 	return function mediate(datasource, controller, observer, options) {
-		var begintx, pointcut, injector, observe, aspect;
+		var pointcut, injector, aspect;
 
 		if(!options) {
 			options = {};
@@ -31,9 +29,8 @@ define(function(require) {
 		injector = options.injector || injectArgument();
 		pointcut = options.pointcut || /^[^_]/;
 
-		observe = options.observe || optimistic;
+		datasource = observe(observer, datasource);
 
-		begintx = transaction(options.queue || queue());
 		aspect = meld.around(controller, pointcut, transactionAdvice);
 
 		return {
@@ -47,28 +44,31 @@ define(function(require) {
 			});
 		}
 
-		function notify(changes) {
-			return observer.update(changes);
-		}
-
 		function transactionAdvice(joinpoint) {
-			var state = begintx(datasource);
+			return when(datasource.fetch(), function(data) {
+				var diff, correlate, result, next;
 
-			return when(state).spread(function(model, commit) {
-				var after = injector(model, joinpoint.target, joinpoint.args);
+				diff = datasource.metadata.diff(data);
+				correlate = injector(data, joinpoint.target, joinpoint.args);
 
-				return when(joinpoint.proceedApply(joinpoint.args), commitTransaction);
+				result = when(joinpoint.proceedApply(joinpoint.args));
 
-				function commitTransaction(result) {
-					// FIXME: This propagates errors, but throws away the
-					// success result from postCommit. Not sure if we need it
-					return commit(after(result)).then(observeCommit).yield(result);
+				next = result.then(updateTransaction);
+
+				if(typeof datasource.commit === 'function') {
+					next = next.then(commitTransaction);
+				}
+
+				return next.yield(result);
+
+				function updateTransaction(result) {
+					return datasource.update(diff(correlate(result)));
+				}
+
+				function commitTransaction() {
+					return datasource.commit();
 				}
 			});
-		}
-
-		function observeCommit(commitResult) {
-			return observe(notify, commitResult[0], commitResult[1]);
 		}
 	}
 

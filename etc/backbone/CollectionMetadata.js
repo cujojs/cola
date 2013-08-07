@@ -18,7 +18,7 @@ define(function() {
 	Metadata.prototype = {
 		map: mapCollection,
 		diff: diffCollection,
-		patch: patchCollection,
+		patch: patchCollection
 	};
 
 	function ModelMetadata(ModelType) {
@@ -65,6 +65,8 @@ define(function() {
 			} else if(change.type === 'deleted') {
 				collection.remove(change.name);
 			}
+
+			return collection;
 
 		}, collection);
 	}

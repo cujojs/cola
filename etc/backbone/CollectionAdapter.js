@@ -13,7 +13,7 @@ define(function(require) {
 	var when, Metadata, iterator;
 
 	when = require('when');
-	Metadata = require('./Metadata');
+	Metadata = require('./CollectionMetadata');
 	iterator = require('../../lib/iterator');
 
 	function CollectionAdapter(collection) {

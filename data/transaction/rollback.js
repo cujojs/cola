@@ -9,22 +9,9 @@
  */
 
 (function(define) { 'use strict';
-define(function(require) {
+define(function() {
 
-	var when = require('when');
-
-	return function optimistic(notify, changes, tx) {
-		if(changes && changes.length) {
-			return when(notify(changes), function() {
-				return tx.otherwise(function() {
-					// TODO: Allow partial changes??
-					return notify(rollback(changes));
-				});
-			});
-		}
-	};
-
-	function rollback(changes) {
+	return function rollback(changes) {
 		return changes.reduce(function(inverted, change) {
 			if(change.type === 'new') {
 				inverted.push({
@@ -62,4 +49,4 @@ define(function(require) {
 	}
 
 });
-}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
+}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));

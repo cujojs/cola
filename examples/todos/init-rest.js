@@ -47,7 +47,6 @@ define(function(require) {
 		metadata = new ArrayMetadata(new ObjectMetadata());
 
 		datasource = fn.sequence(
-			cache,
 			validate(validateChanges),
 			mapUpdate(defaults({ completed: false, created: Date.now }))
 		)(new Rest(client, metadata, { updateMethod: 'patch' }));

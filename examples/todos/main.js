@@ -1,10 +1,15 @@
 define(function(require) {
 
-	var qs, init, config, validateTodo, mediate, mediator, timeout;
+	var qs, init, config, validateTodo, mediate, mediator,
+		queue, transaction, transactional, timeout;
 
-	init = require('./init-rest');
+	init = require('./init-bb');
 	validateTodo = require('./validateTodo');
 	mediate = require('cola/mediate');
+	transaction = require('cola/data/transaction');
+	queue = require('cola/lib/queue');
+
+	transactional = transaction(queue());
 
 	qs = document.querySelector.bind(document);
 
@@ -38,7 +43,8 @@ define(function(require) {
 		}
 	});
 
-	mediator = mediate(config.datasource, config.controller, config.todoList);
+	mediator = mediate(transactional(config.datasource),
+		config.controller, config.todoList);
 	mediator.refresh();
 
 	function sync() {

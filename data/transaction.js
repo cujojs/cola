@@ -11,49 +11,63 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when = require('when');
+	var when, rollback, curry;
 
-	return function(queue) {
+	when = require('when');
+	rollback = require('./transaction/rollback');
+	curry = require('../lib/fn').curry;
 
-		return function begin(datasource) {
-			var data, prepared;
+	return curry(function(queue, datasource) {
 
-			data = datasource.fetch();
-			prepared = when(data, function(data) {
-				return datasource.metadata.diff(data);
+		var cachedData, cachedChanges;
+
+		return Object.create(datasource, {
+			fetch:  { value: fetch, writable: true, configurable: true },
+			update: { value: update, writable: true, configurable: true },
+			commit:   { value: commit, writable: true, configurable: true }
+		});
+
+		function fetch(options) {
+			if(!cachedData) {
+				cachedChanges = [];
+				cachedData = datasource.fetch(options)
+			}
+
+			return cachedData;
+		}
+
+		function update(changes) {
+			if(!cachedData) {
+				cachedData = fetch();
+			}
+
+			cachedChanges = cachedChanges.concat(changes);
+
+			return when(cachedData, function(value) {
+				return patch(value, changes);
+			});
+		}
+
+		function patch(data, changes) {
+			return datasource.metadata.patch(data, changes);
+		}
+
+		function commit() {
+			var changes = cachedChanges;
+			cachedChanges = null;
+			cachedData = null;
+
+			return queue(function() {
+				return when(datasource.update(changes)).otherwise(handleFailure);
 			});
 
-			return [prepared.yield(data), commit];
-
-			function commit(newData) {
-
-				newData = arguments.length > 0 ? newData : data;
-				return queue(function() {
-					return when(doCommit(newData), function(commitResult) {
-						return commitResult[1].then(returnResult, returnResult);
-
-						function returnResult() {
-							return commitResult;
-						}
-					});
-				});
-
-				function doCommit(newData) {
-					return when.join(prepared, newData).spread(function(diff, newData) {
-
-						var changes, result;
-
-						changes = diff(newData);
-						result = when(diff(newData), function(changes) {
-							return datasource.update(changes);
-						});
-
-						return [changes, result];
-					});
-				}
-			};
-		};
-	};
+			function handleFailure(error) {
+				var appliedChanges = error.changes || changes;
+				return datasource.update(rollback(appliedChanges))
+					.yield(when.reject(changes));
+			}
+		}
+	});
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

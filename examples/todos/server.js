@@ -6,7 +6,9 @@ var nodefn = require('when/node/function');
 var mediate = require('../../mediate');
 var ArrayMetadata = require('../../data/metadata/ArrayMetadata');
 var ObjectMetadata = require('../../data/metadata/ObjectMetadata');
-var cache = require('../../data/cache');
+var observe = require('../../data/transaction/observe');
+var transaction = require('../../data/transaction');
+var queue = require('../../lib/queue');
 var fs = require('fs');
 
 var readFile = nodefn.lift(fs.readFile);
@@ -14,7 +16,8 @@ var writeFile = nodefn.lift(fs.writeFile);
 var mediator;
 var timeout;
 
-var datasource = jsonArrayFileStore('./todos.json');
+var observer = { set: console.log, update: doSync };
+var datasource = observe(observer, transaction(queue(), jsonArrayFileStore('./todos.json')));
 
 var controller = {
 	list: function(todos) {
@@ -59,7 +62,7 @@ var controller = {
 	}
 };
 
-mediator = mediate(datasource, controller, { set: console.log, update: doSync });
+mediator = mediate(datasource, controller, observer);
 mediator.refresh();
 
 app.configure(function () {
@@ -77,6 +80,7 @@ app.listen(8080);
 function makeJsonRestEndpoint(app, baseUrl, handler) {
 	app.get(baseUrl, function (request, response) {
 		handler.list().then(function(data) {
+			console.log('list', data);
 			response.json(data);
 		}).otherwise(error)
 	});
@@ -119,7 +123,7 @@ function jsonArrayFileStore(file) {
 
 	metadata = new ArrayMetadata(new ObjectMetadata());
 
-	return cache({
+	return {
 		metadata: metadata,
 
 		fetch: function() {
@@ -142,7 +146,7 @@ function jsonArrayFileStore(file) {
 				return writeFile(file, json);
 			}).otherwise(console.error);
 		}
-	});
+	};
 }
 
 function generateData() {
@@ -157,16 +161,5 @@ function generateData() {
 	return todos;
 }
 
-function doSync() {
-	if(!datasource.sync) {
-		return;
-	}
-	if(timeout == null) {
-		console.log('scheduling sync');
-		timeout = setTimeout(function() {
-			timeout = null;
-			datasource.sync();
-		}, 5000);
-	}
-}
+function doSync() {}
 

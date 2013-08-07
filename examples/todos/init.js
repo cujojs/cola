@@ -32,7 +32,6 @@ define(function(require) {
 		var controller, todoList, todoForm, datasource;
 
 		datasource = fn.sequence(
-			cache,
 			validate(validateChanges),
 			mapUpdate(defaults({ id: defaultId, completed: false, created: Date.now }))
 		)(new LocalStorage('todos'));
