@@ -1,13 +1,22 @@
 define(function(require) {
 
-	var qs, init, config, validateTodo, mediate, mediator,
-		queue, transaction, transactional, timeout;
+	var when, fn, qs, init, config, validateTodo, mediate,
+		createAdapter, changeAdapter, completeAllAdapter, removeCompletedAdapter,
+		queue, transaction, transactional, observe;
 
-	init = require('./init-bb');
+	init = require('./init');
+
+	when = require('when');
+	fn = require('when/function');
 	validateTodo = require('./validateTodo');
 	mediate = require('cola/mediate');
 	transaction = require('cola/data/transaction');
 	queue = require('cola/lib/queue');
+	observe = require('cola/data/transaction/observe');
+
+	var objectEventAdapter = require('cola/data/transaction/eventAdapter');
+	var objectMethodAdapter = require('cola/data/transaction/objectMethodAdapter');
+	var crudMethodDispatcher = require('cola/data/transaction/crudMethodDispatcher');
 
 	transactional = transaction(queue());
 
@@ -15,52 +24,94 @@ define(function(require) {
 
 	config = init(qs('.todo-list'), qs('.todo-form'), validateTodo);
 
-	qs('.todo-form').addEventListener('submit', function(e) {
-		e.preventDefault();
-		config.controller.createTodo(config.todoForm.get())
-			.then(function() {
-				config.todoForm.clear();
-				scheduleSync();
+	var datasource = observe(config.todoList, transactional(config.datasource));
+	var differ = datasource.metadata.diff.bind(datasource.metadata);
+
+	createAdapter = objectEventAdapter(differ, config.controller.create.bind(config.controller), [datasource, config.todoForm]);
+
+	var createTodo = fn.compose(createAdapter, completeTransaction, config.todoForm.clear);
+
+	completeAllAdapter = objectEventAdapter(differ, config.controller.completeAll.bind(config.controller), [datasource]);
+
+	var completeAll = fn.compose(completeAllAdapter, completeTransaction);
+
+	removeCompletedAdapter = objectEventAdapter(differ, config.controller.removeCompleted.bind(config.controller), [datasource]);
+
+	var removeCompleted = fn.compose(removeCompletedAdapter, completeTransaction);
+
+	changeAdapter = objectMethodAdapter(crudMethodDispatcher, differ, config.controller);
+
+	var updateTodo = fn.compose(changeAdapter, completeTransaction);
+
+	when(config.datasource.fetch(), function(data) {
+		config.todoList.set(data);
+		initEvents();
+	});
+
+	function initEvents() {
+		qs('.todo-form').addEventListener('submit', function(e) {
+			e.preventDefault();
+			createTodo(e);
+		});
+
+		qs('.todo-list').addEventListener('click', function(e) {
+			var item = config.todoList.find(e);
+			if(e.target.className === 'remove') {
+				when(config.datasource.fetch(), function(data) {
+					return updateTodo({
+						type: 'deleted',
+						name: findIndexById(config.datasource.metadata.model.id, data, item),
+						object: data,
+						oldValue: item
+					});
+
+				})
+
+			} else if(e.target.classList.contains('toggle')) {
+				when(config.datasource.fetch(), function(data) {
+					return updateTodo({
+						type: 'updated',
+						name: findIndexById(config.datasource.metadata.model.id, data, item),
+						object: data,
+						oldValue: item
+					});
+				});
 			}
-		);
-	});
+		});
 
-	qs('.todo-list').addEventListener('click', function(e) {
-		if(e.target.className === 'remove') {
-			config.controller.removeTodo(config.todoList.find(e))
-				.then(scheduleSync);
-		} else if(e.target.classList.contains('toggle')) {
-			config.controller.updateTodo(config.todoList.find(e))
-				.then(scheduleSync);
-		}
-	});
+		qs('.todo-form').addEventListener('click', function(e) {
+			if(e.target.className === 'remove-completed') {
+				removeCompleted(e);
+			} else if(e.target.className === 'complete-all') {
+				completeAll(e);
+			}
+		});
+	}
 
-	qs('.todo-form').addEventListener('click', function(e) {
-		if(e.target.className === 'remove-completed') {
-			config.controller.removeCompleted().then(scheduleSync);
-		} else if(e.target.className === 'complete-all') {
-			config.controller.completeAll().then(scheduleSync);
-		}
-	});
+	function completeTransaction(changes) {
+		return when(updateTransaction(changes), commitTransaction);
+	}
 
-	mediator = mediate(transactional(config.datasource),
-		config.controller, config.todoList);
-	mediator.refresh();
+	function updateTransaction(changes) {
+		return datasource.update(changes);
+	}
 
-	function sync() {
-		if(typeof config.datasource.sync === 'function') {
-			return config.datasource.sync();
+	function commitTransaction() {
+		if(typeof datasource.commit === 'function') {
+			return datasource.commit();
 		}
 	}
 
-	function scheduleSync() {
-		if(timeout == null) {
-			timeout = setTimeout(function() {
-				timeout = null;
-				sync();
-			}, 1000);
-		}
-	}
+	function findIndexById(id, array, itemToFind) {
+		var found = -1;
+		array.some(function(item, i) {
+			if(id(item) === id(itemToFind)) {
+				found = i;
+				return true;
+			}
+		});
 
+		return found;
+	}
 
 });

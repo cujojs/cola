@@ -23,7 +23,7 @@ define(function(require) {
 		var container, item, diff;
 
 		container = change.object;
-		item = container[item];
+		item = container[change.name];
 		diff = prepareDiff(container);
 
 		target[property] = container;

@@ -3,19 +3,19 @@ define(function() {
 
 	Controller.prototype = {
 
-		createTodo: function(todos, todo) {
+		create: function(todos, todo) {
 //			todos.add(todo);
 			// Or
 			return todos.create(todo);
 		},
-		removeTodo: function(todos, todo) {
+		remove: function(todos, todo) {
 //			todos.remove(todo);
 			// Or
 			todo = todos.get(todo);
 			return todo && todo.destroy();
 		},
 
-		updateTodo: function(todos, todo) {
+		update: function(todos, todo) {
 			todo = todos.get(todo);
 			todo.save({ completed: !todo.get('completed') });
 		},

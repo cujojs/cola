@@ -16,24 +16,26 @@ define(function(require) {
 	when = require('when');
 	curry = require('../../lib/fn').curry;
 
-	return curry(objectMethodAdapter);
+	return curry(objectEventAdapter);
 
-	function objectMethodAdapter(dispatcher, prepareDiff, target, change) {
+	function objectEventAdapter(prepareDiff, handler, sources, event) {
 
-		var container, item, diff;
+		return when.map(sources, getData.bind(void 0, event)).then(
+			function(args) {
+				var primary = args[0];
+				var diff = prepareDiff(primary);
 
-		container = change.object;
-		item = container[change.name];
-		diff = prepareDiff(container);
+				return when(handler.apply(void 0, args.concat(event)),
+					getChanges);
 
-		return when(dispatcher(target, change.type, [container, item, change]),
-			getChanges);
+				function getChanges(result) {
+					var after = preferResult(primary, result);
+					return diff(after);
+				}
+			}
+		);
 
-		function getChanges(result) {
-			var after = preferResult(container, result);
-			return diff(after);
-		}
-	}
+	};
 
 	function preferResult(model, result) {
 		var shouldPreferResult;
@@ -45,6 +47,18 @@ define(function(require) {
 		}
 
 		return shouldPreferResult ? result : model;
+	}
+
+	function getData(e, source) {
+		if(typeof source.get === 'function') {
+			return source.get(e);
+		} else if(typeof source.find === 'function') {
+			return source.find(e);
+		} else if(typeof source.fetch === 'function') {
+			return source.fetch();
+		}
+
+		return source;
 	}
 
 

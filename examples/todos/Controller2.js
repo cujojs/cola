@@ -5,12 +5,12 @@ define(function() {
 
 	Controller.prototype = {
 
-		createTodo: function(todos, todo) {
+		create: function(todos, todo) {
 			todo.id = '' + Date.now() + id++;
 			todos.push(todo);
 		},
 
-		removeTodo: function(todos, todo) {
+		remove: function(todos, todo) {
 			todos.some(function(t, i, todos) {
 				if(t.id === todo.id) {
 					todos.splice(i, 1);
@@ -19,10 +19,12 @@ define(function() {
 			});
 		},
 
-		updateTodo: function(todos, todo) {
+		update: function(todos, todo) {
 			todos.some(function(t) {
 				if(t.id === todo.id) {
+					console.log(t, todo);
 					t.completed = !t.completed;
+					console.log(t, todo);
 					return true;
 				}
 			});
