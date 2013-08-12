@@ -1,3 +1,14 @@
+//
+// Simple REST server for the init-rest client
+//
+// Run it from the root cola dir:
+// `node examples/todos/server.js`
+//
+// It will create a flat file called todos.json for storing todos, and
+// start a static web server on port 8080.  Point your browser at:
+// `http://localhost:8080/examples/todos/`
+//
+
 var express = require('express');
 var app = express();
 
@@ -62,6 +73,8 @@ var controller = {
 	}
 };
 
+// Server still uses mediate() because I haven't had time to update it
+// It works just fine, tho.
 mediator = mediate(datasource, controller, observer);
 mediator.refresh();
 

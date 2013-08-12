@@ -6,11 +6,7 @@
     <style>
         .todo-list li {
             cursor: pointer;
-        }
-
-        .todo-list li.true .todo-description {
-            color: #999;
-            text-decoration: line-through;
+            list-style-type: none;
         }
 
         .todo-list .remove {
@@ -59,7 +55,7 @@
 </form>
 
 <ul data-bard-section="todos" class="todo-list">
-    <li data-bard-bind="className:completed"><span data-bard-bind="textContent:description" class="todo-description toggle"></span>
+    <li><input type="checkbox" name="completed" class="toggle" data-bard-bind="checked:completed"><span data-bard-bind="textContent:description" class="todo-description"></span>
     <span class="remove">&times;</span></li>
 </ul>
 

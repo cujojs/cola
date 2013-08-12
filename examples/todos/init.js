@@ -11,16 +11,10 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var LocalStorage, Controller,
-		reactiveCollection, reactiveModel, bindByAttr,
-		cache, validate, mapUpdate, defaults, fn, idSuffix;
+	var LocalStorage, Controller, validate, mapUpdate, defaults, fn, idSuffix;
 
 	LocalStorage = require('cola/data/LocalStorage');
 	Controller = require('./Controller2');
-	reactiveCollection = require('cola/view/array');
-	reactiveModel = require('cola/view/model');
-	bindByAttr = require('cola/view/bind/byAttr');
-	cache = require('cola/data/cache');
 	validate = require('cola/data/validate');
 	mapUpdate = require('cola/data/mapUpdate');
 	defaults = require('cola/data/defaults');
@@ -28,33 +22,15 @@ define(function(require) {
 
 	idSuffix = 1;
 
-	return function(listNode, formNode, validateTodo) {
-		var controller, todoList, todoForm, datasource;
-
-		datasource = fn.sequence(
+	return function(validateTodo) {
+		var datasource = fn.sequence(
 			validate(validateChanges),
 			mapUpdate(defaults({ id: defaultId, completed: false, created: Date.now }))
 		)(new LocalStorage('todos'));
 
-		todoList = reactiveCollection(listNode, {
-			sectionName: 'created',
-			sortBy: 'id', // FIXME
-			binder: bindByAttr(),
-			proxy: datasource.metadata.model
-		});
-
-		todoForm = reactiveModel(formNode, {
-			binder: bindByAttr(),
-			proxy: datasource.metadata.model
-		});
-
-		controller = new Controller();
-
 		return {
 			datasource: datasource,
-			todoList: todoList,
-			todoForm: todoForm,
-			controller: controller
+			controller: new Controller()
 		};
 
 		function validateChanges(changes, metadata) {

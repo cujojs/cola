@@ -9,79 +9,55 @@
  */
 
 (function(define) { 'use strict';
-define(function(require) {
+	define(function(require) {
 
-	var rest, pathPrefix, entity, mime, location,
-		Rest, ArrayMetadata, ObjectMetadata,
-		Controller, reactiveCollection, reactiveModel, bindByAttr,
-		cache, validate, mapUpdate, defaults, fn;
+		var rest, pathPrefix, entity, mime, location,
+			Rest, ArrayMetadata, ObjectMetadata, Controller,
+			validate, mapUpdate, defaults, fn;
 
-	rest = require('rest');
-	pathPrefix = require('rest/interceptor/pathPrefix');
-	entity = require('rest/interceptor/entity');
-	mime = require('rest/interceptor/mime');
-	location = require('rest/interceptor/location');
-	ArrayMetadata = require('cola/data/metadata/ArrayMetadata');
-	ObjectMetadata = require('cola/data/metadata/ObjectMetadata');
-	Rest = require('cola/data/Rest');
-	Controller = require('./Controller2');
-	reactiveCollection = require('cola/view/array');
-	reactiveModel = require('cola/view/model');
-	bindByAttr = require('cola/view/bind/byAttr');
-	cache = require('cola/data/cache');
-	validate = require('cola/data/validate');
-	mapUpdate = require('cola/data/mapUpdate');
-	defaults = require('cola/data/defaults');
-	fn = require('cola/lib/fn');
+		rest = require('rest');
+		pathPrefix = require('rest/interceptor/pathPrefix');
+		entity = require('rest/interceptor/entity');
+		mime = require('rest/interceptor/mime');
+		location = require('rest/interceptor/location');
 
-	return function(listNode, formNode, validateTodo) {
-		var controller, todoList, todoForm,
-			client, metadata, datasource;
+		Rest = require('cola/data/Rest');
+		ArrayMetadata = require('cola/data/metadata/ArrayMetadata');
+		ObjectMetadata = require('cola/data/metadata/ObjectMetadata');
+		Controller = require('./Controller2');
+		validate = require('cola/data/validate');
+		mapUpdate = require('cola/data/mapUpdate');
+		defaults = require('cola/data/defaults');
+		fn = require('cola/lib/fn');
 
-		client = rest
-			.chain(mime, { mime: 'application/json' })
-			.chain(location)
-			.chain(pathPrefix, { prefix: 'http://localhost:8080/todos' })
-			.chain(entity);
+		return function(validateTodo) {
+			var metadata, client, datasource;
 
-		metadata = new ArrayMetadata(new ObjectMetadata());
+			client = rest
+				.chain(mime, { mime: 'application/json' })
+				.chain(location)
+				.chain(pathPrefix, { prefix: 'http://localhost:8080/todos' })
+				.chain(entity);
 
-		datasource = fn.sequence(
-			validate(validateChanges),
-			mapUpdate(defaults({ completed: false, created: Date.now }))
-		)(new Rest(client, metadata, { updateMethod: 'patch' }));
+			metadata = new ArrayMetadata(new ObjectMetadata());
 
-		todoList = reactiveCollection(listNode, {
-			sectionName: 'todos',
-			sortBy: 'id', // FIXME
-			binder: bindByAttr(),
-			proxy: datasource.metadata.model
-		});
+			datasource = fn.sequence(
+				validate(validateChanges),
+				mapUpdate(defaults({ completed: false, created: Date.now }))
+			)(new Rest(client, metadata, { updateMethod: 'patch' }));
 
-		todoForm = reactiveModel(formNode, {
-			binder: bindByAttr(),
-			proxy: datasource.metadata.model
-		});
+			return {
+				datasource: datasource,
+				controller: new Controller()
+			};
 
-		controller = new Controller();
-
-		return {
-			datasource: datasource,
-			todoList: todoList,
-			todoForm: todoForm,
-			controller: controller
-		};
-
-		function validateChanges(changes, metadata) {
-			if(validateTodo) {
-				changes.forEach(function(change) {
-					validateTodo(change, metadata);
-				});
+			function validateChanges(changes, metadata) {
+				if(validateTodo) {
+					changes.forEach(function(change) {
+						validateTodo(change, metadata);
+					});
+				}
 			}
-		}
-	};
-
-
-
-});
+		};
+	});
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
