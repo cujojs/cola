@@ -10,7 +10,7 @@ define(function(require) {
 	// for plain objects, or backbone, or Rest, etc.
 	// See init.js, init-bb.js, init-rest.js
 	// NOTE: For more init-rest notes, see server.js
-	init = require('./init-rest');
+	init = require('./init');
 
 	when = require('when');
 	fn = require('when/function');
