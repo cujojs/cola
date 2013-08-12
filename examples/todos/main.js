@@ -65,7 +65,7 @@ define(function(require) {
 						oldValue: item
 					});
 
-				})
+				});
 
 			} else if(e.target.classList.contains('toggle')) {
 				when(config.datasource.fetch(), function(data) {

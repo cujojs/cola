@@ -11,6 +11,8 @@
 (function(define) { 'use strict';
 define(function() {
 
+	var undef;
+
 	function Metadata(collection) {
 		this.model = new ModelMetadata(collection.model);
 	}
@@ -30,7 +32,7 @@ define(function() {
 			return new this.ModelType();
 		},
 		id: function(model) {
-			return model & model.get(model._idAttribute);
+			return this.get(model, model._idAttribute);
 		},
 		get: function(model, property) {
 			return model && model.get(property);
@@ -39,7 +41,7 @@ define(function() {
 			model && model.set(property, value);
 		},
 		has: function(model, property) {
-			return model && model.has(property);
+			return this.get(model, property) !== undef;
 		},
 		'delete': function(model, property) {
 			return model && model.unset(property);

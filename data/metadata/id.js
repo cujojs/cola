@@ -30,7 +30,7 @@ define(function() {
 		}
 
 		if(typeof id === 'string') {
-			return property('id');
+			return property(id);
 		}
 
 		return defaultId;

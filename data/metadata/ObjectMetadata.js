@@ -11,7 +11,7 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var id, objectProxy, patchHandlers;
+	var id, objectProxy, patchHandlers, undef;
 
 	id = require('./id');
 
@@ -133,7 +133,7 @@ define(function(require) {
 	}
 
 	function hasProperty(object, property) {
-		return object && 'property' in object;
+		return object && object[property] !== undef;
 	}
 
 	function deleteProperty(object, property) {
