@@ -1,6 +1,6 @@
 {
 	"name": "cola",
-	"version": "0.1.3",
+	"version": "0.1.5",
 	"description": "cujo object linking architecture",
 	"keywords": ["data binding", "data linking", "rest", "data", "cujo"],
 	"licenses": [
