@@ -28,8 +28,11 @@
             },
             packages: {
                 cola: { location: '../../' },
+                most: { location: './bower_components/most', main: 'most',
+                    config: { moduleLoader: 'curl/loader/cjsm11' } },
                 curl: { location: './bower_components/curl/src/curl' },
-                wire: { location: './bower_components/wire', main: 'wire' },
+                wire: { location: './bower_components/wire-next',
+                    config: { moduleLoader: 'curl/loader/cjsm11' } },
                 when: { location: './bower_components/when', main: 'when' },
                 meld: { location: './bower_components/meld', main: 'meld' },
                 rest: { location: './bower_components/rest', main: 'rest' },

@@ -1,7 +1,6 @@
 define(function(require) {
 
-	var when, fn, qs, init, config, validateTodo, mediate,
-		createAdapter, changeAdapter, completeAllAdapter, removeCompletedAdapter,
+	var most, when, fn, domReady, qs, init, config, validateTodo, mediate,
 		queue, transaction, transactional, observe, crudMethodDispatcher,
 		objectMethodAdapter, objectEventAdapter, reactiveCollection, reactiveModel,
 		bindByAttr;
@@ -12,9 +11,11 @@ define(function(require) {
 	// NOTE: For more init-rest notes, see server.js
 	init = require('./init');
 
+	most = require('most');
 	when = require('when');
 	fn = require('when/function');
-	validateTodo = require('./validateTodo');
+	domReady = require('curl/domReady');
+
 	mediate = require('cola/mediate');
 	transaction = require('cola/data/transaction');
 	queue = require('cola/lib/queue');
@@ -25,6 +26,8 @@ define(function(require) {
 	objectEventAdapter = require('cola/data/transaction/eventAdapter');
 	objectMethodAdapter = require('cola/data/transaction/objectMethodAdapter');
 	crudMethodDispatcher = require('cola/data/transaction/crudMethodDispatcher');
+
+	validateTodo = require('./validateTodo');
 
 	qs = document.querySelector.bind(document);
 
@@ -40,112 +43,121 @@ define(function(require) {
 	transactional = transaction(queue());
 	var datasource = observe(todoList, transactional(config.datasource));
 
-	// This is ugly, but need to pass the differ to multiple things
-	// Might be nicer to pass metadata instead.
-	var differ = datasource.metadata.diff.bind(datasource.metadata);
-
-	// CREATE
-
-	// Create an adapter that routes a dom event to controller.create
-	// Pass the differ, so it can compute changes, and pass a list of
-	// data "sources" that create() might find useful--the data provided
-	// by these will be injected
-	// createAdapter is a function which accepts a dom event
-	createAdapter = objectEventAdapter(differ, config.controller.create.bind(config.controller), [datasource, todoForm]);
-
-	// Compose an "event stream" that transforms a dom event into a change ("new"
-	// in this case), which is used to update the datasource and commit a
-	// transaction, and then finally clear the form.
-	var createTodo = fn.compose(createAdapter, completeTransaction, todoForm.clear);
-
-	// REMOVE
-
-	// Create an adapter that routes a dom event to controller.remove, injects
-	// data from the list of providers, and then detects changes
-	// removeAdapter is a function which accepts a dom event
-	var removeAdapter = objectEventAdapter(differ, config.controller.remove.bind(config.controller), [datasource, todoList]);
-
-	var removeTodo = fn.compose(removeAdapter, completeTransaction);
-
-	// COMPLETE ALL
-
-	// Create an adapter that routes a dom event to controller.completeAll, and
-	// then detects changes. Similar to CREATE, pass the differ and source of data.
-	// completeAllAdapter is a function which accepts a dom event
-	completeAllAdapter = objectEventAdapter(differ, config.controller.completeAll.bind(config.controller), [datasource]);
-
-	// Compose event stream for completeAll
-	var completeAll = fn.compose(completeAllAdapter, completeTransaction);
-
-	// REMOVE ALL COMPLETED
-
-	// Similarly to COMPLETE ALL, create an adapter that routes the dom event
-	// to controller.removeCompleted, injects data, and detects changes
-	// removeCompletedAdapter is a function which accepts a dom event
-	removeCompletedAdapter = objectEventAdapter(differ, config.controller.removeCompleted.bind(config.controller), [datasource]);
-
-	// Compose event stream for removeCompleted
-	var removeCompleted = fn.compose(removeCompletedAdapter, completeTransaction);
-
-	// DATA CHANGES
-
-	// This adapter maps CHANGES to CHANGES.  It accepts a change that comes
-	// from the view (which is simulated below), routes it to a controller method
-	// (controller.update in this case), extracting the relevant data sources
-	// (namely the todos collection and updated todo item) from the change record
-	// injecting them, and then detecting changes.
-
-	// NOTE: It seems like we will be able to bypass the controller entirely
-	// here when using observable views.  For now, I am synthesizing a change
-	// record and simply using view.find(e), which returns the non-updated data item,
-	// so I route the item through the controller's update() method and watch
-	// for changes instead.
-	changeAdapter = objectMethodAdapter(crudMethodDispatcher, differ, config.controller);
-
-	var updateTodo = fn.compose(changeAdapter, completeTransaction);
-
 	// Fetch initial data, populate the view, and initialize event handling
-	when(datasource.fetch(), function(data) {
-		todoList.set(data);
-		initEvents();
-	});
+	most.fromArray(datasource.fetch()).each(todoList.add);
+//	todoList.set(most.fromArray(datasource.fetch()));
+	domReady(initEvents);
+//	initEvents();
 
 	// Setup event handling
 	function initEvents() {
-		qs('.todo-form').addEventListener('submit', function(e) {
-			e.preventDefault();
-			createTodo(e);
-		});
+		formCreateStream(qs('.todo-form'), todoForm)
+			.map(function(todo)  {
+				return [todo, datasource.fetch()];
+			})
+			.flatMap(function(newTodoAndTodos) {
+				return most.fromPromise(when(newTodoAndTodos[1], function(todos) {
+					var diff = datasource.metadata.diff(todos);
 
-		qs('.todo-list').addEventListener('click', function(e) {
-			if(e.target.className === 'remove') {
-				removeTodo(e);
+					// This is the only data or application specific code here
+					var todo = newTodoAndTodos[0];
+					todo.id = defaultId();
+					todo.created = Date.now();
+					todos.push(todo);
 
-			} else if(e.target.classList.contains('toggle')) {
-				// This can go away once view.observe is integrated.
-				// Synthesize a change record
-				var item = todoList.find(e);
-				when(datasource.fetch(), function(data) {
-					return updateTodo({
-						type: 'updated',
-						name: findIndexById(datasource.metadata.model.id, data, item),
-						object: data,
-						oldValue: item
+					return diff(todos);
+				}));
+			})
+			.map(completeTransaction)
+			.each(todoForm.clear);
+
+		most.fromEventTarget(qs('.todo-list'), 'click')
+			.filter(function(e) { return e.target.classList.contains('remove'); })
+			.map(todoList.find)
+			.map(function(todo)  {
+				return [todo, datasource.fetch()];
+			})
+			.flatMap(function(todoAndTodos) {
+				return most.fromPromise(when(todoAndTodos[1], function(todos) {
+					var diff = datasource.metadata.diff(todos);
+
+					// This is the only data or application specific code here
+					var todo = todoAndTodos[0];
+					todos.some(function(t, i, todos) {
+						if(t.id === todo.id) {
+							todos.splice(i, 1);
+							return true;
+						}
 					});
-				}).otherwise(function(e) {
-					// Just so errors during testing are observable
-					console.error(e.stack);
-				});
-			}
-		});
 
-		qs('.todo-form').addEventListener('click', function(e) {
-			if(e.target.className === 'remove-completed') {
-				removeCompleted(e);
-			} else if(e.target.className === 'complete-all') {
-				completeAll(e);
-			}
-		});
+					return diff(todos);
+				}));
+			})
+			.each(completeTransaction);
+
+
+		most.fromEventTarget(qs('.todo-list'), 'change')
+			.filter(function(e) { return e.target.classList.contains('toggle'); })
+			.map(todoList.find)
+			.map(function(todo) {
+				return [todo, datasource.fetch()]
+			})
+			.flatMap(function(todoAndTodos) {
+				return most.fromPromise(when(todoAndTodos[1], function(todos) {
+					var todo = todoAndTodos[0];
+
+					// Synthesizing a change record that should have come
+					// from the view, i.e. this would be automagic
+					todo.completed = !todo.completed;
+					var name = findIndexById(datasource.metadata.model.id, todos, todo);
+					var object = {};
+					object[name] = todo;
+					return [{
+						type: 'updated',
+						name: name,
+						object: object,
+						oldValue: todos[name]
+					}];
+
+				}));
+			})
+			.each(completeTransaction);
+
+		most.fromEventTarget(qs('.todo-form'), 'click')
+			.filter(function(e) { return e.target.classList.contains('remove-completed'); })
+			.map(function()  {
+				return datasource.fetch();
+			})
+			.map(function(todos) {
+				var diff = datasource.metadata.diff(todos);
+
+				// This is the only data or application specific code here
+				todos = todos.filter(function(todo) {
+					return !todo.completed;
+				});
+
+				return diff(todos);
+			})
+			.each(completeTransaction);
+
+		most.fromEventTarget(qs('.todo-form'), 'click')
+			.filter(function(e) { return e.target.classList.contains('complete-all'); })
+			.flatMap(function()  {
+				return most.of(datasource.fetch());
+			})
+			.map(function(todos) {
+				var diff = datasource.metadata.diff(todos);
+
+				// This is the only data or application specific code here
+				todos = todos.map(function(todo) {
+					todo.completed = true;
+					return todo;
+				});
+
+				return diff(todos);
+			})
+			.each(completeTransaction);
+
 	}
 
 	// Create the todos bard list view
@@ -166,9 +178,34 @@ define(function(require) {
 		});
 	}
 
+	var id = 1;
+
+	function formCreateStream(node, view) {
+		return most.fromEventTarget(node, 'submit')
+			.tap(preventDefault).map(view.get);
+	}
+
+	function defaults(hash) {
+		return function(obj) {
+			return Object.keys(hash).reduce(function(obj, key) {
+				var value;
+				if(!(key in obj)) {
+					value = hash[key];
+					obj[key] = typeof value === 'function' ? value() : value;
+				}
+				return obj;
+			},obj);
+		}
+	}
+
+	function defaultId() {
+		return '' + Date.now() + id++;
+	}
+
 	// Apply changes to the transactional datasource and commit its transaction
 	function completeTransaction(changes) {
 		return when(updateTransaction(changes), commitTransaction);
+//		return when(changes, updateTransaction).then(commitTransaction);
 	}
 
 	function updateTransaction(changes) {
@@ -193,6 +230,10 @@ define(function(require) {
 		});
 
 		return found;
+	}
+
+	function preventDefault(e) {
+		e.preventDefault();
 	}
 
 });

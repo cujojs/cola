@@ -34,6 +34,9 @@ define(function (require) {
 
 
 		return {
+			add: function(model) {
+				return rdom.insertModel(model);
+			},
 			update: function (changes) {
 				// changes is an array of objects: { type, object, name [, oldValue] }
 				// type can be "new", "deleted", "updated", or "reconfigured"
@@ -57,10 +60,7 @@ define(function (require) {
 						}
 					}
 
-				}, this);
-			},
-			set: function (all) {
-				return rdom.setCollection(all);
+				});
 			},
 			find: function (nodeOrEvent) {
 				return rdom.findModel(nodeOrEvent);

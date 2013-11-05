@@ -57,13 +57,6 @@ define(function (require) {
 
 	NodeCollection.prototype = {
 
-		setCollection: function (iterable) {
-			var self = this;
-			iterator.reduce(function (_, model) {
-				self.insertModel(model);
-			}, null, iterator(iterable));
-		},
-
 		findModel: function (nodeOrEvent) {
 			var binding = this.findBinding(nodeOrEvent);
 			return binding && binding.model;

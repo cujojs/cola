@@ -11,22 +11,16 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var LocalStorage, Controller, validate, mapUpdate, defaults, fn, idSuffix;
+	var LocalStorage, Controller, validate, idSuffix;
 
 	LocalStorage = require('cola/data/LocalStorage');
 	Controller = require('./Controller2');
 	validate = require('cola/data/validate');
-	mapUpdate = require('cola/data/mapUpdate');
-	defaults = require('cola/data/defaults');
-	fn = require('cola/lib/fn');
 
 	idSuffix = 1;
 
 	return function(validateTodo) {
-		var datasource = fn.sequence(
-			validate(validateChanges),
-			mapUpdate(defaults({ id: defaultId, completed: false, created: Date.now }))
-		)(new LocalStorage('todos'));
+		var datasource = validate(validateChanges, new LocalStorage('todos'));
 
 		return {
 			datasource: datasource,
