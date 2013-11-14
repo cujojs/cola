@@ -39,19 +39,13 @@ define(function() {
 	 * @param {function?} diffItem diffing function for items in the array
 	 * @constructor
 	 */
-	function ArrayMetadata(itemMetadata) {
+	function ArrayMetadata(itemMetadata, getIndex) {
 		this.model = itemMetadata.model;
-		this._diffItem = itemMetadata.diff.bind(itemMetadata);
+		this.modelMetadata = itemMetadata;
+		this._getIndex = getIndex || defaultGetIndex;
 	}
 
 	ArrayMetadata.prototype = {
-		map: function(array, f) {
-			var model = this.model;
-			return array.map(function(item) {
-				return f(item, model);
-			});
-		},
-
 		/**
 		 * Creates a snapshot of an array, returns a function that
 		 * accepts another array which will be diff'd against the
@@ -62,10 +56,10 @@ define(function() {
 		 *  of changes in Object.observer format.
 		 */
 		diff: function(before) {
-			var id, snapshotItem;
+			var id, modelMeta;
 
-			id = this.model.id;
-			snapshotItem = this._diffItem;
+			modelMeta = this.modelMetadata;
+			id = modelMeta.model.id;
 
 			var snapshot = before.reduce(function(snapshots, item, index) {
 				var s = snapshots[id(item)] = {
@@ -73,8 +67,8 @@ define(function() {
 					index: index
 				};
 
-				if(snapshotItem) {
-					s.compare = snapshotItem(item);
+				if(modelMeta.diff) {
+					s.compare = modelMeta.diff(item);
 				}
 
 				return snapshots;
@@ -93,17 +87,19 @@ define(function() {
 		 * @returns {*}
 		 */
 		patch: function(array, changes) {
-			var id = this.model.id;
 
 			if(!changes) {
 				return array;
 			}
 
+			var id = this.model.id;
+			var getIndex = this._getIndex;
+
 			return changes.reduce(function(array, change) {
 				var handler = patchHandlers[change.type];
 
 				if(handler) {
-					handler(array, change.name,
+					handler(array, getIndex(change),
 						change.object[change.name], id);
 				}
 
@@ -195,7 +191,11 @@ define(function() {
 			return changes;
 		}, changes);
 
-		return changes.length ? changes : false;
+		return changes;
+	}
+
+	function defaultGetIndex(change) {
+		return change.name;
 	}
 
 });

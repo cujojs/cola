@@ -11,15 +11,16 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when, meld, injectArgument, observe;
+	var when, most, createProxy, injectArgument, observe;
 
 	when = require('when');
-	meld = require('meld');
+	most = require('most');
+	createProxy = require('./lib/proxy');
 	injectArgument = require('./data/transaction/injectArgument');
 	observe = require('./data/transaction/observe');
 
 	return function mediate(datasource, controller, observer, options) {
-		var pointcut, injector, aspect;
+		var pointcut, injector;
 
 		if(!options) {
 			options = {};
@@ -27,49 +28,45 @@ define(function(require) {
 
 		// TODO: Instead of pointcut, accept a capability mapping object
 		injector = options.injector || injectArgument();
-		pointcut = options.pointcut || /^[^_]/;
+		pointcut = options.pointcut || transactionPointcut;
 
-		datasource = observe(observer, datasource);
+		if(observer) {
+			datasource = observe(observer, datasource);
+		}
 
-		aspect = meld.around(controller, pointcut, transactionAdvice);
-
-		return {
-			destroy: aspect.remove,
-			refresh: refresh
-		};
+		refresh();
+		return createProxy(transactionInterceptor(datasource, injector), pointcut, controller);
 
 		function refresh() {
 			return when(datasource.fetch(), function(data) {
-				return observer.set(data);
+				return Array.isArray(data)
+					? most.fromArray(data) : most.of(data);
+			}).then(function(stream) {
+				stream.each(observer.add);
 			});
 		}
+	};
 
-		function transactionAdvice(joinpoint) {
+	function transactionPointcut(method) {
+		return /^[^_]/.test(method);
+	}
+
+	function transactionInterceptor(datasource, injector) {
+		return function(obj, method, args) {
 			return when(datasource.fetch(), function(data) {
-				var diff, correlate, result, next;
+				var diff, correlate;
 
 				diff = datasource.metadata.diff(data);
-				correlate = injector(data, joinpoint.target, joinpoint.args);
+				correlate = injector(data, obj, args);
 
-				result = when(joinpoint.proceedApply(joinpoint.args));
-
-				next = result.then(updateTransaction);
-
-				if(typeof datasource.commit === 'function') {
-					next = next.then(commitTransaction);
-				}
-
-				return next.yield(result);
+				var result = obj[method].apply(obj, args);
+				return when(result, updateTransaction);
 
 				function updateTransaction(result) {
-					return datasource.update(diff(correlate(result)));
-				}
-
-				function commitTransaction() {
-					return datasource.commit();
+					return datasource.update(diff(correlate(result))).yield(result);
 				}
 			});
-		}
+		};
 	}
 
 });

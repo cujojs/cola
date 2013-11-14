@@ -23,7 +23,7 @@ define(function (require) {
 		}
 		if (!options.compare) {
 			options.compare = createCompareForProperty(options.sortBy || 'id',
-				options.proxy);
+				options.metadata.model);
 		}
 
 		var rdom = new NodeCollection(root, options);
@@ -70,6 +70,9 @@ define(function (require) {
 			},
 			clear: function () {
 				return rdom.clearModel();
+			},
+			observe: function() {
+				return rdom.observe();
 			}
 		};
 	}

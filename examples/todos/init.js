@@ -11,19 +11,27 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var LocalStorage, Controller, validate, idSuffix;
+	var LocalStorage, Controller, validate;
 
+	var ArrayStorage = require('cola/data/Array');
 	LocalStorage = require('cola/data/LocalStorage');
 	Controller = require('./Controller2');
 	validate = require('cola/data/validate');
 
-	idSuffix = 1;
-
 	return function(validateTodo) {
-		var datasource = validate(validateChanges, new LocalStorage('todos'));
+//		var a = [];
+//		for(var i=0; i<10000; i++) {
+//			a.push({
+//				id: '' + Date.now() + i + Math.random(),
+//				description: 'a' + i,
+//				created: Date.now()
+//			});
+//		}
+//		var datasource = new ArrayStorage(a);
+		var datasource = new LocalStorage('todos');
 
 		return {
-			datasource: datasource,
+			datasource: validate(validateChanges, datasource),
 			controller: new Controller()
 		};
 
@@ -35,11 +43,6 @@ define(function(require) {
 			}
 		}
 	};
-
-	function defaultId() {
-		idSuffix += 1;
-		return '' + Date.now() + idSuffix;
-	}
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

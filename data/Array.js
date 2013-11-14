@@ -11,8 +11,9 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var ArrayMetadata, ObjectMetadata;
+	var ArrayMetadata, ArrayIndex, ObjectMetadata;
 
+	ArrayIndex = require('./metadata/ArrayIndex');
 	ArrayMetadata = require('./metadata/ArrayMetadata');
 	ObjectMetadata = require('./metadata/ObjectMetadata');
 
@@ -27,7 +28,17 @@ define(function(require) {
 	function ArrayStorage(array, options) {
 		this._array = array || [];
 		this.metadata = new ArrayMetadata(
-			new ObjectMetadata(options && options.id));
+			new ObjectMetadata(options && options.id), getIndex);
+
+		this._index = new ArrayIndex(this.metadata.model.id);
+		this._index.init(array);
+
+		var index = this._index;
+		function getIndex(change) {
+			return change.type === 'updated'
+				? index.find(change.object[change.name])
+				: change.name;
+		}
 	}
 
 	ArrayStorage.prototype = {
@@ -36,7 +47,9 @@ define(function(require) {
 		},
 
 		update: function(changes) {
-			this._array = this.patch(this._array, changes);
+			this._array = this.metadata.patch(this._array, changes);
+			this._index.invalidate();
+			this._index.init(this._array);
 		}
 	};
 

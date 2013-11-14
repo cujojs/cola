@@ -27,10 +27,12 @@ define(function() {
 	function preferResult(model, result) {
 		var shouldPreferResult;
 
-		if(model === Object(model) && typeof model.constructor === 'function') {
-			shouldPreferResult = result instanceof model.constructor;
-		} else {
-			shouldPreferResult = typeof result === typeof model;
+		if(model !== result) {
+			if(model === Object(model) && typeof model.constructor === 'function') {
+				shouldPreferResult = result instanceof model.constructor;
+			} else {
+				shouldPreferResult = typeof result === typeof model;
+			}
 		}
 
 		return shouldPreferResult ? result : model;

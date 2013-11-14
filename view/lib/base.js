@@ -11,7 +11,7 @@ define(function (require) {
 		pushData: function (binding, options) {
 			var model, transform, proxy;
 			model = binding.model;
-			transform = options && options.transform || noop;
+			transform = options && options.transform || blankIfNull;
 			proxy = this.proxy;
 			binding.push(function (key) {
 				// get value
@@ -63,6 +63,10 @@ define(function (require) {
 		}
 
 	};
+
+	function blankIfNull(val) {
+		return val == null ? '' : val;
+	}
 
 	function noop (val) {
 		return val;

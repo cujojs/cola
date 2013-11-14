@@ -11,43 +11,17 @@
 (function(define) { 'use strict';
 	define(function(require) {
 
-		var rest, pathPrefix, entity, mime, location,
-			Rest, ArrayMetadata, ObjectMetadata, Controller,
-			validate, mapUpdate, defaults, fn;
-
-		rest = require('rest');
-		pathPrefix = require('rest/interceptor/pathPrefix');
-		entity = require('rest/interceptor/entity');
-		mime = require('rest/interceptor/mime');
-		location = require('rest/interceptor/location');
+		var Rest, Controller, validate;
 
 		Rest = require('cola/data/Rest');
-		ArrayMetadata = require('cola/data/metadata/ArrayMetadata');
-		ObjectMetadata = require('cola/data/metadata/ObjectMetadata');
 		Controller = require('./Controller2');
 		validate = require('cola/data/validate');
-		mapUpdate = require('cola/data/mapUpdate');
-		defaults = require('cola/data/defaults');
-		fn = require('cola/lib/fn');
 
 		return function(validateTodo) {
-			var metadata, client, datasource;
-
-			client = rest
-				.chain(mime, { mime: 'application/json' })
-				.chain(location)
-				.chain(pathPrefix, { prefix: 'http://localhost:8080/todos' })
-				.chain(entity);
-
-			metadata = new ArrayMetadata(new ObjectMetadata());
-
-			datasource = fn.sequence(
-				validate(validateChanges),
-				mapUpdate(defaults({ completed: false, created: Date.now }))
-			)(new Rest(client, metadata, { updateMethod: 'patch' }));
+			var datasource = new Rest('http://localhost:8080/todos', { patch: true });
 
 			return {
-				datasource: datasource,
+				datasource: validate(validateChanges, datasource),
 				controller: new Controller()
 			};
 

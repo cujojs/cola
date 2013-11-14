@@ -6,6 +6,7 @@ define(function (require) {
 	var dom = require('./dom');
 	var search = require('./search');
 	var iterator = require('../../lib/iterator');
+	var most = require('most');
 
 	/**
 	 * Binds a dom node to data.
@@ -48,7 +49,8 @@ define(function (require) {
 		this.modelNode = modelNode;
 		this.options = options;
 		this.binder = options.binder;
-		this.proxy = options.proxy;
+		this.proxy = options.metadata.model;
+		this.metadata = options.metadata;
 
 		this.bindings = [];
 		// binding = { model, node, push, pull }
@@ -56,6 +58,13 @@ define(function (require) {
 	}
 
 	NodeCollection.prototype = {
+
+		observe: function() {
+			return most.fromEventTarget(this.rootNode, 'change')
+				.map(eventToChangeRecord(this))
+				.filter(notNull)
+				.bufferTime(10);
+		},
 
 		findModel: function (nodeOrEvent) {
 			var binding = this.findBinding(nodeOrEvent);
@@ -206,6 +215,31 @@ define(function (require) {
 		containsNode: base.containsNode
 
 	};
+
+	function eventToChangeRecord(self) {
+		return function(e) {
+			var binding = self.findBinding(e);
+			if(binding) {
+				var model = binding.model;
+				var diff = self.metadata.modelMetadata.diff(model);
+				self.pullData(binding);
+
+				return {
+					type: 'updated',
+					name: 0,
+					object: [model],
+					oldValue: model,
+					changes: diff(model)
+				};
+			}
+
+			return null;
+		};
+	}
+
+	function notNull(x) {
+		return x != null;
+	}
 
 	return NodeCollection;
 

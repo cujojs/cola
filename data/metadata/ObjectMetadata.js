@@ -35,9 +35,6 @@ define(function(require) {
 	}
 
 	ObjectMetadata.prototype = {
-		map: function(object, f) {
-			return f(object, this.model);
-		},
 
 		diff: function(before) {
 			var snapshot = Object.keys(before).reduce(function(snapshot, key) {

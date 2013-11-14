@@ -14,69 +14,10 @@ var app = express();
 
 var when = require('when');
 var nodefn = require('when/node/function');
-var mediate = require('../../mediate');
-var ArrayMetadata = require('../../data/metadata/ArrayMetadata');
-var ObjectMetadata = require('../../data/metadata/ObjectMetadata');
-var observe = require('../../data/transaction/observe');
-var transaction = require('../../data/transaction');
-var queue = require('../../lib/queue');
 var fs = require('fs');
 
 var readFile = nodefn.lift(fs.readFile);
 var writeFile = nodefn.lift(fs.writeFile);
-var mediator;
-var timeout;
-
-var observer = { set: console.log, update: doSync };
-var datasource = observe(observer, transaction(queue(), jsonArrayFileStore('./todos.json')));
-
-var controller = {
-	list: function(todos) {
-		return todos;
-	},
-
-	create: function(todos, todo) {
-		todos.push(todo);
-	},
-
-	patch: function(todos, patch, id) {
-		todos.some(function(t) {
-			if(t.id === id) {
-
-				Object.keys(patch).reduce(function(todo, key) {
-					todo[key] = patch[key];
-					return todo;
-				}, t);
-
-				return true;
-			}
-		});
-	},
-
-	update: function(todos, todo, id) {
-		todos.some(function(t, i, todos) {
-			if(t.id === id) {
-				todos[i] = todo;
-				return true;
-			}
-		});
-	},
-
-	remove: function(todos, id) {
-		todos.some(function(t, i, todos) {
-			if(t.id === id) {
-				todos.splice(i, 1);
-				console.log('REMOVED', i, id, t, todos);
-				return true;
-			}
-		});
-	}
-};
-
-// Server still uses mediate() because I haven't had time to update it
-// It works just fine, tho.
-mediator = mediate(datasource, controller, observer);
-mediator.refresh();
 
 app.configure(function () {
 	// used to parse JSON object given in the body request
@@ -86,93 +27,109 @@ app.configure(function () {
 	app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
 
-makeJsonRestEndpoint(app, '/todos', controller);
+var todos = readFile('todos.json')
+	.then(JSON.parse)
+	.otherwise(generateData);
+
+makeJsonRestEndpoint(app, '/todos');
 
 app.listen(8080);
 
-function makeJsonRestEndpoint(app, baseUrl, handler) {
+function withTodos(response, f) {
+	return when(todos, function(todos) {
+		return when(f(todos), function(result) {
+			if(result) {
+				response.json(result);
+			} else {
+				response.send(201);
+			}
+			return writeFile('todos.json', JSON.stringify(todos));
+		});
+	})
+	.otherwise(function(e) {
+		console.error(e.stack);
+		response.status(e.status || 404).send(e.toString());
+	});
+}
+
+function makeJsonRestEndpoint(app, baseUrl) {
 	app.get(baseUrl, function (request, response) {
-		handler.list().then(function(data) {
-			console.log('list', data);
-			response.json(data);
-		}).otherwise(error)
+		withTodos(response, function(todos) {
+			var arr = [];
+			for(var id in todos) {
+				arr.push(todos[id]);
+			}
+			return arr;
+		});
 	});
 
 	app.post(baseUrl, function (request, response) {
-		controller.create(request.body).then(function() {
-			response.send(200);
-		}).otherwise(error);
+		withTodos(response, function(todos) {
+			var todo = request.body;
+			todos[todo.id] = todo;
+		})
 	});
 
+	app.patch(baseUrl, function(request, response) {
+		withTodos(response, function(todos) {
+			var patches = request.body;
+			patches.forEach(function(patch) {
+//				console.log(patch.op, patch.path);
+				if(patch.op === 'add') {
+					todos[patch.path] = patch.value;
+				} else if(patch.op === 'replace') {
+					if(patch.path in todos) {
+						todos[patch.path] = patch.value;
+					}
+				} else if(patch.op === 'remove') {
+					delete todos[patch.path];
+				}
+			});
+		});
+	})
+
 	app.patch(baseUrl + '/:id', function(request, response) {
-		console.log('patch', request.body);
-		controller.patch(request.body, request.params.id).then(function() {
-			response.send(200);
-		}).otherwise(error)
+		withTodos(response, function(todos) {
+			var patch = request.body;
+			var todo = todos[request.params.id];
+			if(!todo) {
+				throw new Error('Not found');
+			} else {
+				for(var p in patch) {
+					todo[p] = patch[p];
+				}
+			}
+		});
 	});
 
 	app.put(baseUrl + '/:id', function(request, response) {
-		console.log('update', request.body);
-		controller.update(request.body, request.params.id).then(function() {
-			response.send(200);
-		}).otherwise(error)
+		withTodos(response, function(todos) {
+			var update = request.body;
+			var todo = todos[request.params.id];
+			if(todo) {
+				todos[request.param.id] = update;
+			}
+		});
 	});
 
 	app.delete(baseUrl + '/:id', function (request, response) {
-		controller.remove(request.params.id).then(function() {
-			response.send(200);
-		}).otherwise(error);
+		withTodos(response, function(todos) {
+			delete todos[request.params.id];
+		});
 	});
-
-	function error(e) {
-		response.send(400, e.stack);
-	}
 
 	return app;
 }
 
-function jsonArrayFileStore(file) {
-	var array, metadata;
-
-	metadata = new ArrayMetadata(new ObjectMetadata());
-
-	return {
-		metadata: metadata,
-
-		fetch: function() {
-			console.log('REFETCH');
-			if(!array) {
-				array = readFile(file)
-					.then(JSON.parse)
-					.otherwise(generateData);
-			}
-
-			return array;
-		},
-
-		update: function(changes) {
-			console.log('CHANGES', changes);
-			return when(array, function(a) {
-				array = metadata.patch(a, changes);
-				var json = JSON.stringify(array);
-				console.log('syncing todos', json);
-				return writeFile(file, json);
-			}).otherwise(console.error);
-		}
-	};
-}
-
 function generateData() {
-	var todos = [];
-//	for(var i = 1; i<=10000; i++) {
-//		todos.push({
-//			id: String(i),
-//			description: 'todo ' + i
-//		});
-//	}
-//
+	var todos = {};
+	for(var i = 1; i<=10000; i++) {
+		todos[i] = {
+			created: Date.now(),
+			id: String(i),
+			description: 'todo ' + i
+		};
+	}
+
 	return todos;
 }
-
-function doSync() {}
-

@@ -29,7 +29,6 @@ define(function(require) {
 
 		function fetch(options) {
 			if(!cachedData) {
-				cachedChanges = [];
 				cachedData = datasource.fetch(options)
 			}
 
@@ -41,7 +40,7 @@ define(function(require) {
 				cachedData = fetch();
 			}
 
-			cachedChanges = cachedChanges.concat(changes);
+			cachedChanges = (cachedChanges||[]).concat(changes);
 
 			return when(cachedData, function(value) {
 				return patch(value, changes);
@@ -52,10 +51,13 @@ define(function(require) {
 			return datasource.metadata.patch(data, changes);
 		}
 
-		function commit() {
+		function commit(refetch) {
 			var changes = cachedChanges;
 			cachedChanges = null;
-			cachedData = null;
+
+			if(refetch) {
+				cachedData = null;
+			}
 
 			return queue(function() {
 				return when(datasource.update(changes)).otherwise(handleFailure);

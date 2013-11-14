@@ -9,6 +9,7 @@
 		"poly": "~0.6",
 		"wire": "~0.10",
 		"rest": "~0.9",
+		"most": "~0",
 		"backbone": "backbone-amd#~1",
 		"backbone.localStorage": "~1",
 		"underscore": "underscore-amd#~1",

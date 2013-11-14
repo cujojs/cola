@@ -34,7 +34,6 @@
                 wire: { location: './bower_components/wire-next',
                     config: { moduleLoader: 'curl/loader/cjsm11' } },
                 when: { location: './bower_components/when', main: 'when' },
-                meld: { location: './bower_components/meld', main: 'meld' },
                 rest: { location: './bower_components/rest', main: 'rest' },
                 backbone: { location: './bower_components/backbone', main: 'backbone' },
                 underscore: { location: './bower_components/underscore', main: 'underscore' },
@@ -58,9 +57,10 @@
 </form>
 
 <ul data-bard-section="todos" class="todo-list">
-    <li><input type="checkbox" name="completed" class="toggle" data-bard-bind="checked:completed"><span data-bard-bind="textContent:description" class="todo-description"></span>
+    <li><input type="checkbox" name="completed" class="toggle" data-bard-bind="checked:completed"><span data-bard-bind="text:description" class="todo-description"></span>
     <span class="remove">&times;</span></li>
 </ul>
+
 
 </body>
 </html>

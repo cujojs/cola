@@ -1,19 +1,19 @@
 define(function(require) {
 
-	var most, when, fn, domReady, qs, init, config, validateTodo, mediate,
-		queue, transaction, transactional, observe, crudMethodDispatcher,
-		objectMethodAdapter, objectEventAdapter, reactiveCollection, reactiveModel,
+	var most, when, fn, cb, domReady, qs, init, config, validateTodo, mediate,
+		queue, transaction, transactional, observe, reactiveCollection, reactiveModel,
 		bindByAttr;
 
 	// The init module variants bootstrap specific controllers and datasources
 	// for plain objects, or backbone, or Rest, etc.
 	// See init.js, init-bb.js, init-rest.js
 	// NOTE: For more init-rest notes, see server.js
-	init = require('./init');
+	init = require('./init-rest');
 
 	most = require('most');
 	when = require('when');
 	fn = require('when/function');
+	cb = require('when/callbacks');
 	domReady = require('curl/domReady');
 
 	mediate = require('cola/mediate');
@@ -23,9 +23,6 @@ define(function(require) {
 	reactiveModel = require('cola/view/model');
 	bindByAttr = require('cola/view/bind/byAttr');
 	observe = require('cola/data/transaction/observe');
-	objectEventAdapter = require('cola/data/transaction/eventAdapter');
-	objectMethodAdapter = require('cola/data/transaction/objectMethodAdapter');
-	crudMethodDispatcher = require('cola/data/transaction/crudMethodDispatcher');
 
 	validateTodo = require('./validateTodo');
 
@@ -41,132 +38,81 @@ define(function(require) {
 	// Make the datasource transactional and setup the todoList to observe
 	// the transaction outcome
 	transactional = transaction(queue());
-	var datasource = observe(todoList, transactional(config.datasource));
+	var datasource = transactional(config.datasource);
+	var controller = config.controller;
 
-	// Fetch initial data, populate the view, and initialize event handling
-	most.fromArray(datasource.fetch()).each(todoList.add);
-//	todoList.set(most.fromArray(datasource.fetch()));
-	domReady(initEvents);
-//	initEvents();
+	var mediator = mediate(datasource, controller, todoList);
+
+	when.join(mediator.refresh(), cb.call(domReady)).then(initEvents);
+
+	var online = navigator.onLine;
 
 	// Setup event handling
 	function initEvents() {
-		formCreateStream(qs('.todo-form'), todoForm)
-			.map(function(todo)  {
-				return [todo, datasource.fetch()];
-			})
-			.flatMap(function(newTodoAndTodos) {
-				return most.fromPromise(when(newTodoAndTodos[1], function(todos) {
-					var diff = datasource.metadata.diff(todos);
+		most.fromEventTarget(window, 'online').each(function() {
+			var wasOffline = !online;
+			online = true;
+			document.body.classList.remove('offline');
+			if(wasOffline && online) {
+				commitTransaction();
+			}
+		});
 
-					// This is the only data or application specific code here
-					var todo = newTodoAndTodos[0];
-					todo.id = defaultId();
-					todo.created = Date.now();
-					todos.push(todo);
+		most.fromEventTarget(window, 'offline').each(function() {
+			online = false;
+			document.body.classList.add('offline');
+		});
 
-					return diff(todos);
-				}));
+		most.fromEventTarget(qs('.todo-form'), 'submit')
+			.tap(preventDefault)
+			.map(todoForm.get)
+			.map(function(e) {
+				console.log(e);
+				return controller.create(e);
 			})
-			.map(completeTransaction)
+			.flatMap(most.fromPromise)
+			.map(commitIfOnline)
+//			.flatMap(most.fromPromise)
 			.each(todoForm.clear);
 
+		todoList.observe()
+			.map(updateTransaction)
+			.flatMap(most.fromPromise)
+			.each(commitIfOnline);
+
 		most.fromEventTarget(qs('.todo-list'), 'click')
-			.filter(function(e) { return e.target.classList.contains('remove'); })
+			.filter(targetHasClass('remove'))
 			.map(todoList.find)
-			.map(function(todo)  {
-				return [todo, datasource.fetch()];
+			.map(function(x)  {
+				return controller.remove(x);
 			})
-			.flatMap(function(todoAndTodos) {
-				return most.fromPromise(when(todoAndTodos[1], function(todos) {
-					var diff = datasource.metadata.diff(todos);
-
-					// This is the only data or application specific code here
-					var todo = todoAndTodos[0];
-					todos.some(function(t, i, todos) {
-						if(t.id === todo.id) {
-							todos.splice(i, 1);
-							return true;
-						}
-					});
-
-					return diff(todos);
-				}));
-			})
-			.each(completeTransaction);
-
-
-		most.fromEventTarget(qs('.todo-list'), 'change')
-			.filter(function(e) { return e.target.classList.contains('toggle'); })
-			.map(todoList.find)
-			.map(function(todo) {
-				return [todo, datasource.fetch()]
-			})
-			.flatMap(function(todoAndTodos) {
-				return most.fromPromise(when(todoAndTodos[1], function(todos) {
-					var todo = todoAndTodos[0];
-
-					// Synthesizing a change record that should have come
-					// from the view, i.e. this would be automagic
-					todo.completed = !todo.completed;
-					var name = findIndexById(datasource.metadata.model.id, todos, todo);
-					var object = {};
-					object[name] = todo;
-					return [{
-						type: 'updated',
-						name: name,
-						object: object,
-						oldValue: todos[name]
-					}];
-
-				}));
-			})
-			.each(completeTransaction);
+			.flatMap(most.fromPromise)
+			.each(commitIfOnline);
 
 		most.fromEventTarget(qs('.todo-form'), 'click')
-			.filter(function(e) { return e.target.classList.contains('remove-completed'); })
-			.map(function()  {
-				return datasource.fetch();
+			.filter(targetHasClass('remove-completed'))
+			.map(function(e)  {
+				return controller.removeCompleted(e);
 			})
-			.map(function(todos) {
-				var diff = datasource.metadata.diff(todos);
-
-				// This is the only data or application specific code here
-				todos = todos.filter(function(todo) {
-					return !todo.completed;
-				});
-
-				return diff(todos);
-			})
-			.each(completeTransaction);
+			.flatMap(most.fromPromise)
+			.each(commitIfOnline);
 
 		most.fromEventTarget(qs('.todo-form'), 'click')
-			.filter(function(e) { return e.target.classList.contains('complete-all'); })
-			.flatMap(function()  {
-				return most.of(datasource.fetch());
+			.filter(targetHasClass('complete-all'))
+			.map(function(e)  {
+				return controller.completeAll(e);
 			})
-			.map(function(todos) {
-				var diff = datasource.metadata.diff(todos);
-
-				// This is the only data or application specific code here
-				todos = todos.map(function(todo) {
-					todo.completed = true;
-					return todo;
-				});
-
-				return diff(todos);
-			})
-			.each(completeTransaction);
-
+			.flatMap(most.fromPromise)
+			.each(commitIfOnline);
 	}
 
 	// Create the todos bard list view
 	function createTodoListView(node, metadata) {
 		return reactiveCollection(node, {
 			sectionName: 'todos',
-			sortBy: 'created', // FIXME
+			sortBy: 'description', // FIXME
 			binder: bindByAttr(),
-			proxy: metadata.model
+			metadata: metadata
 		});
 	}
 
@@ -178,38 +124,14 @@ define(function(require) {
 		});
 	}
 
-	var id = 1;
-
-	function formCreateStream(node, view) {
-		return most.fromEventTarget(node, 'submit')
-			.tap(preventDefault).map(view.get);
-	}
-
-	function defaults(hash) {
-		return function(obj) {
-			return Object.keys(hash).reduce(function(obj, key) {
-				var value;
-				if(!(key in obj)) {
-					value = hash[key];
-					obj[key] = typeof value === 'function' ? value() : value;
-				}
-				return obj;
-			},obj);
-		}
-	}
-
-	function defaultId() {
-		return '' + Date.now() + id++;
-	}
-
-	// Apply changes to the transactional datasource and commit its transaction
-	function completeTransaction(changes) {
-		return when(updateTransaction(changes), commitTransaction);
-//		return when(changes, updateTransaction).then(commitTransaction);
-	}
-
 	function updateTransaction(changes) {
 		return datasource.update(changes);
+	}
+
+	function commitIfOnline() {
+		if(online) {
+			return commitTransaction();
+		}
 	}
 
 	function commitTransaction() {
@@ -218,22 +140,14 @@ define(function(require) {
 		}
 	}
 
-	// This is used when synthesizing a change record above.  It can go away
-	// once view.observe is integrated.
-	function findIndexById(id, array, itemToFind) {
-		var found = -1;
-		array.some(function(item, i) {
-			if(id(item) === id(itemToFind)) {
-				found = i;
-				return true;
-			}
-		});
-
-		return found;
-	}
-
 	function preventDefault(e) {
 		e.preventDefault();
+	}
+
+	function targetHasClass(cls) {
+		return function(e) {
+			return e.target.classList.contains(cls);
+		};
 	}
 
 });

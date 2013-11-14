@@ -10,8 +10,9 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var ArrayMetadata, ObjectMetadata;
+	var ArrayMetadata, ArrayIndex, ObjectMetadata;
 
+	ArrayIndex = require('./metadata/ArrayIndex');
 	ArrayMetadata = require('./metadata/ArrayMetadata');
 	ObjectMetadata = require('./metadata/ObjectMetadata');
 
@@ -35,30 +36,48 @@ define(function(require) {
 		this._storage = options.localStorage || window.localStorage;
 		this._initStorage = options.init || initWithArray;
 
-		this.metadata = options.metadata || createDefaultMetadata(options.id);
+		this.metadata = options.metadata || this._createDefaultMetadata(options.id);
+
+		this._index = new ArrayIndex(this.metadata.model.id);
 	}
 
 	LocalStorage.prototype = {
 		fetch: function(/*options*/) {
 			var data = this._storage.getItem(this._namespace);
-			return data == null ? this._initStorage() : JSON.parse(data);
+			data = data == null ? this._initStorage() : JSON.parse(data);
+
+			this._index.init(data);
+
+			return data;
 		},
 
 		update: function(changes) {
-			var data = this.metadata.patch(this.fetch(), changes);
-			this._storage.setItem(this._namespace, JSON.stringify(data));
-		}
+			var data = this.fetch();
 
+			data = this.metadata.patch(data, changes);
+
+			this._storage.setItem(this._namespace, JSON.stringify(data));
+			this._index.invalidate();
+		},
+
+		_createDefaultMetadata: function(id) {
+			var metadata = new ArrayMetadata(new ObjectMetadata(id), getIndex);
+			var self = this;
+
+			return metadata;
+
+			function getIndex(change) {
+				return change.type === 'updated'
+					? self._index.find(change.object[change.name])
+					: change.name;
+			}
+		}
 	};
 
 	return LocalStorage;
 
 	function initWithArray() {
 		return [];
-	}
-
-	function createDefaultMetadata(id) {
-		return new ArrayMetadata(new ObjectMetadata(id))
 	}
 
 });

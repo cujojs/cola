@@ -7,6 +7,7 @@ define(function() {
 
 		create: function(todos, todo) {
 			todo.id = '' + Date.now() + id++;
+			todo.created = Date.now();
 			todos.push(todo);
 		},
 
