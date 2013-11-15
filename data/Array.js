@@ -31,7 +31,7 @@ define(function(require) {
 			new ObjectMetadata(options && options.id), getIndex);
 
 		this._index = new ArrayIndex(this.metadata.model.id);
-		this._index.init(array);
+		this._index.init(this._array);
 
 		var index = this._index;
 		function getIndex(change) {
