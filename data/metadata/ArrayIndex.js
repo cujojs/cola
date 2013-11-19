@@ -16,14 +16,12 @@ define(function() {
 	}
 
 	ArrayIndex.prototype = {
-		init: function(data) {
-			if(!this.index) {
-				this.index = createIndex(this.identify, data);
-			}
-		},
-
-		invalidate: function() {
-			delete this.index;
+		rebuild: function(data) {
+			var id = this.identify;
+			this.index = data.reduce(function(index, item, i) {
+				index[id(item)] = i;
+				return index;
+			}, {});
 		},
 
 		find: function(x) {
@@ -32,13 +30,6 @@ define(function() {
 	};
 
 	return ArrayIndex;
-
-	function createIndex(id, array) {
-		return array.reduce(function(index, item, i) {
-			index[id(item)] = i;
-			return index;
-		}, {});
-	}
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));

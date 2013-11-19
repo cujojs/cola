@@ -46,7 +46,7 @@ define(function(require) {
 			var data = this._storage.getItem(this._namespace);
 			data = data == null ? this._initStorage() : JSON.parse(data);
 
-			this._index.init(data);
+			this._index.rebuild(data);
 
 			return data;
 		},
@@ -57,7 +57,7 @@ define(function(require) {
 			data = this.metadata.patch(data, changes);
 
 			this._storage.setItem(this._namespace, JSON.stringify(data));
-			this._index.invalidate();
+			this._index.rebuild(data);
 		},
 
 		_createDefaultMetadata: function(id) {

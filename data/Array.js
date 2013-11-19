@@ -31,7 +31,7 @@ define(function(require) {
 			new ObjectMetadata(options && options.id), getIndex);
 
 		this._index = new ArrayIndex(this.metadata.model.id);
-		this._index.init(this._array);
+		this._index.rebuild(this._array);
 
 		var index = this._index;
 		function getIndex(change) {
@@ -48,8 +48,7 @@ define(function(require) {
 
 		update: function(changes) {
 			this._array = this.metadata.patch(this._array, changes);
-			this._index.invalidate();
-			this._index.init(this._array);
+			this._index.rebuild(this._array);
 		}
 	};
 
