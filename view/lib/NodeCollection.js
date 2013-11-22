@@ -5,7 +5,6 @@ define(function (require) {
 	var base = require('./base');
 	var dom = require('./dom');
 	var search = require('./search');
-	var iterator = require('../../lib/iterator');
 	var most = require('most');
 
 	/**
