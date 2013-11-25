@@ -9,23 +9,28 @@
  */
 
 (function(define) { 'use strict';
-define(function() {
+define(function(require) {
 
-	var removed, patchHandlers;
+	var ArrayIndex, removed, patchHandlers;
+
+    ArrayIndex = require('./ArrayIndex');
 
 	// marker for mark-and-sweep array item removal
 	removed = {};
 
 	// handlers for patch operation types
 	patchHandlers = {
-		new: function (array, index, item, identify) {
+		new: function (array, index, item, id, identify) {
 			var existing = array[index];
-			if (!(existing && identify(existing) == identify(item))) {
+			if (!(existing && identify(existing) === id)) {
 				array[index] = item;
 			}
 		},
-		updated: function (array, index, item) {
-			array[index] = item;
+		updated: function (array, index, item, id, identify) {
+            var existing = array[index];
+            if (existing && identify(existing) === id) {
+                array[index] = item;
+            }
 		},
 		deleted: function (array, index) {
 			array[index] = removed;
@@ -39,10 +44,9 @@ define(function() {
 	 * @param {function?} diffItem diffing function for items in the array
 	 * @constructor
 	 */
-	function ArrayMetadata(itemMetadata, getIndex) {
+	function ArrayMetadata(itemMetadata) {
 		this.model = itemMetadata.model;
 		this.modelMetadata = itemMetadata;
-		this._getIndex = getIndex || defaultGetIndex;
 	}
 
 	ArrayMetadata.prototype = {
@@ -92,15 +96,20 @@ define(function() {
 				return array;
 			}
 
-			var id = this.model.id;
-			var getIndex = this._getIndex;
+            var identify = this.model.id;
+            var index = new ArrayIndex(identify, array);
 
 			return changes.reduce(function(array, change) {
-				var handler = patchHandlers[change.type];
+				var handler, item, id;
+
+                handler = patchHandlers[change.type];
 
 				if(handler) {
-					handler(array, getIndex(change),
-						change.object[change.name], id);
+                    item = change.type === 'deleted' ? change.oldValue : change.object[change.name];
+                    id = identify(item);
+					handler(array,
+                        change.type === 'updated' ? index.find(id) : change.name,
+                        item, id, identify);
 				}
 
 				return array;
@@ -194,9 +203,5 @@ define(function() {
 		return changes;
 	}
 
-	function defaultGetIndex(change) {
-		return change.name;
-	}
-
 });
-}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
+}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

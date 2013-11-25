@@ -11,25 +11,22 @@
 (function(define) { 'use strict';
 define(function() {
 
-	function ArrayIndex(identify) {
-		this.identify = identify;
-	}
+    function ArrayIndex(identify, array) {
+        this.index = createIndex(identify, array);
+    }
 
-	ArrayIndex.prototype = {
-		rebuild: function(data) {
-			var id = this.identify;
-			this.index = data.reduce(function(index, item, i) {
-				index[id(item)] = i;
-				return index;
-			}, {});
-		},
+    ArrayIndex.prototype.find = function(id) {
+        return this.index[id];
+    };
 
-		find: function(x) {
-			return this.index[this.identify(x)];
-		}
-	};
+    return ArrayIndex;
 
-	return ArrayIndex;
+    function createIndex(id, array) {
+        return array.reduce(function (index, item, i) {
+            index[id(item)] = i;
+            return index;
+        }, {});
+    }
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
