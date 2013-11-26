@@ -11,10 +11,11 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when, most, createProxy, injectArgument, observe;
+	var when, most, atomically, createProxy, injectArgument, observe;
 
 	when = require('when');
 	most = require('most');
+	atomically = require('./lib/atomically');
 	createProxy = require('./lib/proxy');
 	injectArgument = require('./data/transaction/injectArgument');
 	observe = require('./data/transaction/observe');
@@ -53,19 +54,13 @@ define(function(require) {
 
 	function transactionInterceptor(datasource, injector) {
 		return function(obj, method, args) {
-			return when(datasource.fetch(), function(data) {
-				var diff, correlate;
+			return atomically(function(data) {
 
-				diff = datasource.metadata.diff(data);
-				correlate = injector(data, obj, args);
-
+				var correlate = injector(data, obj, args);
 				var result = obj[method].apply(obj, args);
-				return when(result, updateTransaction);
 
-				function updateTransaction(result) {
-					return datasource.update(diff(correlate(result))).yield(result);
-				}
-			});
+				return correlate(result);
+			}, datasource);
 		};
 	}
 
