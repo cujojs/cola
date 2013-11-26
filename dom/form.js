@@ -35,7 +35,7 @@ define(function () {
 
 			if(!filter(el, name, value)) return;
 
-			if((el.length && el.type !== 'select-one') || (el.options && el.multiple)) {
+			if((el.length && el.type !== 'select-one') || isMultiSelect(el)) {
 				setGroupValue(el, value);
 			} else {
 				setElementValue(el, value);
@@ -68,7 +68,7 @@ define(function () {
 
 			el.checked = !!value;
 
-		} else if(el.multiple && el.options) {
+		} else if(isMultiSelect(el)) {
 
 			if(!Array.isArray(value)) {
 				el.value = textValue(value);
@@ -79,6 +79,10 @@ define(function () {
 		} else {
 			el.value = textValue(value);
 		}
+	}
+
+	function isMultiSelect(el) {
+		return el.type === 'select-multiple';
 	}
 
 	function setMultiSelectValue(select, values) {
