@@ -35,7 +35,7 @@ define(function () {
 
 			if(!filter(el, name, value)) return;
 
-			if(el.length) {
+			if((el.length && el.type !== 'select-one') || (el.options && el.multiple)) {
 				setGroupValue(el, value);
 			} else {
 				setElementValue(el, value);
