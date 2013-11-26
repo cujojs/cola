@@ -53,7 +53,7 @@ define(function(require) {
 			}
 
 			return changes.reduce(function(object, change) {
-				var handler = handlers[change.type];
+				var handler = patchHandlers[change.type];
 
 				if(handler) {
 					handler(object, change.name,
