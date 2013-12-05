@@ -11,27 +11,19 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when, rest, pathPrefix, entity, mime, location,
-		ArrayIndex, ArrayMetadata, ObjectMetadata, entityUpdaters;
+	var when, rest, entity, mime, pathPrefix, location,
+		ArrayMetadata, ObjectMetadata, entityUpdateStrategy;
 
 	when = require('when');
 
 	rest = require('rest');
-	pathPrefix = require('rest/interceptor/pathPrefix');
 	entity = require('rest/interceptor/entity');
 	mime = require('rest/interceptor/mime');
+	pathPrefix = require('rest/interceptor/pathPrefix');
 	location = require('rest/interceptor/location');
 
-	ArrayIndex = require('cola/data/metadata/ArrayIndex');
 	ArrayMetadata = require('cola/data/metadata/ArrayMetadata');
 	ObjectMetadata = require('cola/data/metadata/ObjectMetadata');
-
-	function defaultClient() {
-		return rest
-			.chain(mime, { mime: 'application/json' })
-			.chain(location)
-			.chain(entity);
-	}
 
 	/**
 	 * A rest.js (cujoJS/rest) based datasource.
@@ -48,92 +40,68 @@ define(function(require) {
 	 * }} options
 	 * @constructor
 	 */
-	function Rest(path, options) {
+	function Rest(client, options) {
 		if(!options) {
 			options = {};
 		}
 
-		var client = options.client || defaultClient();
-		this._client = client.chain(pathPrefix, { prefix: path });
-
-//		this.metadata = options.metadata || defaultMetadata();
-		this.metadata = new ArrayMetadata(
-			new ObjectMetadata(options && options.id), getIndex);
-		this._index = new ArrayIndex(this.metadata.model.id);
-
-		var index = this._index;
-		function getIndex(change) {
-			return change.type === 'updated'
-				? index.find(change.object[change.name])
-				: change.name;
-		}
+		this._client = typeof client === 'function' ? client : defaultClient(client);
 
 		this._options = options;
-
-		this._strategy = options.jsonPatch
-			? jsonPatchRestStrategy
-			: simpleRestStrategy;
-
+		this.metadata = options.metadata
+			|| new ArrayMetadata(new ObjectMetadata(options && options.id));
 	}
 
 	Rest.prototype = {
-		fetch: function(options) {
-			var self = this;
-			return this._client(options).tap(function(data) {
-				self._index.init(data);
-				return data;
-			});
+		fetch: function(dataset) {
+			return this._client(dataset.path);
 		},
 
-		update: function(changes) {
-			return this._strategy(this._client, this.metadata.model.id, this._options, changes);
+		update: function(changes, dataset) {
+			var client = this._client;
+			var id = dataset.metadata.model.id;
+			var getPath = getEntityPath(dataset, id);
+			var enablePatch = this._options.patch;
+
+			return when.reduce(changes, function (_, change) {
+				var entity, updateMethod;
+
+				if (change.type === 'new') {
+					entity = change.object[change.name];
+					return client({
+						path: dataset.path,
+						method: 'POST',
+						entity: entity
+					});
+				}
+
+				if (change.type === 'updated') {
+					entity = change.object[change.name];
+					updateMethod = enablePatch && 'changes' in change ? 'patch' : 'put';
+
+					return client(entityUpdateStrategy[updateMethod](getPath(entity), entity, change));
+				}
+
+				if (change.type === 'deleted') {
+					return client({
+						method: 'DELETE',
+						path: getPath(change.oldValue)
+					});
+				}
+			}, void 0);
 		}
 	};
 
-	function simpleRestStrategy(client, id, options, changes) {
-		var enablePatch = options.patch;
-
-		return when.reduce(changes, function (_, change) {
-			var entity, entityId, updateMethod;
-
-			if (change.type === 'new') {
-				entity = change.object[change.name];
-				return client({
-					method: 'POST',
-					entity: entity
-				});
-			}
-
-			if (change.type === 'updated') {
-				entity = change.object[change.name];
-				entityId = id(entity);
-				updateMethod = enablePatch && 'changes' in change
-					? 'patch'
-					: 'put';
-
-				return client(entityUpdaters[updateMethod](change, entity, entityId));
-			}
-
-			if (change.type === 'deleted') {
-				entity = change.oldValue;
-				return client({
-					method: 'DELETE',
-					path: id(entity)
-				});
-			}
-		}, void 0);
-	}
-
-	entityUpdaters = {
-		put: function(change, entity, id) {
+	entityUpdateStrategy = {
+		put: function(entityPath, entity) {
 			return {
 				method: 'PUT',
-				path: id,
+				path: entityPath,
 				entity: entity
 			};
 		},
 
-		patch: function(change, entity, id) {
+		patch: function(entityPath, entity, change) {
 			var patch = change.changes.reduce(function(patch, change) {
 				patch[change.name] = entity[change.name];
 				return patch;
@@ -141,44 +109,25 @@ define(function(require) {
 
 			return {
 				method: 'PATCH',
-				path: id,
+				path: entityPath,
 				entity: patch
 			}
 		}
 	};
 
-	function jsonPatchRestStrategy(client, id, options, changes) {
-		var patch = changes.reduce(function (patch, change) {
-			var entity;
+	function getEntityPath(dataset, id) {
+		return function(entity) {
+			return dataset.path + '/' + id(entity);
+		};
+	}
 
-			entity = change.object[change.name];
+	function defaultClient(baseUrl) {
+		var client = typeof baseUrl === 'string' ? rest.chain(pathPrefix, { prefix: baseUrl }) : rest;
 
-			if (change.type === 'new') {
-				patch.push({
-					op: 'add',
-					path: id(entity),
-					value: entity
-				});
-			} else if (change.type === 'updated') {
-				patch.push({
-					op: 'replace',
-					path: id(entity),
-					value: entity
-				});
-			} else if (change.type === 'deleted') {
-				patch.push({
-					op: 'remove',
-					path: id(change.oldValue)
-				});
-			}
-
-			return patch;
-		}, []);
-
-		return client({
-			method: 'PATCH',
-			entity: patch
-		});
+		return client
+			.chain(mime, { mime: 'application/json' })
+			.chain(location)
+			.chain(entity);
 	}
 
 	return Rest;

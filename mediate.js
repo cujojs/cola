@@ -20,33 +20,44 @@ define(function(require) {
 	injectArgument = require('./data/transaction/injectArgument');
 	observe = require('./data/transaction/observe');
 
-	return function mediate(datasource, controller, observer, options) {
-		var pointcut, injector;
+	mediate.view = mediateView;
+	mediate.controller = mediateController;
 
-		if(!options) {
-			options = {};
-		}
+	return mediate;
 
-		// TODO: Instead of pointcut, accept a capability mapping object
-		injector = options.injector || injectArgument();
-		pointcut = options.pointcut || transactionPointcut;
+	function mediate(view, controller, dataset) {
+		dataset = observe(view, dataset);
 
-		if(observer) {
-			datasource = observe(observer, datasource);
-		}
+		return {
+			view: mediateView(view, dataset),
+			controller: mediateController(controller, dataset)
+		};
+	}
 
-		refresh();
-		return createProxy(transactionInterceptor(datasource, injector), pointcut, controller);
+	function mediateView(view, dataset) {
+		return Object.create(view, {
+			refresh: {
+				value: function() {
+					var self = this;
+					return when(dataset.fetch(), function(data) {
+						return Array.isArray(data)
+							? most.fromArray(data) : most.of(data);
+					}).then(function(stream) {
+						self.set(stream).forEach(noop);
+					});
+				},
+				configurable: true,
+				writable: true
+			}
+		});
+	}
 
-		function refresh() {
-			return when(datasource.fetch(), function(data) {
-				return Array.isArray(data)
-					? most.fromArray(data) : most.of(data);
-			}).then(function(stream) {
-				stream.each(observer.add);
-			});
-		}
-	};
+	function mediateController(controller, dataset) {
+		return createProxy(
+			transactionInterceptor(dataset, injectArgument()),
+			transactionPointcut, controller);
+	}
+
 
 	function transactionPointcut(method) {
 		return /^[^_]/.test(method);
@@ -63,6 +74,8 @@ define(function(require) {
 			}, datasource);
 		};
 	}
+
+	function noop() {}
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

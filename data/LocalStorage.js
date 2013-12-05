@@ -10,10 +10,11 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var ArrayMetadata, ObjectMetadata;
+	var jsonPointer, jsonPatch, JsonMetadata;
 
-	ArrayMetadata = require('./metadata/ArrayMetadata');
-	ObjectMetadata = require('./metadata/ObjectMetadata');
+	jsonPointer = require('../lib/jsonPointer');
+	jsonPatch = require('../lib/jsonPatch');
+	JsonMetadata = require('./metadata/JsonMetadata');
 
 	/**
 	 * A LocalStorage datasource
@@ -26,37 +27,46 @@ define(function(require) {
 	 * @param {function?} options.id identifier function for data items
 	 * @constructor
 	 */
-	function LocalStorage(namespace, options) {
-		if(!options) {
-			options = {};
-		}
+	function LocalStorage(namespace, init, identify) {
+		this._namespace = namespace || '';
+		this._init = init || defaultInit;
 
-		this._namespace = namespace;
-		this._storage = options.localStorage || window.localStorage;
-		this._initStorage = options.init || initWithArray;
-
-		this.metadata = options.metadata || createDefaultMetadata(options.id);
+		this.metadata = new JsonMetadata(identify);
 	}
 
 	LocalStorage.prototype = {
-		fetch: function(/*options*/) {
-			var data = this._storage.getItem(this._namespace);
-			return data == null ? this._initStorage() : JSON.parse(data);
+		fetch: function(path) {
+			return jsonPatch.snapshot(jsonPointer.getValue(this._load(), path));
 		},
 
-		update: function(changes) {
-			var data = this.metadata.patch(this.fetch(), changes);
-			this._storage.setItem(this._namespace, JSON.stringify(data));
+		update: function(changes, path) {
+			var data = this._load();
+			jsonPointer.setValue(data, path,
+				this.metadata.patch(jsonPointer.getValue(data, path), changes));
+			this._save(data);
+		},
+
+		_load: function() {
+			var data = localStorage.getItem(this._namespace);
+			if(data == null) {
+				data = typeof this._init === 'function'
+					? this._init()
+					: this._init;
+			} else {
+				data = JSON.parse(data);
+			}
+
+			return data;
+		},
+
+		_save: function(data) {
+			localStorage.setItem(this._namespace, JSON.stringify(data));
 		}
 	};
 
 	return LocalStorage;
 
-    function createDefaultMetadata(id) {
-        return new ArrayMetadata(new ObjectMetadata(id));
-    }
-
-	function initWithArray() {
+	function defaultInit() {
 		return [];
 	}
 

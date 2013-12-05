@@ -34,8 +34,10 @@ define(function (require) {
 
 
 		return {
-			add: function(model) {
-				return rdom.insertModel(model);
+			set: function(data) {
+				return data.map(function(model) {
+					return rdom.insertModel(model);
+				});
 			},
 			update: function (changes) {
 				// changes is an array of objects: { type, object, name [, oldValue] }
