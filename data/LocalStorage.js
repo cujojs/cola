@@ -18,32 +18,22 @@ define(function(require) {
 
 	/**
 	 * A LocalStorage datasource
-	 * @param {string} namespace namespace to use to store data in localstorage
-	 * @param {object?} options
-	 * @param {object?} options.localStorage LocalStorage API to use, defaults to
-	 *  window.localStorage
-	 * @param {function?} options.init function used to initialize localStorage
-	 *  namespace when it's found to be non-existent
-	 * @param {function?} options.id identifier function for data items
 	 * @constructor
 	 */
 	function LocalStorage(namespace, init, identify) {
 		this._namespace = namespace || '';
 		this._init = init || defaultInit;
-
 		this.metadata = new JsonMetadata(identify);
 	}
 
 	LocalStorage.prototype = {
 		fetch: function(path) {
-			return jsonPatch.snapshot(jsonPointer.getValue(this._load(), path));
+			var data = this._load();
+			return jsonPointer.getValue(data, path, data);
 		},
 
-		update: function(changes, path) {
-			var data = this._load();
-			jsonPointer.setValue(data, path,
-				this.metadata.patch(jsonPointer.getValue(data, path), changes));
-			this._save(data);
+		update: function(patch) {
+			this._save(this.metadata.patch(this._load(), patch));
 		},
 
 		_load: function() {

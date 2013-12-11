@@ -26,22 +26,13 @@ define(function(require) {
 		}
 	});
 
-	function updateJsonPatch(patch, dataset) {
-		var client = this._client;
-
-		if(patch.length === 0) {
-			return when.resolve();
-		}
-
-		patch = patch.map(function(p) {
-			p.path = dataset.path + '/' + p.path;
-			return p;
-		});
-
-		return client({
-			method: 'PATCH',
-			entity: patch
-		});
+	function updateJsonPatch(patch) {
+		return patch.length === 0
+			? when.resolve()
+			: this._client({
+				method: 'PATCH',
+				entity: patch
+			});
 	}
 
 	return JsonPatch;

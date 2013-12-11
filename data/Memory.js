@@ -24,12 +24,11 @@ define(function(require) {
 
 	MemoryStorage.prototype = {
 		fetch: function(path) {
-			return jsonPatch.snapshot(jsonPointer.getValue(this._data, path));
+			return jsonPointer.getValue(this._data, path);
 		},
 
-		update: function(changes, path) {
-			var data = jsonPointer.getValue(this._data, path);
-			jsonPointer.setValue(this.metadata.patch(data, changes), path);
+		update: function(patch) {
+			this._data = this.metadata.patch(this._data, patch);
 		}
 	};
 

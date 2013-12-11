@@ -12,7 +12,7 @@
 define(function(require) {
 
 	var when, rest, entity, mime, pathPrefix, location,
-		ArrayMetadata, ObjectMetadata, entityUpdateStrategy;
+		JsonMetadata, entityUpdateStrategy;
 
 	when = require('when');
 
@@ -22,8 +22,7 @@ define(function(require) {
 	pathPrefix = require('rest/interceptor/pathPrefix');
 	location = require('rest/interceptor/location');
 
-	ArrayMetadata = require('cola/data/metadata/ArrayMetadata');
-	ObjectMetadata = require('cola/data/metadata/ObjectMetadata');
+	JsonMetadata = require('./metadata/JsonMetadata');
 
 	/**
 	 * A rest.js (cujoJS/rest) based datasource.
@@ -48,47 +47,15 @@ define(function(require) {
 		this._client = typeof client === 'function' ? client : defaultClient(client);
 
 		this._options = options;
-		this.metadata = options.metadata
-			|| new ArrayMetadata(new ObjectMetadata(options && options.id));
+		this.metadata = options.metadata || new JsonMetadata(options.id);
 	}
 
 	Rest.prototype = {
-		fetch: function(dataset) {
-			return this._client(dataset.path);
+		fetch: function(path) {
+			return this._client(path);
 		},
 
-		update: function(changes, dataset) {
-			var client = this._client;
-			var id = dataset.metadata.model.id;
-			var getPath = getEntityPath(dataset, id);
-			var enablePatch = this._options.patch;
-
-			return when.reduce(changes, function (_, change) {
-				var entity, updateMethod;
-
-				if (change.type === 'new') {
-					entity = change.object[change.name];
-					return client({
-						path: dataset.path,
-						method: 'POST',
-						entity: entity
-					});
-				}
-
-				if (change.type === 'updated') {
-					entity = change.object[change.name];
-					updateMethod = enablePatch && 'changes' in change ? 'patch' : 'put';
-
-					return client(entityUpdateStrategy[updateMethod](getPath(entity), entity, change));
-				}
-
-				if (change.type === 'deleted') {
-					return client({
-						method: 'DELETE',
-						path: getPath(change.oldValue)
-					});
-				}
-			}, void 0);
+		update: function(changes) {
 		}
 	};
 
@@ -115,14 +82,9 @@ define(function(require) {
 		}
 	};
 
-	function getEntityPath(dataset, id) {
-		return function(entity) {
-			return dataset.path + '/' + id(entity);
-		};
-	}
-
 	function defaultClient(baseUrl) {
-		var client = typeof baseUrl === 'string' ? rest.chain(pathPrefix, { prefix: baseUrl }) : rest;
+		var client = typeof baseUrl === 'string'
+			? rest.chain(pathPrefix, { prefix: baseUrl }) : rest;
 
 		return client
 			.chain(mime, { mime: 'application/json' })
