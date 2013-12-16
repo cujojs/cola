@@ -14,7 +14,9 @@ define(function(require) {
 	var createProxy = require('../lib/proxy');
 	var jsonPatch = require('../lib/jsonPatch');
 
-	function ProxyClient() {}
+	function ProxyClient(identify) {
+		this.id = identify;
+	}
 
 	ProxyClient.prototype = {
 		set: function(data) {
@@ -23,13 +25,13 @@ define(function(require) {
 		},
 
 		update: function(changes) {
-			this._shadow = jsonPatch.patch(changes, this._shadow);
-			this.data = jsonPatch.patch(changes, this.data);
+			this._shadow = jsonPatch.patch(changes, this._shadow, this.id);
+			this.data = jsonPatch.patch(changes, this.data, this.id);
 		},
 
 		sync: function() {
-			var d = jsonPatch.diff(this._shadow, this.data);
-			this._shadow = jsonPatch.patch(d, this._shadow);
+			var d = jsonPatch.diff(this._shadow, this.data, this.id);
+			this._shadow = jsonPatch.patch(d, this._shadow, this.id);
 			return d;
 		},
 
