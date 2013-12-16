@@ -16,7 +16,9 @@ define(function() {
 				return;
 			}
 
-			var index = things.findIndex(this.compare.bind(this, removed));
+			var index = things.findIndex(function(thing) {
+				return this.compare(thing, removed) === 0;
+			}, this);
 
 			if(index >= 0) {
 				things.splice(index, 1);
