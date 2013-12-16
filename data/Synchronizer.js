@@ -37,21 +37,44 @@ define(function() {
 			client.hint = scheduleSync;
 		});
 
+		var nextSync;
+
 		function scheduleSync(client) {
-			setTimeout(function() {
-				updateClients(clients, client);
+			if(nextSync) {
+				clearTimeout(nextSync);
+			}
+			nextSync = setTimeout(function() {
+				updateAllClients(clients, client);
 			}, 0);
+		}
+	}
+
+	function updateAllClients(clients, startingAt) {
+		var index;
+		clients.some(function(client, i) {
+			if(client === startingAt) {
+				index = i;
+				return true;
+			}
+		});
+
+		var remaining = clients.length;
+		while(remaining) {
+			updateClients(clients, clients[index]);
+			index = (index + 1) % clients.length;
+			remaining -= 1;
 		}
 	}
 
 	function updateClients(clients, client) {
 		var patch = client.sync();
 		if(patch && patch.length > 0) {
-			clients.forEach(function(c) {
+			clients.reduce(function(patch, c) {
 				if(c !== client) {
-					c.update(patch);
+					client.sync(c.sync(patch));
 				}
-			});
+				return patch;
+			}, patch);
 		}
 	}
 

@@ -45,11 +45,12 @@ define(function(require) {
 			return this._shadow = this._client(path);
 		},
 
-		update: function(changes) {
+		sync: function(changes) {
 
 			var identify = this.metadata.id;
 			var client = this._client;
 			var seen = {};
+			var self = this;
 
 			return when(this._shadow, send);
 
@@ -99,6 +100,8 @@ define(function(require) {
 							entity: entity
 						});
 					}
+				}).then(function() {
+					return self._shadow = self.metadata.patch(shadow, changes);
 				});
 			}
 		}

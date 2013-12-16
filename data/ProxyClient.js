@@ -24,15 +24,16 @@ define(function(require) {
 			this.data = jsonPatch.snapshot(data);
 		},
 
-		update: function(changes) {
-			this._shadow = jsonPatch.patch(changes, this._shadow, this.id);
-			this.data = jsonPatch.patch(changes, this.data, this.id);
-		},
+		sync: function(patch) {
+			if(patch && patch.length) {
+				this._shadow = jsonPatch.patch(patch, this._shadow, this.id);
+				this.data = jsonPatch.patch(patch, this.data, this.id);
+			}
 
-		sync: function() {
-			var d = jsonPatch.diff(this._shadow, this.data, this.id);
-			this._shadow = jsonPatch.patch(d, this._shadow, this.id);
-			return d;
+			var local = jsonPatch.diff(this._shadow, this.data, this.id);
+			this._shadow = jsonPatch.patch(local, this._shadow, this.id);
+
+			return local;
 		},
 
 		proxy: function(mediator) {

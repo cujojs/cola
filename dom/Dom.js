@@ -34,7 +34,7 @@ define(function(require) {
 			}
 
 			this._shadow = data;
-			this._changes = [];
+//			this._changes = [];
 			observe = this._observe = this._createObserver();
 			eachNodeEventPair(function(node, event) {
 				node.addEventListener(event, observe, false);
@@ -56,19 +56,25 @@ define(function(require) {
 			domPatch.patch(this.node, patch, this._lists);
 		},
 
-		sync: function() {
-			var d = diffDataAndDom(this._changes, this._shadow, this.node);
+		sync: function(patch) {
+			if(patch && patch.length) {
+				this._shadow = jsonPatch.patch(patch, this._shadow);
+				domPatch.patch(this.node, patch, this._lists);
+			}
+
+			var local = diffDataAndDom(this._shadow, this.node);
 //			this._changes = [];
-			this._shadow = jsonPatch.patch(d, this._shadow);
-			return d;
+			this._shadow = jsonPatch.patch(local, this._shadow);
+
+			return local;
 		},
 
 		_createObserver: function() {
 			var node = this.node;
-			var changes = this._changes = [];
+//			var changes = this._changes = [];
 			var self = this;
 			return function (e) {
-				changes.push(buildPath(e.target, node));
+//				changes.push(buildPath(e.target, node));
 				self.hint(self);
 			};
 		}
@@ -110,31 +116,37 @@ define(function(require) {
 		}, {});
 	}
 
-	function diffDataAndDom(changes, shadow, root) {
-		return changes.reduce(function (patch, path) {
-			var value = jsonPointer.getValue(shadow, path);
-			var node = domPatch.find(path, root);
-			var nodeValue;
+	function diffDataAndDom(shadow, root) {
 
+		function diff(x, node, patch, path) {
 			if(!node) {
 				patch.push({
 					op: 'remove',
 					path: path
 				});
-			} else {
-				nodeValue = node && node[guessProp(node)];
 
-				if (value !== nodeValue) {
-					patch.push({
-						op: 'replace',
-						path: path,
-						value: nodeValue
-					});
-				}
+				return patch;
+			}
+
+			if(x && (Array.isArray(x) || typeof x === 'object')) {
+				return Object.keys(x).reduce(function(patch, key) {
+					return diff(x[key], domPatch.find(key, node), patch, path ? path + '/' + key : key);
+				}, patch);
+			}
+
+			var nodeValue = node && node[guessProp(node)];
+			if (x !== nodeValue) {
+				patch.push({
+					op: 'replace',
+					path: path,
+					value: nodeValue
+				});
 			}
 
 			return patch;
-		}, []);
+		}
+
+		return diff(shadow, root, [], '');
 	}
 
 	function buildPath(start, end) {

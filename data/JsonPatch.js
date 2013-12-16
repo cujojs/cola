@@ -19,7 +19,7 @@ define(function(require) {
 	}
 
 	JsonPatch.prototype = Object.create(Rest.prototype, {
-		update: {
+		sync: {
 			value: updateJsonPatch,
 			configurable: true,
 			writable: true
@@ -27,11 +27,14 @@ define(function(require) {
 	});
 
 	function updateJsonPatch(patch) {
+		var self = this;
 		return patch.length === 0
 			? when.resolve()
 			: this._client({
 				method: 'PATCH',
 				entity: patch
+			}).then(function() {
+				self._shadow = self.metadata.patch(self._shadow, patch);
 			});
 	}
 

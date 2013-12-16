@@ -28,12 +28,22 @@ define(function(require) {
 
 	LocalStorage.prototype = {
 		get: function(path) {
-			var data = this._load();
+			var data = this._shadow = this._load();
 			return jsonPointer.getValue(data, path, data);
 		},
 
-		update: function(patch) {
-			this._save(this.metadata.patch(this._load(), patch));
+		sync: function(patch) {
+			var data = this._load();
+
+			if(patch && patch.length) {
+				this._shadow = this.metadata.patch(this._shadow, patch);
+				data = this.metadata.patch(data, patch);
+			}
+
+			var local = this.metadata.diff(this._shadow, data);
+			this._save(this.metadata.patch(this._shadow, local));
+
+			return local;
 		},
 
 		_load: function() {

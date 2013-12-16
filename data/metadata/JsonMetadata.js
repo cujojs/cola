@@ -19,13 +19,8 @@ define(function(require) {
 	}
 
 	JsonMetadata.prototype = {
-		diff: function(before) {
-			var snapshot = jsonPatch.snapshot(before);
-			var identify = this.id;
-
-			return function(after) {
-				return jsonPatch.diff(snapshot, after, identify);
-			};
+		diff: function(before, after) {
+			return jsonPatch.diff(before, after, this.id);
 		},
 
 		patch: function(x, changes) {
