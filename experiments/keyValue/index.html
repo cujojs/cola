@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script src="../run.js"></script>
+    <script src="../bower_components/curl/src/curl.js"></script>
+    <script>
+        curl(['./main']);
+    </script>
+</head>
+<body>
+<ul data-path="things">
+    <li data-list>
+        <input name="key"/>
+        <input name="value"/>
+    </li>
+</ul>
+<form data-add-thing>
+    <input type="text" name="key"/>
+    <input type="text" name="value"/>
+    <button type="submit">Add</button>
+</form>
+</body>
+</html>

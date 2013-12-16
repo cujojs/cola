@@ -12,12 +12,10 @@
 define(function(require) {
 
 	var jsonPatch = require('../../lib/jsonPatch');
-	var ObjectMetadata = require('./ObjectMetadata');
+	var id = require('./id');
 
 	function JsonMetadata(identify) {
-		this.id = identify;
-		// TODO: Remove. temporary, to appease BindableView
-		this.model = new ObjectMetadata(identify).model;
+		this.id = id(identify);
 	}
 
 	JsonMetadata.prototype = {

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script src="../run.js"></script>
+    <script src="../bower_components/curl/src/curl.js"></script>
+    <script>
+        curl(['./main']);
+    </script>
+</head>
+<body>
+    <form data-path="person">
+        <label>Name<input type="text" name="name"/></label>
+        <fieldset data-path="address">
+            <label>Street<input type="text" name="street"/></label>
+            <label>City<input type="text" name="city"/></label>
+            <label>State<input type="text" name="state"/></label>
+        </fieldset>
+    </form>
+    <button data-generate-name>Random Name</button>
+
+    <ul data-path="things">
+        <li data-list>
+            <label>
+                <input type="checkbox" name="packed" data-path="packed">
+                <span data-path="name"></span>
+            </label>
+            <span data-path="description"></span>
+        </li>
+    </ul>
+</body>
+</html>

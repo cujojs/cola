@@ -11,19 +11,19 @@
 (function(define) { 'use strict';
 define(function() {
 
-	function DocumentView(path, datasource) {
+	function DocumentView(path, source) {
 		this.path = path;
-		this.datasource = datasource;
-		this.metadata = datasource.metadata
+		this.source = source;
+		this.metadata = source.metadata
 	}
 
 	DocumentView.prototype = {
 		set: function(data, path) {
-			this.datasource.set(data, makePath(this.path, path));
+			this.source.set(data, makePath(this.path, path));
 		},
 
-		fetch: function(path) {
-			return this.datasource.fetch(makePath(this.path, path));
+		get: function(path) {
+			return this.source.get(makePath(this.path, path));
 		},
 
 		update: function(patch) {
@@ -34,7 +34,7 @@ define(function() {
 				});
 			});
 
-			return this.datasource.update(mapped);
+			return this.source.update(mapped);
 		}
 	};
 

@@ -12,7 +12,7 @@
 define(function(require) {
 
 	var when, rest, entity, mime, pathPrefix, location,
-		JsonMetadata, entityUpdateStrategy;
+		JsonMetadata, jsonPointer;
 
 	when = require('when');
 
@@ -22,21 +22,11 @@ define(function(require) {
 	pathPrefix = require('rest/interceptor/pathPrefix');
 	location = require('rest/interceptor/location');
 
+	jsonPointer = require('../lib/jsonPointer');
 	JsonMetadata = require('./metadata/JsonMetadata');
 
 	/**
 	 * A rest.js (cujoJS/rest) based datasource.
-	 * @param {function} client configured rest client to use to fetch and
-	 *  store data.
-	 * @param {{
-	 *  client: function
-	 *  patch: boolean,
-	 *  metadata: {
-	 *   model: {id: function, get:function, set:function}
-	 *   diff: function
-	 *   patch: function
-	 *  }
-	 * }} options
 	 * @constructor
 	 */
 	function Rest(client, options) {
@@ -51,33 +41,65 @@ define(function(require) {
 	}
 
 	Rest.prototype = {
-		fetch: function(path) {
-			return this._client(path);
+		get: function(path) {
+			return this._shadow = this._client(path);
 		},
 
 		update: function(changes) {
-		}
-	};
 
-	entityUpdateStrategy = {
-		put: function(entityPath, entity) {
-			return {
-				method: 'PUT',
-				path: entityPath,
-				entity: entity
-			};
-		},
+			var identify = this.metadata.id;
+			var client = this._client;
+			var seen = {};
 
-		patch: function(entityPath, entity, change) {
-			var patch = change.changes.reduce(function(patch, change) {
-				patch[change.name] = entity[change.name];
-				return patch;
-			}, {});
+			return when(this._shadow, send);
 
-			return {
-				method: 'PATCH',
-				path: entityPath,
-				entity: patch
+			function send(shadow) {
+				return when.map(changes, function(change) {
+					var entity, segments;
+					var path = change.path;
+
+					if(path[0] === '/') {
+						path = path.slice(1);
+					}
+
+					segments = path.split('/');
+					path = segments[0];
+
+					if(seen[path]) {
+						return;
+					}
+
+					seen[path] = 1;
+
+					if(segments.length === 1) {
+						if(change.op === 'add') {
+							entity = jsonPointer.getValue(shadow, path);
+							return entity !== void 0 && client({
+								method: 'POST',
+								entity: entity
+							});
+						} else if(change.op === 'replace') {
+							entity = jsonPointer.getValue(shadow, path);
+							return entity !== void 0 && client({
+								method: 'PUT',
+								path: identify(entity),
+								entity: entity
+							});
+						} else if(change.op === 'remove') {
+							return client({
+								method: 'DELETE',
+								path: identify(entity)
+							});
+						}
+					} else if(segments.length > 1) {
+						entity = jsonPointer.getValue(shadow, path);
+						return entity !== void 0 && client({
+							method: 'PUT',
+							path: identify(entity),
+							entity: entity
+						});
+					}
+				});
 			}
 		}
 	};

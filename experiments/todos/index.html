@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script src="../run.js"></script>
+    <script src="../bower_components/curl/src/curl.js"></script>
+    <script>
+        curl(['./main']);
+    </script>
+    <style>
+        ul {
+            list-style: none;
+        }
+        ul input {
+            border: none;
+            border-bottom: 1px dotted #aaa;
+        }
+        select {
+            direction: rtl;
+        }
+    </style>
+</head>
+<body>
+<form>
+    <input name="description"/>
+    <button type="submit">Add</button>
+    <button data-complete-all>Complete All</button>
+    <button data-remove-completed>Remove Completed</button>
+</form>
+
+<ul>
+    <li data-list>
+        <input type="checkbox" name="complete"/>
+        <input name="description"/>
+    </li>
+</ul>
+
+</body>
+</html>

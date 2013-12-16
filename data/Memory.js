@@ -23,7 +23,7 @@ define(function(require) {
 	}
 
 	MemoryStorage.prototype = {
-		fetch: function(path) {
+		get: function(path) {
 			return jsonPointer.getValue(this._data, path);
 		},
 

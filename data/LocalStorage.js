@@ -27,7 +27,7 @@ define(function(require) {
 	}
 
 	LocalStorage.prototype = {
-		fetch: function(path) {
+		get: function(path) {
 			var data = this._load();
 			return jsonPointer.getValue(data, path, data);
 		},

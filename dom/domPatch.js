@@ -18,38 +18,56 @@ define(function(require) {
 		patch: patch,
 		set: set,
 		applyChange: applyChange
-	}
+	};
 
 	function find(path, root) {
+		path = normalizePath(path);
+
 		if(!path) {
 			return root;
-		}
-
-		if(path[0] === '/') {
-			path = path.slice(1);
 		}
 
 		return root.querySelector(createQuery(path, true))
 			|| root.querySelector(createQuery(path, false));
 	}
 
-	function patch(node, patch) {
+	function normalizePath(path) {
+		return path && path[0] === '/' ? path.slice(1) : path;
+	}
+
+	function patch(node, patch, templates) {
 		return patch.reduce(function(root, change) {
 			var node = find(change.path, root);
 			if(node) {
 				applyChange(node, change);
+			} else {
+				var path = change.path;
+
+				path = path && path.replace(/\/[^/]+\/?$/, '');
+				var template = templates[path];
+				if(template) {
+					var parent = find(path, root);
+					if(parent) {
+						node = template.cloneNode(true);
+						node.setAttribute('data-path', normalizePath(change.path));
+						parent.appendChild(set(node, change.value, null, path));
+					}
+				}
 			}
+
+			return root;
 		}, node);
 
 	}
 
 	function applyChange(node, change) {
-		var prop = dom.guessProp(node);
-		if(change.op === 'replace') {
+		if(change.op === 'replace' || change.op === 'add') {
 			set(node, change.value);
 		} else if(change.op === 'remove') {
-			node[prop] = '';
+			node.parentNode.removeChild(node);
 		}
+
+		return node;
 	}
 
 	function createQuery(path, useName) {
@@ -62,23 +80,31 @@ define(function(require) {
 		}).join(' ');
 	}
 
-	function set(node, value) {
+	function set(node, value, generator, path) {
 		if(value != null && typeof value === 'object') {
-			return setObject(node, value);
+			return setObject(node, value, generator, path || '');
 		} else if(node) {
-			node[dom.guessProp(node)] = value;
+			node[dom.guessProp(node)] = typeof value === 'function' ? value() : value;
 		}
+
 		return node;
 	}
 
-	function setObject(node, data) {
+	function setObject(node, data, generator, path) {
 		return Object.keys(data).reduce(setValues, node);
 
 		function setValues(node, key) {
 			var n = node.querySelector('[data-path="' + key + '"]')
 				|| node.querySelector('[name="' + key + '"]');
 
-			set(n, data[key]);
+			if(!n && generator) {
+				n = generator(node, path);
+			}
+
+			if(n) {
+				n.setAttribute('data-path',key);
+				set(n, data[key], generator, path + '/' + key);
+			}
 
 			return node;
 		}

@@ -1,0 +1,24 @@
+{
+  "name": "cola-next-experiments",
+  "version": "0.1.5",
+  "authors": [
+    "Brian Cavalier <brian@hovercraftstudios.com>"
+  ],
+  "description": "Examples and experiments",
+  "main": "run.js",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "curl": "~0.8.4",
+    "most": "~0.3.0",
+    "rest": "~1.0.0",
+    "when": "~2.7.0"
+  }
+}
