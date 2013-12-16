@@ -1,17 +1,38 @@
 define(function() {
 
 	return {
-		add: function(things, e) {
-			e.preventDefault();
+		add: function(things, added) {
 
-			var key = e.target.elements.key.value;
-			if(!key) {
+			if(!added.key || !added.value) {
 				return;
 			}
 
-			things[key] = { key: key, value: e.target.elements.value.value };
+			things.push({ key: added.key, value: added.value });
+		},
 
-			e.target.reset();
+		remove: function(things, removed) {
+
+			if(!removed.key || !removed.value) {
+				return;
+			}
+
+			var index = things.findIndex(this.compare.bind(this, removed));
+
+			if(index >= 0) {
+				things.splice(index, 1);
+			}
+		},
+
+		uniqueId: function(thing) {
+			// cheesy but works for now
+			return thing.key + ':' + thing.value;
+		},
+
+		compare: function(thing1, thing2) {
+			var id1, id2;
+			id1 = this.uniqueId(thing1);
+			id2 = this.uniqueId(thing2);
+			return id1 === id2 ? 0 : id1 < id2 ? -1 : 1;
 		}
 	};
 
