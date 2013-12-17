@@ -32,18 +32,13 @@ define(function(require) {
 			return jsonPointer.getValue(data, path, data);
 		},
 
-		sync: function(patch) {
+		diff: function(shadow) {
+			return this.metadata.diff(shadow, this._load());
+		},
+
+		patch: function(patch) {
 			var data = this._load();
-
-			if(patch && patch.length) {
-				this._shadow = this.metadata.patch(this._shadow, patch);
-				data = this.metadata.patch(data, patch);
-			}
-
-			var local = this.metadata.diff(this._shadow, data);
-			this._save(this.metadata.patch(this._shadow, local));
-
-			return local;
+			this._save(this.metadata.patch(data, patch));
 		},
 
 		_load: function() {

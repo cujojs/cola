@@ -20,20 +20,15 @@ define(function(require) {
 
 	ProxyClient.prototype = {
 		set: function(data) {
-			this._shadow = data;
 			this.data = jsonPatch.snapshot(data);
 		},
 
-		sync: function(patch) {
-			if(patch && patch.length) {
-				this._shadow = jsonPatch.patch(patch, this._shadow, this.id);
-				this.data = jsonPatch.patch(patch, this.data, this.id);
-			}
+		diff: function(shadow) {
+			return jsonPatch.diff(shadow, this.data, this.id);
+		},
 
-			var local = jsonPatch.diff(this._shadow, this.data, this.id);
-			this._shadow = jsonPatch.patch(local, this._shadow, this.id);
-
-			return local;
+		patch: function(patch) {
+			this.data = jsonPatch.patch(patch, this.data);
 		},
 
 		proxy: function(mediator) {

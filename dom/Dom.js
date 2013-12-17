@@ -34,7 +34,6 @@ define(function(require) {
 			}
 
 			this._shadow = data;
-//			this._changes = [];
 			observe = this._observe = this._createObserver();
 			eachNodeEventPair(function(node, event) {
 				node.addEventListener(event, observe, false);
@@ -51,30 +50,17 @@ define(function(require) {
 			});
 		},
 
-		update: function(patch) {
-			this._shadow = jsonPatch.patch(patch, this._shadow);
+		diff: function(shadow) {
+			return diffDataAndDom(shadow, this.node);
+		},
+
+		patch: function(patch) {
 			domPatch.patch(this.node, patch, this._lists);
 		},
 
-		sync: function(patch) {
-			if(patch && patch.length) {
-				this._shadow = jsonPatch.patch(patch, this._shadow);
-				domPatch.patch(this.node, patch, this._lists);
-			}
-
-			var local = diffDataAndDom(this._shadow, this.node);
-//			this._changes = [];
-			this._shadow = jsonPatch.patch(local, this._shadow);
-
-			return local;
-		},
-
 		_createObserver: function() {
-			var node = this.node;
-//			var changes = this._changes = [];
 			var self = this;
-			return function (e) {
-//				changes.push(buildPath(e.target, node));
+			return function () {
 				self.hint(self);
 			};
 		}

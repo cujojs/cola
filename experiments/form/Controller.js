@@ -4,8 +4,8 @@ define(function() {
 
 	Controller.prototype = {
 		generateName: function(data) {
-			document.querySelector('[name="name"]').value = Math.random();
-//			data.name = '' + Math.random();
+//			document.querySelector('[name="name"]').value = Math.random();
+			data.name = '' + Math.random();
 		}
 	};
 

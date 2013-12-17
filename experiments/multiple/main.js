@@ -2,7 +2,7 @@ define(function(require) {
 
 	var Dom = require('cola/dom/Dom');
 	var ProxyClient = require('cola/data/ProxyClient');
-	var Synchronizer = require('cola/data/Synchronizer');
+	var Synchronizer = require('cola/data/ShadowSynchronizer');
 
 	var data = 'Bob';
 
