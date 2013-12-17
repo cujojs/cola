@@ -12,7 +12,8 @@
 define(function(require) {
 
 	var Dom = require('./Dom');
-	var DocumentView = require('cola/data/DocumentView');
+	var DocumentView = require('../data/DocumentView');
+	var Synchronizer = require('../data/ShadowSynchronizer');
 	var when = require('when');
 
 	return function(root, datasource, handler) {
@@ -37,8 +38,9 @@ define(function(require) {
 	};
 
 	function defaultHandler(view, data) {
+		var s = new Synchronizer([view, data]);
 		return when(data.get(), function(data) {
-			view.set(data);
+			s.set(data);
 		});
 	}
 

@@ -18,8 +18,7 @@ define(function(require) {
 	JsonMetadata = require('./metadata/JsonMetadata');
 
 	function MemoryStorage(data, identify) {
-		this._data = data;
-		this._shadow = jsonPatch.snapshot(data);
+		this._data = jsonPatch.snapshot(data);
 		this.metadata = new JsonMetadata(identify);
 	}
 
@@ -28,17 +27,12 @@ define(function(require) {
 			return jsonPointer.getValue(this._data, path, this._data);
 		},
 
-		sync: function(patch) {
+		diff: function(shadow) {
+			return this.metadata.diff(shadow, this._data);
+		},
 
-			if(patch && patch.length) {
-				this._shadow = this.metadata.patch(this._shadow, patch);
-				this._data = this.metadata.patch(this._data, patch);
-			}
-
-			var local = this.metadata.diff(this._shadow, this._data);
-			this._data = this.metadata.patch(this._shadow, local);
-
-			return local;
+		patch: function(patch) {
+			this._data = this.metadata.patch(this._data, patch);
 		}
 	};
 

@@ -9,7 +9,9 @@
  */
 
 (function(define) { 'use strict';
-define(function() {
+define(function(require) {
+
+	var when = require('when');
 
 	function DocumentView(path, source) {
 		this.path = path;
@@ -18,15 +20,22 @@ define(function() {
 	}
 
 	DocumentView.prototype = {
-		set: function(data, path) {
-			this.source.set(data, makePath(this.path, path));
-		},
-
 		get: function(path) {
 			return this.source.get(makePath(this.path, path));
 		},
 
-		update: function(patch) {
+		diff: function(shadow) {
+			var diff = this.source.diff(shadow);
+			var path = this.path;
+
+			return diff && when.map(diff, function(change) {
+				return Object.create(change, {
+					path: { value: trimPath(path, change.path) }
+				});
+			});
+		},
+
+		patch: function(patch) {
 			var path = this.path;
 			var mapped = patch.map(function(change) {
 				return Object.create(change, {
@@ -34,7 +43,7 @@ define(function() {
 				});
 			});
 
-			return this.source.update(mapped);
+			return this.source.patch(mapped);
 		}
 	};
 
@@ -46,7 +55,12 @@ define(function() {
 		return path[0] === '/' ? path : '/' + path;
 	}
 
+	function trimPath(path, prefix) {
+		var trimmed = path.slice(0, prefix.length);
+		return trimmed === prefix ? path.slice(prefix.length) : path;
+	}
+
 	return DocumentView;
 
 });
-}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
+}(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

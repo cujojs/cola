@@ -76,6 +76,7 @@ define(function(require) {
 				start = (start + 1) % len;
 				var patch = client.diff(self._shadow);
 				if(patch && patch.length) {
+					patch = jsonPatch.snapshot(patch);
 					self._shadow = jsonPatch.patch(patch, self._shadow);
 
 					for(var i = start, remaining = len-1; remaining > 0; i++, remaining--) {

@@ -42,20 +42,27 @@ define(function(require) {
 
 	Rest.prototype = {
 		get: function(path) {
-			return this._shadow = this._client(path);
+			return this._data = this._client(path);
 		},
 
-		sync: function(changes) {
+		diff: function(shadow) {
+			var metadata = this.metadata;
+			return when(this._data, function(data) {
+				return metadata.diff(shadow, data);
+			});
+		},
+
+		patch: function(patch) {
 
 			var identify = this.metadata.id;
 			var client = this._client;
 			var seen = {};
 			var self = this;
 
-			return when(this._shadow, send);
+			return when(this._data, send);
 
-			function send(shadow) {
-				return when.map(changes, function(change) {
+			function send(data) {
+				return when.map(patch, function(change) {
 					var entity, segments;
 					var path = change.path;
 
@@ -74,13 +81,13 @@ define(function(require) {
 
 					if(segments.length === 1) {
 						if(change.op === 'add') {
-							entity = jsonPointer.getValue(shadow, path);
+							entity = jsonPointer.getValue(data, path);
 							return entity !== void 0 && client({
 								method: 'POST',
 								entity: entity
 							});
 						} else if(change.op === 'replace') {
-							entity = jsonPointer.getValue(shadow, path);
+							entity = jsonPointer.getValue(data, path);
 							return entity !== void 0 && client({
 								method: 'PUT',
 								path: identify(entity),
@@ -93,7 +100,7 @@ define(function(require) {
 							});
 						}
 					} else if(segments.length > 1) {
-						entity = jsonPointer.getValue(shadow, path);
+						entity = jsonPointer.getValue(data, path);
 						return entity !== void 0 && client({
 							method: 'PUT',
 							path: identify(entity),
@@ -101,7 +108,7 @@ define(function(require) {
 						});
 					}
 				}).then(function() {
-					return self._shadow = self.metadata.patch(shadow, changes);
+					return self._data = self.metadata.patch(data, patch);
 				});
 			}
 		}

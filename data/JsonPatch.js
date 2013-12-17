@@ -20,17 +20,10 @@ define(function(require) {
 
 	JsonPatch.prototype = Object.create(Rest.prototype);
 
-	JsonPatch.prototype.diff = function(shadow) {
-		var metadata = this.metadata;
-		return when(this._shadow, function(data) {
-			return metadata.diff(shadow, data);
-		});
-	};
-
 	JsonPatch.prototype.patch = function(patch) {
 		var metadata = this.metadata;
 		var self = this;
-		this._shadow = when(this._shadow, function(data) {
+		this._data = when(this._data, function(data) {
 			self._client({
 				method: 'PATCH',
 				entity: patch
@@ -38,6 +31,8 @@ define(function(require) {
 				return metadata.patch(metadata.patch(data, patch), remotePatch);
 			})
 		});
+
+		return this._data.yield();
 	};
 
 	return JsonPatch;
