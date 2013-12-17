@@ -16,6 +16,10 @@ define(function(require) {
 	var when = require('when');
 
 	return function(root, datasource, handler) {
+		if(!handler) {
+			handler = defaultHandler;
+		}
+
 		Array.prototype.reduce.call(root.children, function(next, node) {
 			return when(next, function() {
 				var path = node.getAttribute('data-path');
@@ -30,6 +34,12 @@ define(function(require) {
 				return next;
 			})
 		}, when.resolve());
+	};
+
+	function defaultHandler(view, data) {
+		return when(data.get(), function(data) {
+			view.set(data);
+		});
 	}
 
 });
