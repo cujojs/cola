@@ -50,7 +50,9 @@ define(function(require) {
 		},
 
 		diff: function(shadow) {
-			return diffDataAndDom(shadow, this.node);
+			var changes = this._changes;
+			this._changes = [];
+			return diffDataAndDom(shadow, this.node, changes);
 		},
 
 		patch: function(patch) {
@@ -59,7 +61,9 @@ define(function(require) {
 
 		_createObserver: function() {
 			var self = this;
-			return function () {
+			this._changes = [];
+			return function (e) {
+				self._changes.push(buildPath(e.target, self.node));
 				self.hint(self);
 			};
 		}
@@ -101,7 +105,23 @@ define(function(require) {
 		}, {});
 	}
 
-	function diffDataAndDom(shadow, root) {
+	function diffDataAndDom(shadow, root, changes) {
+
+		var patch = changes.reduce(function (patch, path) {
+			var pointer = jsonPointer.find(shadow, path);
+			if(pointer && !(pointer.key in pointer.target)) {
+				var node = domPatch.find(path, root);
+				patch.push({
+					op: 'add',
+					path: path,
+					value: node[guessProp(node)]
+				});
+			}
+
+			return patch;
+		}, []);
+
+		return diff(shadow, root, patch, '');
 
 		function diff(x, node, patch, path) {
 			if(!node) {
@@ -115,7 +135,8 @@ define(function(require) {
 
 			if(x && (Array.isArray(x) || typeof x === 'object')) {
 				return Object.keys(x).reduce(function(patch, key) {
-					return diff(x[key], domPatch.find(key, node), patch, path ? path + '/' + key : key);
+					return diff(x[key], domPatch.find(key, node), patch,
+						path ? path + '/' + key : key);
 				}, patch);
 			}
 
@@ -130,8 +151,6 @@ define(function(require) {
 
 			return patch;
 		}
-
-		return diff(shadow, root, [], '');
 	}
 
 	function buildPath(start, end) {

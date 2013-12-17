@@ -18,25 +18,27 @@ define(function(require) {
 		Rest.apply(this, arguments);
 	}
 
-	JsonPatch.prototype = Object.create(Rest.prototype, {
-		sync: {
-			value: updateJsonPatch,
-			configurable: true,
-			writable: true
-		}
-	});
+	JsonPatch.prototype = Object.create(Rest.prototype);
 
-	function updateJsonPatch(patch) {
+	JsonPatch.prototype.diff = function(shadow) {
+		var metadata = this.metadata;
+		return when(this._shadow, function(data) {
+			return metadata.diff(shadow, data);
+		});
+	};
+
+	JsonPatch.prototype.patch = function(patch) {
+		var metadata = this.metadata;
 		var self = this;
-		return patch.length === 0
-			? when.resolve()
-			: this._client({
+		this._shadow = when(this._shadow, function(data) {
+			self._client({
 				method: 'PATCH',
 				entity: patch
-			}).then(function() {
-				self._shadow = self.metadata.patch(self._shadow, patch);
-			});
-	}
+			}).then(function(remotePatch) {
+				return metadata.patch(metadata.patch(data, patch), remotePatch);
+			})
+		});
+	};
 
 	return JsonPatch;
 
