@@ -33,7 +33,6 @@ define(function(require) {
 				}, this._events, this.node);
 			}
 
-			this._shadow = data;
 			observe = this._observe = this._createObserver();
 			eachNodeEventPair(function(node, event) {
 				node.addEventListener(event, observe, false);

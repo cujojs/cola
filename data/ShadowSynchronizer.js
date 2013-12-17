@@ -74,10 +74,12 @@ define(function(require) {
 
 			function syncClientIndex(client, start) {
 				var patch = client.diff(self._shadow);
-				self._shadow = jsonPatch.patch(patch, self._shadow);
+				if(patch && patch.length) {
+					self._shadow = jsonPatch.patch(patch, self._shadow);
 
-				for(var i = start, remaining = len; remaining > 0; i++, remaining--) {
-					clients[i].patch(patch);
+					for(var i = start, remaining = len; remaining > 0; i++, remaining--) {
+						clients[i].patch(patch);
+					}
 				}
 			}
 		}
