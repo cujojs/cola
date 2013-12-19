@@ -18,13 +18,13 @@ define(function(require) {
 
 	function Dom(node, events) {
 		this.node = template.replaceNode(node);
+		this._lists = findListTemplates(this.node);
 
 		var self = this;
 		this._doc = new DomDocument(new Registration(this.node), function(parent, key) {
 			return self._generateNode(parent, key);
 		});
 
-		this._lists = findListTemplates(this.node);
 		this._events = normalizeEvents(events);
 	}
 
