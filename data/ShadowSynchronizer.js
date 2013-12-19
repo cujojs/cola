@@ -39,7 +39,7 @@ define(function(require) {
 
 			clients = clients.concat(clients);
 
-			runSync();
+//			runSync();
 
 			function runSync() {
 				setTimeout(function() {
@@ -73,16 +73,20 @@ define(function(require) {
 			}
 
 			function syncClientIndex(client, start) {
-				start = (start + 1) % len;
 				var patch = client.diff(self._shadow);
 				if(patch && patch.length) {
 					patch = jsonPatch.snapshot(patch);
 					self._shadow = jsonPatch.patch(patch, self._shadow);
 
-					for(var i = start, remaining = len-1; remaining > 0; i++, remaining--) {
-						clients[i].patch(patch);
-					}
+					start = (start + 1) % len;
+					return patchClients(patch, clients.slice(start, start + len - 1));
 				}
+			}
+
+			function patchClients(patch, clientsToPatch) {
+				return clientsToPatch.map(function(c) {
+					return c.patch(patch);
+				});
 			}
 		}
 	};

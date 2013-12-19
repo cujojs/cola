@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" href="base.css"/>
+    <script src="../run.js"></script>
+    <script src="../bower_components/curl/src/curl.js"></script>
+    <script>
+        curl(['./main']);
+    </script>
+</head>
+<body>
+
+<h2>You</h2>
+<form data-path="person">
+    <label>Name<input type="text" name="name"/></label>
+    <fieldset data-path="address">
+        <legend>Address</legend>
+        <label>Street<input type="text" name="street"/></label>
+        <label>City<input type="text" name="city"/></label>
+        <label>State<input type="text" name="state"/></label>
+    </fieldset>
+
+    <p>Your name is {{name}}, and you live at {{address.street}} in {{address/city}}, {{address/state}}</p>
+</form>
+
+<h2>Your Todos</h2>
+
+<form class="create-todo">
+    <input name="description"/>
+    <button type="submit">Add</button>
+    <button data-complete-all>Complete All</button>
+    <button data-remove-completed>Remove Completed</button>
+</form>
+
+<section data-path="todos">
+    <ul>
+        <li data-list>
+            <input type="checkbox" name="complete"/>
+            <input name="description"/>
+        </li>
+    </ul>
+</section>
+
+</body>
+</html>

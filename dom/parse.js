@@ -16,28 +16,30 @@ define(function(require) {
 	var Synchronizer = require('../data/ShadowSynchronizer');
 	var when = require('when');
 
+	var reduce = Array.prototype.reduce;
+
 	return function(root, datasource, handler) {
 		if(!handler) {
 			handler = defaultHandler;
 		}
 
-		Array.prototype.reduce.call(root.children, function(next, node) {
-			return when(next, function() {
-				var path = node.getAttribute('data-path');
-				var data, view;
-				if(path != null) {
-					data = new DocumentView(path, datasource);
-					view = new Dom(node);
+		var registrations = reduce.call(root.children, function(registrations, node) {
+			var path = node.getAttribute('data-path');
+			var data, view;
+			if(path != null) {
+				data = new DocumentView(path, datasource);
+				view = new Dom(node);
 
-					return when(handler(view, data));
-				}
+				registrations.push(when(handler(path, view, data)));
+			}
 
-				return next;
-			})
-		}, when.resolve());
+			return registrations;
+		}, []);
+
+		return when.all(registrations);
 	};
 
-	function defaultHandler(view, data) {
+	function defaultHandler(path, view, data) {
 		var s = new Synchronizer([view, data]);
 		return when(data.get(), function(data) {
 			s.set(data);

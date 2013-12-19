@@ -4,7 +4,8 @@ define(function(require) {
 	var LocalStorage = require('cola/data/LocalStorage');
 
 	var Controller = require('./Controller');
-	var store = new LocalStorage('cola-person', { name: 'Brian', address: {} });
+	var store = new LocalStorage('cola-person',
+		{ person: { name: 'Brian', address: {} } });
 
 	var controller = new Controller();
 

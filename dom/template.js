@@ -11,31 +11,33 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var tokenRx = />[^<]*(\{\{([^\}]+)\}\})/g;
+	var tokenRx = /\{\{([^\}]+)\}\}/g;
 
 	return {
 		fromString: fromString,
-		fromNode: fromNode
+		fromNode: fromNode,
+		replaceNode: replaceNode
 	};
 
 	function fromString(html) {
-		return html.replace(tokenRx, function(s, t, path) {
-			return s.replace(t, '<span data-path="' + path + '"></span>');
+		return html.replace(tokenRx, function(s, path) {
+			return '<span data-path="' + path + '"></span>';
 		});
 	}
 
 	function fromNode(node) {
-		var origParent = node.parentNode;
-		var marker = document.createElement('div');
-		origParent.replaceChild(marker, node);
-
+		var t = node.cloneNode(true);
 		var parent = document.createElement('div');
-		parent.appendChild(node);
+		parent.appendChild(t);
 
 		parent.innerHTML = fromString(parent.innerHTML);
-		node = parent.firstElementChild;
-		origParent.replaceChild(node, marker);
-		return node;
+		return parent.firstElementChild;
+	}
+
+	function replaceNode(node) {
+		var converted = fromNode(node);
+		node.parentNode.replaceChild(converted, node);
+		return converted;
 	}
 
 });

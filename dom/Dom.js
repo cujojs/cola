@@ -12,13 +12,18 @@
 define(function(require) {
 
 	var guessProp = require('../view/lib/dom').guessProp;
-	var domPatch = require('./domPatch');
+	var Registration = require('./Registration');
+	var DomDocument = require('./DomDocument');
 	var template = require('./template');
-	var jsonPointer = require('../lib/jsonPointer');
-	var jsonPatch = require('../lib/jsonPatch');
 
 	function Dom(node, events) {
-		this.node = template.fromNode(node);
+		this.node = template.replaceNode(node);
+
+		var self = this;
+		this._doc = new DomDocument(new Registration(this.node), function(parent, key) {
+			return self._generateNode(parent, key);
+		});
+
 		this._lists = findListTemplates(this.node);
 		this._events = normalizeEvents(events);
 	}
@@ -30,42 +35,52 @@ define(function(require) {
 				observe = this._observe;
 				eachNodeEventPair(function(node, event) {
 					node.removeEventListener(event, observe);
-				}, this._events, this.node);
+				}, this._events, this._doc);
 			}
 
 			observe = this._observe = this._createObserver();
 			eachNodeEventPair(function(node, event) {
 				node.addEventListener(event, observe, false);
-			}, this._events, this.node);
+			}, this._events, this._doc);
 
-			var self = this;
-			return domPatch.set(this.node, data, function(parent, key) {
-				var template = self._lists[key];
-				if(template) {
-					var node = template.cloneNode(true);
-					parent.appendChild(node);
-					return node;
-				}
-			});
+			return this._doc.set('', data);
 		},
 
 		diff: function(shadow) {
-			var changes = this._changes;
-			this._changes = [];
-			return diffDataAndDom(shadow, this.node, changes);
+			var diff = this._doc.diff(shadow);
+			return  diff;
 		},
 
 		patch: function(patch) {
-			domPatch.patch(this.node, patch, this._lists);
+			this._doc.patch(patch);
 		},
 
 		_createObserver: function() {
 			var self = this;
-			this._changes = [];
 			return function (e) {
-				self._changes.push(buildPath(e.target, self.node));
+				var node = e.target;
+				var path = self._doc.findPath(node);
+				self._syncNodes(node, path);
 				self.hint(self);
 			};
+		},
+
+		_syncNodes: function(sourceNode, path) {
+			var nodes = this._doc.findNodes(path);
+			nodes.forEach(function(n) {
+				if(n !== sourceNode) {
+					n[guessProp(n)] = sourceNode[guessProp(sourceNode)];
+				}
+			});
+		},
+
+		_generateNode: function(parent, key) {
+			var t = this._lists[key];
+			if(t) {
+				var node = t.template.cloneNode(true);
+				t.parent.appendChild(node);
+				return node;
+			}
 		}
 	};
 
@@ -81,92 +96,33 @@ define(function(require) {
 		return events;
 	}
 
-	function eachNodeEventPair(f, events, root) {
+	function eachNodeEventPair(f, events, reg) {
 		Object.keys(events).forEach(function(path) {
 			var event = events[path];
 			event = event.split(/\s*,\s*/);
 			event.forEach(function(event) {
-				var node = domPatch.find(path, root);
-
-				if(node) {
+				var nodes = reg.findNodes(path);
+				nodes.forEach(function(node) {
 					f(node, event);
-				}
+				});
 			});
 		});
 	}
 
-	function findListTemplates(node) {
-		var lists = Array.prototype.slice.call(node.querySelectorAll('[data-list]'));
+	function findListTemplates(root) {
+		var lists = Array.prototype.slice.call(root.querySelectorAll('[data-list]'));
 		return lists.reduce(function (lists, list) {
 			list.removeAttribute('data-list');
+			lists[Registration.buildPath(root, list)] = {
+				template: list,
+				parent: list.parentNode
+			};
+
 			list.parentNode.removeChild(list);
-			lists[buildPath(list, node)] = list;
+
 			return lists;
 		}, {});
 	}
-
-	function diffDataAndDom(shadow, root, changes) {
-
-		var patch = changes.reduce(function (patch, path) {
-			var pointer = jsonPointer.find(shadow, path);
-			if(pointer && !(pointer.key in pointer.target)) {
-				var node = domPatch.find(path, root);
-				patch.push({
-					op: 'add',
-					path: path,
-					value: node[guessProp(node)]
-				});
-			}
-
-			return patch;
-		}, []);
-
-		return diff(shadow, root, patch, '');
-
-		function diff(x, node, patch, path) {
-			if(!node) {
-				patch.push({
-					op: 'remove',
-					path: path
-				});
-
-				return patch;
-			}
-
-			if(x && (Array.isArray(x) || typeof x === 'object')) {
-				return Object.keys(x).reduce(function(patch, key) {
-					return diff(x[key], domPatch.find(key, node), patch,
-						path ? path + '/' + key : key);
-				}, patch);
-			}
-
-			var nodeValue = node && node[guessProp(node)];
-			if (x !== nodeValue) {
-				patch.push({
-					op: 'replace',
-					path: path,
-					value: nodeValue
-				});
-			}
-
-			return patch;
-		}
-	}
-
-	function buildPath(start, end) {
-		var segment, path = '';
-		while(start && start !== end) {
-			segment = start.getAttribute('name') || start.getAttribute('data-path');
-			if(segment) {
-				path = path ? (segment + '/' + path) : segment;
-			}
-			start = start.parentNode;
-		}
-
-		return path;
-	}
-
-
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

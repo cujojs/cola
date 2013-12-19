@@ -11,6 +11,7 @@
 (function(define) { 'use strict';
 define(function(require) {
 
+	var path = require('../lib/path');
 	var when = require('when');
 
 	function DocumentView(path, source) {
@@ -20,45 +21,32 @@ define(function(require) {
 	}
 
 	DocumentView.prototype = {
-		get: function(path) {
-			return this.source.get(makePath(this.path, path));
+		get: function(p) {
+			return this.source.get(path.join(this.path, p));
 		},
 
 		diff: function(shadow) {
 			var diff = this.source.diff(shadow);
-			var path = this.path;
+			var p = this.path;
 
 			return diff && when.map(diff, function(change) {
 				return Object.create(change, {
-					path: { value: trimPath(path, change.path) }
+					path: { value: path.trim(p, change.path) }
 				});
 			});
 		},
 
 		patch: function(patch) {
-			var path = this.path;
+			var p = this.path;
 			var mapped = patch.map(function(change) {
 				return Object.create(change, {
-					path: { value: makePath(path, change.path) }
+					path: { value: path.join(p, change.path) }
 				});
 			});
 
 			return this.source.patch(mapped);
 		}
 	};
-
-	function makePath(head, tail) {
-		return tail == null ? head : head + ensureSlash(tail);
-	}
-
-	function ensureSlash(path) {
-		return path[0] === '/' ? path : '/' + path;
-	}
-
-	function trimPath(path, prefix) {
-		var trimmed = path.slice(0, prefix.length);
-		return trimmed === prefix ? path.slice(prefix.length) : path;
-	}
 
 	return DocumentView;
 
