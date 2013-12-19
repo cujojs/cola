@@ -12,6 +12,7 @@
 define(function(require) {
 
 	var jsonPatch = require('../lib/jsonPatch');
+	var when = require('when');
 
 	function ShadowSynchronizer(clients) {
 		this.clients = clients;
@@ -19,11 +20,19 @@ define(function(require) {
 
 	ShadowSynchronizer.prototype = {
 		set: function(data) {
-			this._shadow = jsonPatch.snapshot(data);
 			this.startSync(this.clients, data);
 		},
 
+		fromSource: function(source) {
+			var self = this;
+			return when(source.get(), function(data) {
+				self.set(data);
+				return self;
+			});
+		},
+
 		startSync: function(clients, data) {
+			this._shadow = jsonPatch.snapshot(data);
 
 			clients.forEach(function(client) {
 				// FIXME: Yuck, interface check
@@ -39,7 +48,7 @@ define(function(require) {
 
 			clients = clients.concat(clients);
 
-//			runSync();
+			runSync();
 
 			function runSync() {
 				setTimeout(function() {
@@ -51,8 +60,8 @@ define(function(require) {
 			function syncNextClient() {
 				var client = clients[start];
 
+				start = nextIndex(start, len);
 				syncClientIndex(client, start);
-				start = (start + 1) % len;
 
 			}
 
@@ -66,6 +75,7 @@ define(function(require) {
 				});
 
 				if(typeof index === 'number') {
+					index = nextIndex(index, len);
 					setTimeout(function() {
 						syncClientIndex(client, index);
 					}, 0);
@@ -78,7 +88,6 @@ define(function(require) {
 					patch = jsonPatch.snapshot(patch);
 					self._shadow = jsonPatch.patch(patch, self._shadow);
 
-					start = (start + 1) % len;
 					return patchClients(patch, clients.slice(start, start + len - 1));
 				}
 			}
@@ -92,6 +101,10 @@ define(function(require) {
 	};
 
 	return ShadowSynchronizer;
+
+	function nextIndex(i, len) {
+		return (i + 1) % len;
+	}
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));

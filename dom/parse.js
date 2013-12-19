@@ -41,9 +41,7 @@ define(function(require) {
 
 	function defaultHandler(path, view, data) {
 		var s = new Synchronizer([view, data]);
-		return when(data.get(), function(data) {
-			s.set(data);
-		});
+		return s.fromSource(data);
 	}
 
 });

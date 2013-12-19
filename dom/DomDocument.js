@@ -139,6 +139,8 @@ define(function(require) {
 					applyChange(node, reg, change);
 				});
 			}
+
+			return reg;
 		}, reg);
 	}
 

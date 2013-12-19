@@ -28,9 +28,8 @@ define(function(require) {
 		}
 
 		var s = new Synchronizer(clients);
-		return when(data.get(), function(data) {
-			return s.set(data);
-		});
+		return s.fromSource(data);
+
 	}).done(function() {
 		var controller = controllers.todos;
 		on('.create-todo', 'submit', function(e) {
