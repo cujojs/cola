@@ -16,7 +16,8 @@ define(function(require) {
 	return {
 		fromString: fromString,
 		fromNode: fromNode,
-		replaceNode: replaceNode
+		replaceNode: replaceNode,
+		replaceContents: replaceContents
 	};
 
 	function fromString(html) {
@@ -32,6 +33,11 @@ define(function(require) {
 
 		parent.innerHTML = fromString(parent.innerHTML);
 		return parent.firstElementChild;
+	}
+
+	function replaceContents(node) {
+		node.innerHTML = fromString(node.innerHTML);
+		return node;
 	}
 
 	function replaceNode(node) {

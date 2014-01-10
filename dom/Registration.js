@@ -11,7 +11,7 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var dom = require('../view/lib/dom');
+	var dom = require('../lib/dom');
 	var path = require('../lib/path');
 
 	function Registration(node) {
@@ -22,6 +22,14 @@ define(function(require) {
 	Registration.prototype = {
 		add: function(path, node) {
 			register(this._map, path, node);
+		},
+
+		rebuild: function() {
+			this._map = register({}, '', this._root);
+		},
+
+		remove: function(/* TODO: incremental removal */) {
+			this.rebuild();
 		},
 
 		findNodes: function(path) {
@@ -84,7 +92,6 @@ define(function(require) {
 			return map;
 		}, map);
 	}
-
 
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));

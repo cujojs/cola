@@ -3,7 +3,7 @@ define(function(require) {
 	var Dom = require('cola/dom/Dom');
 	var ProxyClient = require('cola/data/ProxyClient');
 	var LocalStorage = require('cola/data/LocalStorage');
-	var Synchronizer = require('cola/data/ShadowSynchronizer');
+	var Synchronizer = require('cola/sync/ShadowSynchronizer');
 	var getValues = require('cola/dom/form').getValues;
 
 	var controller = require('./controller');

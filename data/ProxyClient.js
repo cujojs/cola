@@ -37,7 +37,6 @@ define(function(require) {
 				var result = target[method].apply(target, [self.data].concat(args));
 
 				self.data = preferResult(self.data, result);
-				self.hint(self);
 				return result;
 			}, function(method) {
 				return /^[^_]/.test(method);

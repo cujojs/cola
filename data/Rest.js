@@ -12,7 +12,7 @@
 define(function(require) {
 
 	var when, rest, entity, mime, pathPrefix, location,
-		JsonMetadata, jsonPointer;
+		JsonMetadata, jsonPointer, path;
 
 	when = require('when');
 
@@ -24,6 +24,7 @@ define(function(require) {
 
 	jsonPointer = require('../lib/jsonPointer');
 	JsonMetadata = require('./metadata/JsonMetadata');
+	path = require('../lib/path');
 
 	/**
 	 * A rest.js (cujoJS/rest) based datasource.
@@ -62,54 +63,55 @@ define(function(require) {
 			return when(this._data, send);
 
 			function send(data) {
-				return when.map(patch, function(change) {
+				self._data = data = self.metadata.patch(data, patch);
+
+				// Because adds and deletes affect array indices, ideally
+				// a patch for an array should be processed in descending index
+				// order, but for now just assume it was generated in ascending
+				// index order and reverse it.  Need a better strategy here for
+				// arrays.  Using ids would work out fine regardless.
+				return when.reduce(patch.reverse(), function(_, change) {
 					var entity, segments;
-					var path = change.path;
+					var p = change.path;
 
-					if(path[0] === '/') {
-						path = path.slice(1);
-					}
+					segments = p.split(change.path);
+					p = segments[0];
 
-					segments = path.split('/');
-					path = segments[0];
-
-					if(seen[path]) {
+					if(seen[p]) {
 						return;
 					}
 
-					seen[path] = 1;
+					seen[p] = 1;
 
 					if(segments.length === 1) {
 						if(change.op === 'add') {
-							entity = jsonPointer.getValue(data, path);
+							entity = jsonPointer.getValue(data, p);
 							return entity !== void 0 && client({
 								method: 'POST',
 								entity: entity
 							});
 						} else if(change.op === 'replace') {
-							entity = jsonPointer.getValue(data, path);
+							entity = jsonPointer.getValue(data, p);
 							return entity !== void 0 && client({
 								method: 'PUT',
-								path: identify(entity),
+								path: identify(entity) || p,
 								entity: entity
 							});
 						} else if(change.op === 'remove') {
 							return client({
 								method: 'DELETE',
-								path: identify(entity)
+								path: p
 							});
 						}
 					} else if(segments.length > 1) {
-						entity = jsonPointer.getValue(data, path);
+						entity = jsonPointer.getValue(data, p);
 						return entity !== void 0 && client({
 							method: 'PUT',
-							path: identify(entity),
+							path: identify(entity) || p,
 							entity: entity
 						});
 					}
-				}).then(function() {
-					return self._data = self.metadata.patch(data, patch);
-				});
+				}, void 0);
 			}
 		}
 	};

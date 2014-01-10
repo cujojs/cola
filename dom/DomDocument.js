@@ -12,7 +12,7 @@
 define(function(require) {
 
 	var path = require('../lib/path');
-	var guessProp = require('../view/lib/dom').guessProp;
+	var dom = require('../lib/dom');
 	var jsonPointer = require('../lib/jsonPointer');
 
 	function DomDocument(registration, generator) {
@@ -50,20 +50,26 @@ define(function(require) {
 
 		var patch = diff([], '', data, reg.findNodes(''));
 
-		return Object.keys(reg._map).reduce(function(patch, path) {
+		patch = Object.keys(reg._map).reduce(function(patch, path) {
 			var pointer = jsonPointer.find(data, path);
-			if(pointer && !(path in seen) && !isContainer(pointer.target[pointer.key])) {
+			if(pointer && pointer.target && !(path in seen) && !isContainer(pointer.target[pointer.key])) {
 				var nodes = reg.findNodes(path);
 				if(nodes && nodes.length > 0) {
 					patch.push({
 						op: 'add',
 						path: path,
-						value: getValue(nodes[0])
+						value: dom.getValue(nodes[0])
 					});
 				}
 			}
 			return patch;
 		}, patch);
+
+		if(patch.length > 0) {
+			console.log(patch);
+		}
+
+		return patch;
 
 		function diff(patch, basePath, value, nodes) {
 			var nodeValue;
@@ -74,14 +80,17 @@ define(function(require) {
 				return bfs(patch, basePath, value);
 			}
 
-			nodeValue = getValue(nodes[0]);
-			if(nodeValue !== value) {
-				patch.push({
-					op: 'replace',
-					path: basePath,
-					value: nodeValue
-				});
-			}
+			var node = nodes[0];
+//			if(node !== document.activeElement) {
+				nodeValue = dom.getValue(node);
+				if(nodeValue !== value) {
+					patch.push({
+						op: 'replace',
+						path: basePath,
+						value: nodeValue
+					});
+				}
+//			}
 			return patch;
 		}
 
@@ -91,7 +100,7 @@ define(function(require) {
 				var local = path.join(basePath, key);
 				var nodes = reg.findNodes(local);
 
-				if(nodes.length > 0) {
+				if(nodes && nodes.length > 0) {
 					return diff(patch, local, data[key], nodes);
 				} else {
 					patch.push({
@@ -113,10 +122,6 @@ define(function(require) {
 		return x && !(x instanceof Date) && (Array.isArray(x) || typeof x === 'object');
 	}
 
-	function getValue(node) {
-		return node[guessProp(node)];
-	}
-
 	function patchDom(reg, generator, patch) {
 		return patch.reduce(function(reg, change) {
 			var path = normalizePath(change.path);
@@ -128,11 +133,13 @@ define(function(require) {
 					var node;
 					if(generator) {
 						node = generator(node, ancestorPath);
-						reg.add(path, node);
 					}
 
-					node.setAttribute('data-path', path);
-					setOne(node, reg, change.path, generator, change.value);
+					if(node) {
+						reg.add(path, node);
+						node.setAttribute('data-path', path);
+						setOne(node, reg, change.path, generator, change.value);
+					}
 				}
 			} else {
 				nodes.forEach(function(node) {
@@ -161,6 +168,7 @@ define(function(require) {
 			setOne(node, reg, '', null, change.value);
 		} else if(change.op === 'remove') {
 			node.parentNode.removeChild(node);
+			reg.remove(node);
 		}
 
 		return node;
@@ -176,7 +184,7 @@ define(function(require) {
 		if(value != null && typeof value === 'object') {
 			return setObject(node, reg, path || '', generator, value);
 		} else if(node) {
-			node[guessProp(node)] = value;
+			dom.setValue(node, value);
 		}
 	}
 
@@ -191,7 +199,7 @@ define(function(require) {
 				var n;
 				if(generator) {
 					n = generator(node, reg.findPath(node));
-					reg.add(subpath, n);
+					n && reg.add(subpath, n);
 				}
 
 				if(n) {

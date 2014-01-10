@@ -30,23 +30,32 @@ define(function(require) {
 			var p = this.path;
 
 			return diff && when.map(diff, function(change) {
-				return Object.create(change, {
-					path: { value: path.trim(p, change.path) }
-				});
+				return copyChange(p, path.trim, change);
 			});
 		},
 
 		patch: function(patch) {
 			var p = this.path;
 			var mapped = patch.map(function(change) {
-				return Object.create(change, {
-					path: { value: path.join(p, change.path) }
-				});
+				return copyChange(p, path.join, change);
 			});
 
 			return this.source.patch(mapped);
 		}
 	};
+
+	function copyChange(path, updatePath, change) {
+		var updated = {
+			op: change.op,
+			path: updatePath(path, change.path)
+		};
+
+		if(typeof change.value !== 'undefined') {
+			updated.value = change.value;
+		}
+
+		return updated;
+	}
 
 	return DocumentView;
 

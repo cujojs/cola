@@ -12,6 +12,7 @@
 define(function(require) {
 
 	var when = require('when');
+	var path = require('../lib/path');
 	var Rest = require('./Rest');
 
 	function JsonPatch(client, options) {
@@ -26,7 +27,7 @@ define(function(require) {
 		this._data = when(this._data, function(data) {
 			self._client({
 				method: 'PATCH',
-				entity: patch
+				entity: patch.map(normalizePath)
 			}).then(function(remotePatch) {
 				return metadata.patch(metadata.patch(data, patch), remotePatch);
 			})
@@ -34,6 +35,11 @@ define(function(require) {
 
 		return this._data.yield();
 	};
+
+	function normalizePath(change) {
+		change.path = path.rooted(change.path);
+		return change;
+	}
 
 	return JsonPatch;
 

@@ -47,26 +47,3 @@ a2.forEach(function(x) {
 var start = Date.now();
 jsonpatch.diff(a, a2);
 console.log(elapsed + Date.now() - start);
-
-var ArrayMetadata, ObjectMetadata;
-
-ArrayMetadata = require('../data/metadata/ArrayMetadata');
-ObjectMetadata = require('../data/metadata/ObjectMetadata');
-
-a = [];
-for(i=0; i<10000; i++) {
-	a.push({ id: i, name: i });
-}
-
-var am = new ArrayMetadata(new ObjectMetadata());
-start = Date.now();
-var d = am.diff(a);
-elapsed = Date.now() - start;
-
-a.forEach(function(x) {
-	x.name = 'a'+ x.name;
-});
-
-start = Date.now();
-d(a);
-console.log(elapsed + Date.now() - start);

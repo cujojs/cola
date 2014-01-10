@@ -2,7 +2,7 @@ define(function(require) {
 
 	var Dom = require('cola/dom/Dom');
 	var ProxyClient = require('cola/data/ProxyClient');
-	var Synchronizer = require('cola/data/ShadowSynchronizer');
+	var Synchronizer = require('cola/sync/ShadowSynchronizer');
 	var LocalStorage = require('cola/data/LocalStorage');
 //	var Rest = require('cola/data/Rest');
 //	var JsonPatch = require('cola/data/JsonPatch');

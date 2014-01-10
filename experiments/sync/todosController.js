@@ -1,22 +1,17 @@
-define(function() {
+module.exports = {
+	add: function(todos, todo) {
+		todos.push(todo);
+	},
 
-	return {
-		add: function(todos, e) {
-			todos.push({
-				description: e.target.elements.description.value
-			});
-		},
+	completeAll: function(todos) {
+		todos.forEach(function(todo) {
+			todo.complete = true;
+		});
+	},
 
-		completeAll: function(todos) {
-			todos.forEach(function(todo) {
-				todo.complete = true;
-			});
-		},
-
-		removeCompleted: function(todos) {
-			return todos.filter(function(todo) {
-				return !todo.complete;
-			});
-		}
-	};
-});
+	removeCompleted: function(todos) {
+		return todos.filter(function(todo) {
+			return !todo.complete;
+		});
+	}
+};

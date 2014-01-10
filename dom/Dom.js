@@ -11,13 +11,13 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var guessProp = require('../view/lib/dom').guessProp;
+	var dom = require('../lib/dom');
 	var Registration = require('./Registration');
 	var DomDocument = require('./DomDocument');
 	var template = require('./template');
 
 	function Dom(node, events) {
-		this.node = template.replaceNode(node);
+		this.node = template.replaceContents(node);
 		this._lists = findListTemplates(this.node);
 
 		var self = this;
@@ -48,7 +48,7 @@ define(function(require) {
 
 		diff: function(shadow) {
 			var diff = this._doc.diff(shadow);
-			return  diff;
+			return diff;
 		},
 
 		patch: function(patch) {
@@ -58,10 +58,7 @@ define(function(require) {
 		_createObserver: function() {
 			var self = this;
 			return function (e) {
-				var node = e.target;
-				var path = self._doc.findPath(node);
-				self._syncNodes(node, path);
-				self.hint(self);
+				self._syncNodes(e.target, self._doc.findPath(e.target));
 			};
 		},
 
@@ -69,7 +66,7 @@ define(function(require) {
 			var nodes = this._doc.findNodes(path);
 			nodes.forEach(function(n) {
 				if(n !== sourceNode) {
-					n[guessProp(n)] = sourceNode[guessProp(sourceNode)];
+					dom.setValue(n, dom.getValue(sourceNode));
 				}
 			});
 		},
