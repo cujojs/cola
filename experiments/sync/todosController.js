@@ -13,5 +13,25 @@ module.exports = {
 		return todos.filter(function(todo) {
 			return !todo.complete;
 		});
+	},
+
+	generate: function(todos, data) {
+		var n;
+		try {
+			n = parseInt(data.n, 10);
+		} catch(e) {}
+		return todos.concat(generateTodos(isNaN(n) ? 200 : n));
 	}
 };
+
+
+function generateTodos(n) {
+	var todos = [];
+	for(var i=0; i<n; i++) {
+		todos.push({
+			description: 'todo ' + i,
+			complete: false
+		});
+	}
+	return todos;
+}

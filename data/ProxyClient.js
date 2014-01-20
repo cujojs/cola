@@ -24,6 +24,10 @@ define(function(require) {
 		},
 
 		diff: function(shadow) {
+			if(!this._hasChanged) {
+				return;
+			}
+			this._hasChanged = false;
 			return jsonPatch.diff(shadow, this.data, this.id);
 		},
 
@@ -37,6 +41,7 @@ define(function(require) {
 				var result = target[method].apply(target, [self.data].concat(args));
 
 				self.data = preferResult(self.data, result);
+				self._hasChanged = true;
 				return result;
 			}, function(method) {
 				return /^[^_]/.test(method);

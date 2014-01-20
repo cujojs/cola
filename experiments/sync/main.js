@@ -1,7 +1,10 @@
-var Rest = require('cola/data/Rest');
+//var Rest = require('cola/data/Rest');
+var LocalStorage = require('cola/data/LocalStorage');
 var todosController = require('./todosController');
 
 module.exports = {
 	todosController: todosController,
-	todosModel: new Rest('/todos')
+//	todosModel: []
+	todosModel: new LocalStorage('todos', [])
+//	todosModel: new Rest('/todos')
 };

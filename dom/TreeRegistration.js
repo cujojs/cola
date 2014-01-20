@@ -13,10 +13,11 @@ define(function(require) {
 
 	var dom = require('../lib/dom');
 	var path = require('../lib/path');
+	var jsonPointer = require('../lib/jsonPointer');
 
 	function Registration(node) {
 		this._root = node;
-		this._tree = register({}, '', node);
+		this.rebuild();
 	}
 
 	Registration.prototype = {
@@ -30,23 +31,20 @@ define(function(require) {
 
 		remove: function(node) {
 			var p = buildPath(this._root, node);
-			var l = p.length;
-			this._tree = Object.keys(this._tree).reduce(function(map, key) {
-				if(key.length >= l && key.slice(0, l) === p) {
-					delete map[key];
-				}
-
-				return map;
-			}, this._tree);
-//			this.rebuild();
+			removeOne(p, node, this._tree);
 		},
 
 		findNodes: function(path) {
-			return find(this._tree, path);
+			var n = findTreeNode(path, this._tree);
+			return n && n.nodes;
 		},
 
 		findPath: function(node) {
 			return buildPath(this._root, node);
+		},
+
+		reduce: function(f, initial) {
+
 		}
 	};
 
@@ -57,7 +55,7 @@ define(function(require) {
 	function buildPath(end, start) {
 		var segment, p = '';
 		while(start && start !== end) {
-			segment = start.getAttribute('name') || start.getAttribute('data-path');
+			segment = start.getAttribute('data-path') || start.getAttribute('name');
 			p = path.join(segment, p);
 
 			if(path.isAbsolute(p)) {
@@ -77,29 +75,73 @@ define(function(require) {
 		return map[normalizePath(path)];
 	}
 
-	function register(map, basePath, root) {
-		map[basePath] = [root];
+	function register(tree, basePath, root) {
+		addOne(basePath, root, tree);
 
 		var nodes = root.querySelectorAll('[data-path], [name]');
-		return Array.prototype.reduce.call(nodes, function(map, node) {
-			var list, p;
-
-			p = buildPath(root, node);
+		return Array.prototype.reduce.call(nodes, function(tree, node) {
+			var p = buildPath(root, node);
 
 			if(p) {
 				if(!path.isAbsolute(p)) {
 					p = path.join(basePath, p);
 				}
 
-				list = map[p];
-				if(!list) {
-					map[p] = [node];
-				} else {
-					list.push(node);
+				addOne(p, node, tree);
+			}
+			return tree;
+		}, tree);
+	}
+
+	function findTreeNode (p, tree) {
+		return path.split(p).reduce(function (node, key) {
+			var child = node.children[key];
+			if (!child) {
+				child = node.children[key] = {
+					children: {}
 				}
 			}
-			return map;
-		}, map);
+			return child;
+		}, tree);
+	}
+
+	function addOne(p, node, tree) {
+		var leaf = findTreeNode(p, tree);
+
+		var nodes = leaf.nodes;
+		if(!nodes) {
+			nodes = [node];
+		} else {
+			nodes.push(node);
+		}
+	}
+
+	function removeOne(p, node, tree) {
+		var prev, prevKey;
+		var leaf = path.split(p).reduce(function(node, key) {
+			var child = node.children[key];
+			if(!child) {
+				child = node.children[key] = {
+					children: {}
+				}
+			}
+			prev = child;
+			prevKey = key;
+			return child;
+		}, tree);
+
+		if(leaf.nodes) {
+			leaf.nodes.some(function(n, i, nodes) {
+				if(n === node) {
+					nodes.splice(i, 1);
+					return true;
+				}
+			});
+
+			if(leaf.nodes.length === 0 && prev !== leaf) {
+				delete prev.children[prevKey];
+			}
+		}
 	}
 
 });

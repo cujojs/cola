@@ -48,28 +48,7 @@ define(function(require) {
 
 		var seen = {};
 
-		var patch = diff([], '', data, reg.findNodes(''));
-
-		patch = Object.keys(reg._map).reduce(function(patch, path) {
-			var pointer = jsonPointer.find(data, path);
-			if(pointer && pointer.target && !(path in seen) && !isContainer(pointer.target[pointer.key])) {
-				var nodes = reg.findNodes(path);
-				if(nodes && nodes.length > 0) {
-					patch.push({
-						op: 'add',
-						path: path,
-						value: dom.getValue(nodes[0])
-					});
-				}
-			}
-			return patch;
-		}, patch);
-
-		if(patch.length > 0) {
-			console.log(patch);
-		}
-
-		return patch;
+		return diff([], '', data, reg.findNodes(''));
 
 		function diff(patch, basePath, value, nodes) {
 			var nodeValue;
@@ -80,17 +59,14 @@ define(function(require) {
 				return bfs(patch, basePath, value);
 			}
 
-			var node = nodes[0];
-//			if(node !== document.activeElement) {
-				nodeValue = dom.getValue(node);
-				if(nodeValue !== value) {
-					patch.push({
-						op: 'replace',
-						path: basePath,
-						value: nodeValue
-					});
-				}
-//			}
+			nodeValue = dom.getValue(nodes[0]);
+			if(nodeValue !== value) {
+				patch.push({
+					op: 'replace',
+					path: basePath,
+					value: nodeValue
+				});
+			}
 			return patch;
 		}
 
@@ -127,7 +103,7 @@ define(function(require) {
 			var path = normalizePath(change.path);
 			var nodes = reg.findNodes(path);
 
-			if(!nodes) {
+			if(!nodes || nodes.length === 0) {
 				var ancestorPath = findDeepest(reg, path);
 				if(ancestorPath != null) {
 					var node;
@@ -195,7 +171,7 @@ define(function(require) {
 			var subpath = path.join(p, key);
 			var nodes = reg.findNodes(subpath);
 
-			if(!nodes) {
+			if(!nodes || nodes.length === 0) {
 				var n;
 				if(generator) {
 					n = generator(node, reg.findPath(node));

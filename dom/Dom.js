@@ -16,6 +16,15 @@ define(function(require) {
 	var DomDocument = require('./DomDocument');
 	var template = require('./template');
 
+	var requestAnimationFrame = (function(){
+		return  window.requestAnimationFrame       ||
+			window.webkitRequestAnimationFrame ||
+			window.mozRequestAnimationFrame    ||
+			function( callback ){
+				window.setTimeout(callback, 1000 / 60);
+			};
+	})();
+
 	function Dom(node, events) {
 		this.node = template.replaceContents(node);
 		this._lists = findListTemplates(this.node);
@@ -47,17 +56,24 @@ define(function(require) {
 		},
 
 		diff: function(shadow) {
-			var diff = this._doc.diff(shadow);
-			return diff;
+			if(!this._hasChanged) {
+				return;
+			}
+			this._hasChanged = false;
+			return this._doc.diff(shadow);
 		},
 
 		patch: function(patch) {
-			this._doc.patch(patch);
+			var self = this;
+			requestAnimationFrame(function() {
+				self._doc.patch(patch);
+			});
 		},
 
 		_createObserver: function() {
 			var self = this;
 			return function (e) {
+				self._hasChanged = true;
 				self._syncNodes(e.target, self._doc.findPath(e.target));
 			};
 		},

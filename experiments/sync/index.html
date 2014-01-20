@@ -38,7 +38,10 @@
         <input name="complete" type="checkbox" disabled style="display: none"/>
         <button type="submit">Add</button>
     </form>
-
+    <form data-on-submit="todos@controller.generate">
+        <input name="n"/>
+        <button type="submit">Generate</button>
+    </form>
     <section data-path="todos">
         <button data-on-click="todos@controller.completeAll">Complete All</button>
         <button data-on-click="todos@controller.removeCompleted">Remove Completed</button>
