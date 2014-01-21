@@ -30,15 +30,19 @@ define(function(require) {
 
 		remove: function(node) {
 			var p = buildPath(this._root, node);
-			var l = p.length;
+			var p2 = p + path.separator;
+			var l = p2.length;
+
+			// Prune "subtrees"
 			this._tree = Object.keys(this._tree).reduce(function(map, key) {
-				if(key.length >= l && key.slice(0, l) === p) {
+				if(key === p
+					|| (key.length > l && key[l] === path.separator
+						&& key.slice(0, l) === p2)) {
 					delete map[key];
 				}
 
 				return map;
 			}, this._tree);
-//			this.rebuild();
 		},
 
 		findNodes: function(path) {
