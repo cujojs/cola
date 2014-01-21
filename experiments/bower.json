@@ -16,9 +16,10 @@
     "tests"
   ],
   "dependencies": {
-    "curl": "~0.8.4",
+    "curl": "~0.8",
     "most": "~0.3.0",
-    "rest": "~1.0.0",
-    "when": "~2.7.0"
+    "rest": "~1",
+    "when": "~2.7",
+	"wire": "https://github.com/briancavalier/wire-next.git"
   }
 }
