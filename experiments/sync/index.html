@@ -7,41 +7,26 @@
     <script src="../run.js"></script>
     <script src="../bower_components/curl/src/curl.js"></script>
     <script>
-//        curl(['./main']);
         curl(['wire/wire!app/main']);
     </script>
 
 </head>
 <body data-bard>
 
-<!--<h2>You</h2>-->
-<!--<form data-path="person">-->
-    <!--<label>Name<input type="text" name="name"/></label>-->
-    <!--<fieldset data-path="address">-->
-        <!--<legend>Address</legend>-->
-        <!--<label>Street<input type="text" name="street"/></label>-->
-        <!--<label>City<input type="text" name="city"/></label>-->
-        <!--<label>State<input type="text" name="state"/></label>-->
-    <!--</fieldset>-->
-
-    <!--<p>Your name is {{name}}, and you live at {{address/street}} in {{address/city}}, {{address/state}}</p>-->
-
-<!--</form>-->
-
-<!--<p data-path="person">Your name is {{name}}, and you live at <span data-path="address">{{street}} in {{city}}, {{state}}</span></p>-->
-
 <section>
     <h2>Your Todos</h2>
 
     <form class="create-todo" data-on-submit="todos@controller.add">
-        <input name="description"/>
+        <input name="description" placeholder="Add a todo" autofocus/>
         <input name="complete" type="checkbox" disabled style="display: none"/>
         <button type="submit">Add</button>
     </form>
+
     <form data-on-submit="todos@controller.generate">
-        <input name="n"/>
+        <input name="n" placeholder="Enter a number"/>
         <button type="submit">Generate</button>
     </form>
+
     <section data-path="todos">
         <button data-on-click="todos@controller.completeAll">Complete All</button>
         <button data-on-click="todos@controller.removeCompleted">Remove Completed</button>
