@@ -75,6 +75,7 @@ define(function(require) {
 			return function (e) {
 				self._hasChanged = true;
 				self._syncNodes(e.target, self._doc.findPath(e.target));
+				self.changed();
 			};
 		},
 
@@ -94,7 +95,9 @@ define(function(require) {
 				t.parent.appendChild(node);
 				return node;
 			}
-		}
+		},
+
+		changed: function() {}
 	};
 
 	return Dom;

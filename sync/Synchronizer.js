@@ -28,10 +28,17 @@ define(function(require) {
 			this._shadow = jsonPatch.snapshot(data);
 			this._clientsWindow = this.clients.concat(this.clients);
 
+			var self = this;
 			this.clients.forEach(function(client) {
 				// FIXME: Yuck, interface check
 				if(client !== source && client.set) {
 					client.set(data);
+				}
+
+				if(typeof client.changed === 'function') {
+					client.changed = function() {
+						self.syncNow(client);
+					}
 				}
 			});
 		},
@@ -52,6 +59,13 @@ define(function(require) {
 
 			this._start = nextIndex(this._start, this.clients.length);
 			return this._syncClientIndex(client, this._start);
+		},
+
+		syncNow: function(client) {
+			var start = this.clients.indexOf(client);
+			if(start >= 0) {
+				return this._syncClientIndex(client, nextIndex(start, this.clients.length));
+			}
 		},
 
 		_syncClientIndex: function(client, start) {

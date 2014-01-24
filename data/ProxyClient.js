@@ -42,11 +42,14 @@ define(function(require) {
 
 				self.data = preferResult(self.data, result);
 				self._hasChanged = true;
+				self.changed();
 				return result;
 			}, function(method) {
 				return /^[^_]/.test(method);
 			}, mediator);
-		}
+		},
+
+		changed: function() {}
 	};
 
 	function preferResult(input, output) {
