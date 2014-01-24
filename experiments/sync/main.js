@@ -1,10 +1,10 @@
-//var Rest = require('cola/data/Rest');
-var LocalStorage = require('cola/data/LocalStorage');
+//var JsonPatch = require('cola/data/JsonPatch');
+//var LocalStorage = require('cola/data/LocalStorage');
 var todosController = require('./todosController');
 
 module.exports = {
 	todosController: todosController,
-	todosModel: new LocalStorage('todos', [])
-//	todosModel: [] // Use a plain array, or
-//	todosModel: new Rest('/todos') // a Rest endpoint
+	todosModel: [] // plain array
+//	todosModel: new LocalStorage('todos', []) // LocalStorage
+//	todosModel: new JsonPatch('/todos') // JsonPatch endpoint
 };

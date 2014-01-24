@@ -10,21 +10,6 @@ define(function() {
 			things.push({ key: added.key, value: added.value });
 		},
 
-		remove: function(things, removed) {
-
-			if(!removed.key || !removed.value) {
-				return;
-			}
-
-			var index = things.findIndex(function(thing) {
-				return this.compare(thing, removed) === 0;
-			}, this);
-
-			if(index >= 0) {
-				things.splice(index, 1);
-			}
-		},
-
 		uniqueId: function(thing) {
 			// cheesy but works for now
 			return thing.key + ':' + thing.value;

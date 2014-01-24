@@ -6,21 +6,20 @@
     <script src="../run.js"></script>
     <script src="../bower_components/curl/src/curl.js"></script>
     <script>
-        curl(['./main']);
+        curl(['wire/wire!./main']);
     </script>
 </head>
-<body>
-<ul data-path="things">
+<body data-bard>
+<ul data-path="things" data-on-click="@controller.remove">
     <li data-list>
 		<form>
 			<input name="key"/>
 			<input name="value"/>
-			<a data-remove-thing href="#">x</a>
 		</form>
     </li>
 </ul>
-<form data-add-thing>
-    <input type="text" name="key"/>
+<form data-on-submit="@controller.add">
+    <input type="text" name="key" autofocus/>
     <input type="text" name="value"/>
     <button type="submit">Add</button>
 </form>
