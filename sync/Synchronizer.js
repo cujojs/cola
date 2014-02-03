@@ -15,7 +15,7 @@ define(function(require) {
 	var when = require('when');
 
 	function Synchronizer(clients) {
-		this.clients = clients;
+		this.clients = clients || [];
 		this._start = 0;
 	}
 
@@ -24,23 +24,36 @@ define(function(require) {
 			return this._init(data);
 		},
 
+		add: function(client) {
+			this.clients.push(client);
+			this._initClient(client);
+		},
+
+		remove: function(client) {
+			this.clients.splice(this.clients.indexOf(client), 1);
+		},
+
 		_init: function(data, source) {
 			this._shadow = jsonPatch.snapshot(data);
-			this._clientsWindow = this.clients.concat(this.clients);
 
 			var self = this;
 			this.clients.forEach(function(client) {
-				// FIXME: Yuck, interface check
-				if(client !== source && client.set) {
-					client.set(data);
-				}
-
-				if(typeof client.changed === 'function') {
-					client.changed = function() {
-						self.syncNow(client);
-					}
-				}
+				self._initClient(client, source);
 			});
+		},
+
+		_initClient: function(client, source) {
+			// FIXME: Yuck, interface check
+			if(client !== source && client.set) {
+				client.set(this._shadow);
+			}
+
+			if(typeof client.changed === 'function') {
+				var self = this;
+				client.changed = function() {
+					self.syncNow(client);
+				}
+			}
 		},
 
 		fromSource: function(source) {
@@ -71,10 +84,12 @@ define(function(require) {
 		_syncClientIndex: function(client, start) {
 			var patch = client.diff(this._shadow);
 			if(patch && patch.length) {
-				patch = jsonPatch.snapshot(patch);
 				this._shadow = jsonPatch.patch(patch, this._shadow);
 
-				return this._patchClients(patch, this._clientsWindow.slice(start, start + this.clients.length - 1));
+				var clientsWindow = this.clients.concat(this.clients)
+					.slice(start, start + this.clients.length - 1);
+
+				return this._patchClients(patch, clientsWindow);
 			}
 		},
 

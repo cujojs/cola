@@ -3,8 +3,8 @@ define(function(require) {
 
 	return {
 		thingsController: require('./controller'),
-//		thingsModel: new LocalStorage('key-value', [])
-		thingsModel: []
+		thingsModel: new LocalStorage('key-value', [])
+//		thingsModel: []
 	};
 });
 

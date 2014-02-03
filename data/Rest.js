@@ -37,18 +37,17 @@ define(function(require) {
 
 		this._client = typeof client === 'function' ? client : defaultClient(client);
 
-		this._options = options;
 		this.metadata = options.metadata || new JsonMetadata(options.id);
 	}
 
 	Rest.prototype = {
 		get: function(path) {
-			return this._data = this._client(path);
+			return this._shadow = this._client(path);
 		},
 
 		diff: function(shadow) {
 			var metadata = this.metadata;
-			return when(this._data, function(data) {
+			return when(this._shadow, function(data) {
 				return metadata.diff(shadow, data);
 			});
 		},
@@ -60,10 +59,10 @@ define(function(require) {
 			var seen = {};
 			var self = this;
 
-			return when(this._data, send);
+			return when(this._shadow, send);
 
 			function send(data) {
-				self._data = data = self.metadata.patch(data, patch);
+				self._shadow = data = self.metadata.patch(data, patch);
 
 				// Because adds and deletes affect array indices, ideally
 				// a patch for an array should be processed in descending index

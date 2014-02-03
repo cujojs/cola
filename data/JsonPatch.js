@@ -24,7 +24,7 @@ define(function(require) {
 	JsonPatch.prototype.patch = function(patch) {
 		var metadata = this.metadata;
 		var self = this;
-		this._data = when(this._data, function(data) {
+		this._shadow = when(this._shadow, function(data) {
 			self._client({
 				method: 'PATCH',
 				entity: patch.map(normalizePath)
@@ -33,7 +33,7 @@ define(function(require) {
 			})
 		});
 
-		return this._data.yield();
+		return this._shadow.yield();
 	};
 
 	function normalizePath(change) {

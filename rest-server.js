@@ -6,7 +6,6 @@ var jsonPatch = require('./lib/jsonPatch');
 var app = express();
 
 var data = {
-	person: { address: {} },
 	todos: []
 };
 
@@ -22,7 +21,6 @@ app.configure(function () {
 	app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
 
-makeRestEndpoint(app, 'person');
 makeRestEndpoint(app, 'todos');
 makeJsonPatchEndpoint(app);
 
@@ -30,18 +28,20 @@ app.listen(8080);
 
 function makeRestEndpoint(app, baseUrl) {
 	app.get('/' + baseUrl, function(request, response) {
+		console.log(data[baseUrl]);
 		response.json(data[baseUrl]);
 	});
 }
 
 function makeJsonPatchEndpoint(app) {
-	app.patch('/', function(request, response) {
+	app.patch('/:key', function(request, response) {
 		var patch = request.body;
-		console.log(patch);
-		jsonPatch.patch(patch, shadow);
-		jsonPatch.patch(patch, data);
+		var key = request.params.key;
+
+		jsonPatch.patch(patch, shadow[key]);
+		jsonPatch.patch(patch, data[key]);
 
 		console.log('Multi-patch done');
-		response.json(jsonPatch.diff(shadow, data));
+		response.json(jsonPatch.diff(shadow[key], data[key]));
 	});
 }

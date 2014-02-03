@@ -18,21 +18,21 @@ define(function(require) {
 	JsonMetadata = require('./metadata/JsonMetadata');
 
 	function MemoryStorage(data, identify) {
-		this._data = jsonPatch.snapshot(data);
+		this._shadow = jsonPatch.snapshot(data);
 		this.metadata = new JsonMetadata(identify);
 	}
 
 	MemoryStorage.prototype = {
 		get: function(path) {
-			return jsonPointer.getValue(this._data, path, this._data);
+			return jsonPointer.getValue(this._shadow, path, this._shadow);
 		},
 
 		diff: function(shadow) {
-			return this.metadata.diff(shadow, this._data);
+			return this.metadata.diff(shadow, this._shadow);
 		},
 
 		patch: function(patch) {
-			this._data = this.metadata.patch(this._data, patch);
+			this._shadow = this.metadata.patch(this._shadow, patch);
 		}
 	};
 
