@@ -4,6 +4,19 @@ var WebSocketServer = require('ws').Server;
 var Memory = require('./data/Memory');
 var jsonPatch = require('./lib/jsonPatch');
 
+// Simple express just to server static demo files
+var express = require('express');
+var app = express();
+app.configure(function () {
+	var cwd = process.cwd();
+	console.log(cwd);
+	app.use(express.static(cwd));
+	app.use(express.directory(cwd));
+	app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
+});
+app.listen(8000);
+
+// The real fun: Setup DS WebSocket server
 var todos = new Memory([]);
 
 var clientId = 1;
