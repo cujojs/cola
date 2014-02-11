@@ -44,7 +44,8 @@
     "buster": "~0.6",
     "jshint": "~2",
     "gent": "~0.4",
-	"ws": "~0.4"
+    "express": "~3",
+    "ws": "~0.4"
   },
   "main": "./cola",
   "directories": {
