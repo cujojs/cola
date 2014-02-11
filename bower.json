@@ -5,7 +5,7 @@
 		"when": "~2"
 	},
 	"devDependencies": {
-		"buster": "~0.6"
+		"curl": "~0.8"
 	},
 	"ignore": [
 		".idea/",
