@@ -13,12 +13,19 @@ define(function(require) {
 
 	var createProxy = require('../lib/proxy');
 	var jsonPatch = require('../lib/jsonPatch');
+	var jsonPointer = require('../lib/jsonPointer');
+	var Registration = require('../dom/Registration');
 
-	function ProxyClient(identify) {
+	function ProxyClient(identify, invoker) {
 		this.id = identify;
+		this.invoker = typeof invoker === 'function' ? invoker : this._defaultInvoker;
 	}
 
 	ProxyClient.prototype = {
+		get: function(path) {
+			return jsonPointer.getValue(this.data, path, this.data);
+		},
+
 		set: function(data) {
 			this.data = jsonPatch.snapshot(data);
 		},
@@ -38,7 +45,7 @@ define(function(require) {
 		proxy: function(mediator) {
 			var self = this;
 			return createProxy(function(target, method, args) {
-				var result = target[method].apply(target, [self.data].concat(args));
+				var result = self.invoker(target, method, args, self.data);
 
 				self.data = preferResult(self.data, result);
 				self._hasChanged = true;
@@ -47,6 +54,11 @@ define(function(require) {
 			}, function(method) {
 				return /^[^_]/.test(method);
 			}, mediator);
+		},
+
+		_defaultInvoker: function(target, method, args, data) {
+			args.unshift(data);
+			return target[method].apply(target, args);
 		},
 
 		changed: function() {}

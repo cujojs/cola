@@ -70,6 +70,10 @@ define(function(require) {
 			});
 		},
 
+		findPath: function(node) {
+			return this._doc.findPath(node);
+		},
+
 		_createObserver: function() {
 			var self = this;
 			return function (e) {

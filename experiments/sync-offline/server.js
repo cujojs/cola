@@ -2,6 +2,7 @@
 
 var WebSocketServer = require('ws').Server;
 var jsonPatch = require('../../lib/jsonPatch');
+var fs = require('fs');
 
 // Simple express just to server static demo files
 var express = require('express');
@@ -18,6 +19,16 @@ app.listen(8000);
 // The real fun: Setup DS WebSocket server
 var data = {};
 var localVersion = 0;
+if(fs.existsSync('data.json')) {
+	data = JSON.parse(fs.readFileSync('data.json'));
+	localVersion = data.localVersion;
+	data = data.data;
+	console.log('read startup data', localVersion, data);
+}
+
+function writeData() {
+	fs.writeFileSync('data.json', JSON.stringify({ data: data, localVersion: localVersion }));
+}
 
 var clientId = 1;
 var clients = {};
@@ -37,15 +48,27 @@ server.on('connection', function(ws) {
 		shadow: jsonPatch.snapshot(data)
 	};
 
-	send(ws, { data: data, localVersion: localVersion });
-
 	ws.on('message', function(message) {
 		var msg = JSON.parse(message);
+
+		if(msg.data) {
+			console.log(id, 'data request', localVersion, data);
+			send(ws, { data: data, localVersion: localVersion });
+			return;
+		}
+
+		if(msg.status) {
+			console.log(id, 'status request', localVersion);
+			send(ws, { localVersion: localVersion });
+			return;
+		}
+
 		if(!msg.patches || msg.patches.length === 0) {
 			console.log('no patch info');
 			return;
 		}
 
+		console.log(id, 'patch request');
 		process.nextTick(function() {
 			msg.patches.forEach(function(change) {
 				console.log(change);
@@ -62,6 +85,7 @@ server.on('connection', function(ws) {
 			});
 
 			localVersion += 1;
+			writeData();
 			console.log(localVersion, data);
 
 			respondWithPatch(client, data, localVersion);

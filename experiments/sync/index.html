@@ -31,9 +31,10 @@
         <button data-on-click="todos@controller.completeAll">Complete All</button>
         <button data-on-click="todos@controller.removeCompleted">Remove Completed</button>
         <ul>
-            <li data-list>
+            <li data-list data-on-click>
                 <input type="checkbox" name="complete"/>
                 <input name="description"/>
+                <span data-on-click="todos@controller.remove">&times;</span>
             </li>
         </ul>
     </section>

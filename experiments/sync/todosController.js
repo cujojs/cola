@@ -3,6 +3,10 @@ module.exports = {
 		todos.push(todo);
 	},
 
+	remove: function(todos, todo) {
+		todos.splice(todos.indexOf(todo), 1);
+	},
+
 	completeAll: function(todos) {
 		todos.forEach(function(todo) {
 			todo.complete = true;
