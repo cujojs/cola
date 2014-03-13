@@ -75,7 +75,7 @@ define(function(require) {
 
 					function addViews(context, root) {
 
-						context.add('@app', function () {
+						context.add('@root', function () {
 							return root;
 						});
 
@@ -98,7 +98,7 @@ define(function(require) {
 			})
 			.add('events@startup', function (context) {
 				return context.resolve(['sync@startup'], function () {
-					return context.resolve(['@app'], function (views) {
+					return context.resolve(['@root'], function (views) {
 						return views.map(function (view) {
 							return createEventDispatcher(view, context, proxies);
 						});
