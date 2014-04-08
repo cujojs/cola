@@ -35,7 +35,9 @@ define(function(require) {
 			options = {};
 		}
 
-		this._client = typeof client === 'function' ? client : defaultClient(client);
+		this._client = typeof client === 'function'
+			? client
+			: this._createDefaultClient(client);
 
 		this.metadata = options.metadata || new JsonMetadata(options.id);
 	}
@@ -112,18 +114,18 @@ define(function(require) {
 					}
 				}, void 0);
 			}
+		},
+
+		_createDefaultClient: function(baseUrl, mimeType) {
+			var client = typeof baseUrl === 'string'
+				? rest.chain(pathPrefix, { prefix: baseUrl }) : rest;
+
+			return client
+				.chain(mime, { mime: mimeType || 'application/json' })
+				.chain(location)
+				.chain(entity);
 		}
 	};
-
-	function defaultClient(baseUrl) {
-		var client = typeof baseUrl === 'string'
-			? rest.chain(pathPrefix, { prefix: baseUrl }) : rest;
-
-		return client
-			.chain(mime, { mime: 'application/json' })
-			.chain(location)
-			.chain(entity);
-	}
 
 	return Rest;
 

@@ -15,6 +15,8 @@ define(function(require) {
 	var path = require('../lib/path');
 	var Rest = require('./Rest');
 
+	var defaultMimeType = 'application/json-patch+json';
+
 	function JsonPatch(client, options) {
 		Rest.apply(this, arguments);
 	}
@@ -29,11 +31,16 @@ define(function(require) {
 				method: 'PATCH',
 				entity: patch.map(normalizePath)
 			}).then(function(remotePatch) {
+				// TODO: Apply original patch before or after request?
 				return metadata.patch(metadata.patch(data, patch), remotePatch);
 			})
 		});
 
 		return this._shadow.yield();
+	};
+
+	JsonPatch.prototype._createDefaultClient = function(baseUrl, mimeType) {
+		return Rest.prototype._createDefaultClient.call(this, baseUrl, mimeType || defaultMimeType);
 	};
 
 	function normalizePath(change) {

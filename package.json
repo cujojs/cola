@@ -37,8 +37,8 @@
     }
   ],
   "dependencies": {
-    "when": "~2",
-    "most": "~0"
+    "when": "~3",
+    "rest": "~1"
   },
   "devDependencies": {
     "buster": "~0.6",
