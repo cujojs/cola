@@ -18,8 +18,8 @@ define(function(require) {
 	var Map = require('wire/lib/Map');
 
 	var path = require('../lib/path');
+	var domPointer = require('../lib/domPointer');
 	var Dom = require('../dom/Dom');
-	var Registration = require('../dom/Registration');
 	var form = require('../dom/form');
 	var ProxyClient = require('../data/ProxyClient');
 	var Memory = require('../data/Memory');
@@ -97,11 +97,12 @@ define(function(require) {
 				});
 			})
 			.add('events@startup', function (context) {
-				return context.resolve(['sync@startup'], function () {
-					return context.resolve(['@root'], function (views) {
-						return views.map(function (view) {
-							return createEventDispatcher(view, context, proxies);
-						});
+				return context.resolve(['@root'], function (views) {
+					return views.map(function (view) {
+						return createEventDispatcher(view, context, proxies);
+					});
+				}).then(function() {
+					return context.resolve(['sync@startup'], function () {
 					});
 				});
 			})
@@ -214,13 +215,13 @@ define(function(require) {
 					}
 					return result;
 				});
-			});
+			}).done();
 		}
 	}
 
 	function buildArgs(views, controllers, proxies, e) {
 		return views.reduce(function (args, view) {
-			var path = Registration.buildPath(view, e.target);
+			var path = domPointer(view, e.target);
 			return controllers.reduce(function (args, controller) {
 				var proxy = proxies.get(controller);
 				if(proxy) {

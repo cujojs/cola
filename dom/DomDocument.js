@@ -60,7 +60,7 @@ define(function(require) {
 			}
 
 			nodeValue = dom.getValue(nodes[0]);
-			if(nodeValue !== value) {
+			if(nodeValue != value) {
 				patch.push({
 					op: 'replace',
 					path: basePath,

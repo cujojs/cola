@@ -13,6 +13,7 @@ define(function(require) {
 
 	var dom = require('../lib/dom');
 	var path = require('../lib/path');
+	var domPointer = require('../lib/domPointer');
 
 	function Registration(node) {
 		this._root = node;
@@ -29,7 +30,7 @@ define(function(require) {
 		},
 
 		remove: function(node) {
-			var p = buildPath(this._root, node);
+			var p = domPointer(this._root, node);
 			var p2 = p + path.separator;
 			var l = p2.length;
 
@@ -50,28 +51,11 @@ define(function(require) {
 		},
 
 		findPath: function(node) {
-			return buildPath(this._root, node);
+			return domPointer(this._root, node);
 		}
 	};
 
-	Registration.buildPath = buildPath;
-
 	return Registration;
-
-	function buildPath(end, start) {
-		var segment, p = '';
-		while(start && start !== end) {
-			segment = start.getAttribute('name') || start.getAttribute('data-path');
-			p = path.join(segment, p);
-
-			if(path.isAbsolute(p)) {
-				start = end;
-			}
-			start = start.parentNode;
-		}
-
-		return p;
-	}
 
 	function normalizePath(path) {
 		return path && path[0] === '/' ? path.slice(1) : path;
@@ -88,7 +72,7 @@ define(function(require) {
 		return Array.prototype.reduce.call(nodes, function(map, node) {
 			var list, p;
 
-			p = buildPath(root, node);
+			p = domPointer(root, node);
 
 			if(p) {
 				if(!path.isAbsolute(p)) {
