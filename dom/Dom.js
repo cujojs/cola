@@ -12,6 +12,7 @@
 define(function(require) {
 
 	var dom = require('../lib/dom');
+	var domPointer = require('../lib/domPointer');
 	var Registration = require('./Registration');
 	var DomDocument = require('./DomDocument');
 	var template = require('./template');
@@ -133,7 +134,7 @@ define(function(require) {
 		var lists = Array.prototype.slice.call(root.querySelectorAll('[data-list]'));
 		return lists.reduce(function (lists, list) {
 			list.removeAttribute('data-list');
-			lists[Registration.buildPath(root, list)] = {
+			lists[domPointer(root, list)] = {
 				template: list,
 				parent: list.parentNode
 			};
