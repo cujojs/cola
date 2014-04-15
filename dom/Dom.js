@@ -16,16 +16,9 @@ define(function(require) {
 	var Registration = require('./Registration');
 	var DomDocument = require('./DomDocument');
 	var template = require('./template');
-	var ap = Array.prototype;
+	var requestAnimationFrame = require('./requestAnimationFrame');
 
-	var requestAnimationFrame = (function(){
-		return  window.requestAnimationFrame       ||
-			window.webkitRequestAnimationFrame ||
-			window.mozRequestAnimationFrame    ||
-			function( callback ){
-				window.setTimeout(callback, 1000 / 60);
-			};
-	})();
+	var ap = Array.prototype;
 
 	function Dom(node, events) {
 		this.node = template.replaceContents(node);
@@ -73,10 +66,14 @@ define(function(require) {
 		patch: function(patch) {
 			var self = this;
 			requestAnimationFrame(function() {
-				if(self._doc.patch(patch)) {
-					self._postProcess();
-				}
+				self._patch(patch);
 			});
+		},
+
+		_patch: function(patch) {
+			if(this._doc.patch(patch)) {
+				this._postProcess();
+			}
 		},
 
 		_postProcess: function() {},
