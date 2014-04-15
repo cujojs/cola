@@ -27,7 +27,7 @@ define(function(require) {
 		var metadata = this.metadata;
 		var self = this;
 		this._shadow = when(this._shadow, function(data) {
-			self._client({
+			return self._client({
 				method: 'PATCH',
 				entity: patch.map(normalizePath)
 			}).then(function(remotePatch) {

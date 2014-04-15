@@ -12,7 +12,7 @@
 define(function(require) {
 
 	var when, rest, entity, mime, pathPrefix, location,
-		JsonMetadata, jsonPointer, path;
+		JsonMetadata, jsonPatch, jsonPointer, path;
 
 	when = require('when');
 
@@ -23,6 +23,7 @@ define(function(require) {
 	location = require('rest/interceptor/location');
 
 	jsonPointer = require('../lib/jsonPointer');
+	jsonPatch = require('../lib/jsonPatch');
 	JsonMetadata = require('./metadata/JsonMetadata');
 	path = require('../lib/path');
 
@@ -44,7 +45,8 @@ define(function(require) {
 
 	Rest.prototype = {
 		get: function(path) {
-			return this._shadow = this._client(path);
+			this._shadow = this._client(path);
+			return this._shadow.then(jsonPatch.snapshot);
 		},
 
 		diff: function(shadow) {
