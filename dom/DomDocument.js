@@ -99,7 +99,9 @@ define(function(require) {
 	}
 
 	function patchDom(reg, generator, patch) {
-		return patch.reduce(function(reg, change) {
+		var nodesToRemove = [];
+
+		patch.reduce(function(reg, change) {
 			var path = normalizePath(change.path);
 			var nodes = reg.findNodes(path);
 
@@ -125,6 +127,24 @@ define(function(require) {
 
 			return reg;
 		}, reg);
+
+		nodesToRemove.reduce(function(reg, node) {
+			node.parentNode.removeChild(node);
+			reg.remove(node);
+			return reg;
+		}, reg);
+
+		return nodesToRemove.length > 0;
+
+		function applyChange(node, reg, change) {
+			if(change.op === 'replace' || change.op === 'add') {
+				setOne(node, reg, '', null, change.value);
+			} else if(change.op === 'remove') {
+				nodesToRemove.push(node);
+			}
+
+			return node;
+		}
 	}
 
 	function findDeepest(reg, p) {
@@ -137,17 +157,6 @@ define(function(require) {
 		}
 
 		return p;
-	}
-
-	function applyChange(node, reg, change) {
-		if(change.op === 'replace' || change.op === 'add') {
-			setOne(node, reg, '', null, change.value);
-		} else if(change.op === 'remove') {
-			node.parentNode.removeChild(node);
-			reg.remove(node);
-		}
-
-		return node;
 	}
 
 	function set(nodes, reg, path, generator, value) {

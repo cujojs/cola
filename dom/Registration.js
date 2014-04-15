@@ -17,7 +17,7 @@ define(function(require) {
 
 	function Registration(node) {
 		this._root = node;
-		this._tree = register({}, '', node);
+		this.rebuild();
 	}
 
 	Registration.prototype = {

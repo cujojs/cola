@@ -16,6 +16,7 @@ define(function(require) {
 	var Registration = require('./Registration');
 	var DomDocument = require('./DomDocument');
 	var template = require('./template');
+	var ap = Array.prototype;
 
 	var requestAnimationFrame = (function(){
 		return  window.requestAnimationFrame       ||
@@ -31,7 +32,8 @@ define(function(require) {
 		this._lists = findListTemplates(this.node);
 
 		var self = this;
-		this._doc = new DomDocument(new Registration(this.node), function(parent, key) {
+		this._registration = new Registration(this.node);
+		this._doc = new DomDocument(this._registration, function(parent, key) {
 			return self._generateNode(parent, key);
 		});
 
@@ -53,6 +55,10 @@ define(function(require) {
 				node.addEventListener(event, observe, false);
 			}, this._events, this._doc);
 
+			if(Array.isArray(data)) {
+				this._postProcess = this._updatePaths;
+			}
+
 			return this._doc.set('', data);
 		},
 
@@ -67,8 +73,21 @@ define(function(require) {
 		patch: function(patch) {
 			var self = this;
 			requestAnimationFrame(function() {
-				self._doc.patch(patch);
+				if(self._doc.patch(patch)) {
+					self._postProcess();
+				}
 			});
+		},
+
+		_postProcess: function() {},
+
+		_updatePaths: function() {
+			var lists = this._lists;
+			Object.keys(lists).forEach(function(k) {
+				updatePath(lists[k].parent.children);
+			});
+
+			this._registration.rebuild();
 		},
 
 		findPath: function(node) {
@@ -107,6 +126,14 @@ define(function(require) {
 
 	return Dom;
 
+	function updatePath(listNodes) {
+		ap.forEach.call(listNodes, function(node, i) {
+			if(node.hasAttribute('data-path')) {
+				node.setAttribute('data-path', i);
+			}
+		});
+	}
+
 	function normalizeEvents(events) {
 		if (!events) {
 			events = { '/': 'change' };
@@ -131,7 +158,7 @@ define(function(require) {
 	}
 
 	function findListTemplates(root) {
-		var lists = Array.prototype.slice.call(root.querySelectorAll('[data-list]'));
+		var lists = ap.slice.call(root.querySelectorAll('[data-list]'));
 		return lists.reduce(function (lists, list) {
 			list.removeAttribute('data-list');
 			lists[domPointer(root, list)] = {
