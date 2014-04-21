@@ -11,20 +11,16 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var jsonPointer, jsonPatch, JsonMetadata;
-
-	jsonPointer = require('../lib/jsonPointer');
-	jsonPatch = require('../lib/jsonPatch');
-	JsonMetadata = require('./metadata/JsonMetadata');
+	var JsonMetadata = require('./metadata/JsonMetadata');
 
 	function MemoryStorage(data, identify) {
-		this._shadow = jsonPatch.snapshot(data);
 		this.metadata = new JsonMetadata(identify);
+		this._shadow = this.metadata.snapshot(data);
 	}
 
 	MemoryStorage.prototype = {
 		get: function(path) {
-			return jsonPointer.getValue(this._shadow, path, this._shadow);
+			return this.metadata.getValue(this._shadow, path, this._shadow);
 		},
 
 		diff: function(shadow) {

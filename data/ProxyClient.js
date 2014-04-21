@@ -12,22 +12,21 @@
 define(function(require) {
 
 	var createProxy = require('../lib/proxy');
-	var jsonPatch = require('../lib/jsonPatch');
-	var jsonPointer = require('../lib/jsonPointer');
 	var Registration = require('../dom/Registration');
+	var JsonMetadata = require('./metadata/JsonMetadata');
 
 	function ProxyClient(identify, invoker) {
-		this.id = identify;
+		this.metadata = new JsonMetadata(identify);
 		this.invoker = typeof invoker === 'function' ? invoker : this._defaultInvoker;
 	}
 
 	ProxyClient.prototype = {
 		get: function(path) {
-			return jsonPointer.getValue(this.data, path, this.data);
+			return this.metadata.getValue(this.data, path, this.data);
 		},
 
 		set: function(data) {
-			this.data = jsonPatch.snapshot(data);
+			this.data = this.metadata.clone(data);
 		},
 
 		diff: function(shadow) {
@@ -35,11 +34,11 @@ define(function(require) {
 				return;
 			}
 			this._hasChanged = false;
-			return jsonPatch.diff(shadow, this.data, this.id);
+			return this.metadata.diff(shadow, this.data, this.id);
 		},
 
 		patch: function(patch) {
-			this.data = jsonPatch.patch(patch, this.data);
+			this.data = this.metadata.patch(this.data, patch);
 		},
 
 		proxy: function(mediator) {

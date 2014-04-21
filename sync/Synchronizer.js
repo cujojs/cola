@@ -11,12 +11,14 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var jsonPatch = require('../lib/jsonPatch');
+	var JsonMetdata = require('../data/metadata/JsonMetadata');
 	var when = require('when');
 
-	function Synchronizer(clients) {
+	function Synchronizer(clients, metadata) {
 		this.clients = clients || [];
 		this._start = 0;
+
+		this.metadata = metadata || new JsonMetdata();
 	}
 
 	Synchronizer.prototype = {
@@ -34,7 +36,7 @@ define(function(require) {
 		},
 
 		_init: function(data, source) {
-			this._shadow = jsonPatch.snapshot(data);
+			this._shadow = this.metadata.clone(data);
 
 			var self = this;
 			this.clients.forEach(function(client) {
@@ -84,7 +86,7 @@ define(function(require) {
 		_syncClientIndex: function(client, start) {
 			var patch = client.diff(this._shadow);
 			if(patch && patch.length) {
-				this._shadow = jsonPatch.patch(patch, this._shadow);
+				this._shadow = this.metadata.patch(this._shadow, patch);
 
 				var clientsWindow = this.clients.concat(this.clients)
 					.slice(start, start + this.clients.length - 1);

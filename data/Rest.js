@@ -11,21 +11,16 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var when, rest, entity, mime, pathPrefix, location,
-		JsonMetadata, jsonPatch, jsonPointer, path;
+	var when = require('when');
 
-	when = require('when');
+	var rest = require('rest');
+	var entity = require('rest/interceptor/entity');
+	var mime = require('rest/interceptor/mime');
+	var pathPrefix = require('rest/interceptor/pathPrefix');
+	var location = require('rest/interceptor/location');
 
-	rest = require('rest');
-	entity = require('rest/interceptor/entity');
-	mime = require('rest/interceptor/mime');
-	pathPrefix = require('rest/interceptor/pathPrefix');
-	location = require('rest/interceptor/location');
-
-	jsonPointer = require('../lib/jsonPointer');
-	jsonPatch = require('../lib/jsonPatch');
-	JsonMetadata = require('./metadata/JsonMetadata');
-	path = require('../lib/path');
+	var JsonMetadata = require('./metadata/JsonMetadata');
+	var path = require('../lib/path');
 
 	/**
 	 * A rest.js (cujoJS/rest) based datasource.
@@ -46,7 +41,7 @@ define(function(require) {
 	Rest.prototype = {
 		get: function(path) {
 			this._shadow = this._client(path);
-			return this._shadow.then(jsonPatch.snapshot);
+			return this._shadow.then(this.metadata.clone);
 		},
 
 		diff: function(shadow) {
@@ -58,6 +53,7 @@ define(function(require) {
 
 		patch: function(patch) {
 
+			var metadata = this.metadata;
 			var identify = this.metadata.id;
 			var client = this._client;
 			var seen = {};
@@ -88,13 +84,13 @@ define(function(require) {
 
 					if(segments.length === 1) {
 						if(change.op === 'add') {
-							entity = jsonPointer.getValue(data, p);
+							entity = metadata.getValue(data, p);
 							return entity !== void 0 && client({
 								method: 'POST',
 								entity: entity
 							});
 						} else if(change.op === 'replace') {
-							entity = jsonPointer.getValue(data, p);
+							entity = metadata.getValue(data, p);
 							return entity !== void 0 && client({
 								method: 'PUT',
 								path: identify(entity) || p,
@@ -107,7 +103,7 @@ define(function(require) {
 							});
 						}
 					} else if(segments.length > 1) {
-						entity = jsonPointer.getValue(data, p);
+						entity = metadata.getValue(data, p);
 						return entity !== void 0 && client({
 							method: 'PUT',
 							path: identify(entity) || p,

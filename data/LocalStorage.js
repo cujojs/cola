@@ -10,11 +10,7 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var jsonPointer, jsonPatch, JsonMetadata;
-
-	jsonPointer = require('../lib/jsonPointer');
-	jsonPatch = require('../lib/jsonPatch');
-	JsonMetadata = require('./metadata/JsonMetadata');
+	var JsonMetadata = require('./metadata/JsonMetadata');
 
 	/**
 	 * A LocalStorage datasource
@@ -29,7 +25,7 @@ define(function(require) {
 	LocalStorage.prototype = {
 		get: function(path) {
 			var data = this._shadow = this._load();
-			return jsonPointer.getValue(data, path, data);
+			return this.metadata.getValue(data, path, data);
 		},
 
 		diff: function(shadow) {

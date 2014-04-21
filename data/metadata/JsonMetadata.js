@@ -11,7 +11,8 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var jsonPatch = require('../../lib/jsonPatch');
+	var jiff = require('jiff');
+	var jsonPointer = require('jiff/lib/jsonPointer');
 	var id = require('./id');
 
 	function JsonMetadata(identify) {
@@ -19,12 +20,20 @@ define(function(require) {
 	}
 
 	JsonMetadata.prototype = {
+		clone: function(data) {
+			return jiff.clone(data);
+		},
+
 		diff: function(before, after) {
-			return jsonPatch.diff(before, after, this.id);
+			return jiff.diff(before, after, this.id);
 		},
 
 		patch: function(x, changes) {
-			return jsonPatch.patch(changes, x, this.id);
+			return jiff.patch(changes, x, this.id);
+		},
+
+		getValue: function(data, path, defaultValue) {
+			return jsonPointer.getValue(data, path, defaultValue);
 		}
 	};
 

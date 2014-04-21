@@ -12,7 +12,7 @@
 define(function(require) {
 
 	var when = require('when');
-	var jsonPatch = require('../lib/jsonPatch');
+	var jiff = require('jiff');
 	var path = require('../lib/path');
 
 	function JsonPatchWS(url) {
@@ -25,7 +25,7 @@ define(function(require) {
 				return this._listen();
 			}
 
-			return jsonPatch.snapshot(this._shadow);
+			return jiff.clone(this._shadow);
 		},
 
 		diff: function(shadow) {
@@ -33,7 +33,7 @@ define(function(require) {
 				return;
 			}
 
-			return jsonPatch.diff(shadow, this._shadow);
+			return jiff.diff(shadow, this._shadow);
 		},
 
 		patch: function(patch) {
@@ -44,7 +44,7 @@ define(function(require) {
 		},
 
 		_patch: function(patch) {
-			this._shadow = jsonPatch.patch(jsonPatch.snapshot(patch), this._shadow);
+			this._shadow = jiff.patch(jiff.clone(patch), this._shadow);
 		},
 
 		_listen: function() {
@@ -58,7 +58,7 @@ define(function(require) {
 					if(message.data) {
 						console.log('set data', self._shadow);
 						self._shadow = message.data;
-						resolve(jsonPatch.snapshot(self._shadow));
+						resolve(jiff.clone(self._shadow));
 
 					} else if(self._shadow && message.patch && message.patch.length > 0) {
 						self._patch(message.patch);
