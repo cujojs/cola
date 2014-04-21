@@ -20,7 +20,6 @@ define(function(require) {
 	var location = require('rest/interceptor/location');
 
 	var JsonMetadata = require('./metadata/JsonMetadata');
-	var path = require('../lib/path');
 
 	/**
 	 * A rest.js (cujoJS/rest) based datasource.
@@ -70,6 +69,7 @@ define(function(require) {
 				// index order and reverse it.  Need a better strategy here for
 				// arrays.  Using ids would work out fine regardless.
 				return when.reduce(patch.reverse(), function(_, change) {
+					/*jshint maxcomplexity:7*/
 					var entity, segments;
 					var p = change.path;
 

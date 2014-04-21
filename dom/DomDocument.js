@@ -13,7 +13,6 @@ define(function(require) {
 
 	var path = require('../lib/path');
 	var dom = require('../lib/dom');
-	var jsonPointer = require('../lib/jsonPointer');
 
 	function DomDocument(registration, generator) {
 		this.reg = registration;
@@ -82,7 +81,7 @@ define(function(require) {
 					patch.push({
 						op: 'remove',
 						path: local
-					})
+					});
 				}
 
 				return patch;

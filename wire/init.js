@@ -11,13 +11,11 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var merge = require('wire/config/merge');
 	var fluent = require('wire/config/fluent');
 	var role = require('wire/query/role');
 	var dom = require('wire/dom');
 	var Map = require('wire/lib/Map');
 
-	var path = require('../lib/path');
 	var domPointer = require('../lib/domPointer');
 	var Dom = require('../dom/Dom');
 	var form = require('../dom/form');
@@ -25,8 +23,6 @@ define(function(require) {
 	var Memory = require('../data/Memory');
 	var Synchronizer = require('../sync/Synchronizer');
 	var Scheduler = require('../sync/Scheduler');
-
-	var when = require('when');
 
 	var isController = role('controller');
 	var isModel = role('model');
@@ -64,7 +60,7 @@ define(function(require) {
 
 						return instance;
 					}
-				}
+				};
 			})
 			.add('views@init', function (context) {
 				return context.resolve(['qsa'], function (qsa) {
@@ -160,7 +156,7 @@ define(function(require) {
 
 		function keyToMetadata(key) {
 			if (/controller$/i.test(key)) {
-				return key.slice(0, key.length - 10) + '@controller'
+				return key.slice(0, key.length - 10) + '@controller';
 			} else if (/model$/i.test(key)) {
 				return key.slice(0, key.length - 5) + '@model';
 			} else if (/view/i.test(key)) {
@@ -174,9 +170,9 @@ define(function(require) {
 	}
 
 	function createEventHandler(context, proxies) {
-		return 	function eventHandler (e, target, expression) {
+		return function eventHandler (e, target, expression) {
 			handleEvent(e, expression, context, proxies);
-		}
+		};
 	}
 
 	function handleEvent(e, expression, context, proxies) {

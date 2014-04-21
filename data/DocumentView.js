@@ -17,7 +17,7 @@ define(function(require) {
 	function DocumentView(path, source) {
 		this.path = path;
 		this.source = source;
-		this.metadata = source.metadata
+		this.metadata = source.metadata;
 	}
 
 	DocumentView.prototype = {

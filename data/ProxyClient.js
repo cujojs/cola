@@ -12,8 +12,9 @@
 define(function(require) {
 
 	var createProxy = require('../lib/proxy');
-	var Registration = require('../dom/Registration');
 	var JsonMetadata = require('./metadata/JsonMetadata');
+
+	var privateMethodRx = /^[^_]/;
 
 	function ProxyClient(identify, invoker) {
 		this.metadata = new JsonMetadata(identify);
@@ -51,7 +52,7 @@ define(function(require) {
 				self.changed();
 				return result;
 			}, function(method) {
-				return /^[^_]/.test(method);
+				return privateMethodRx.test(method);
 			}, mediator);
 		},
 

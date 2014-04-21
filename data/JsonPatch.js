@@ -18,7 +18,7 @@ define(function(require) {
 	var defaultMimeType = 'application/json-patch+json';
 
 	function JsonPatch(client, options) {
-		Rest.apply(this, arguments);
+		Rest.call(this, client, options);
 	}
 
 	JsonPatch.prototype = Object.create(Rest.prototype);
@@ -33,7 +33,7 @@ define(function(require) {
 			}).then(function(remotePatch) {
 				// TODO: Apply original patch before or after request?
 				return metadata.patch(metadata.patch(data, patch), remotePatch);
-			})
+			});
 		});
 
 		return this._shadow.yield();

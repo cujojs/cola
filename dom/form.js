@@ -38,7 +38,9 @@ define(function () {
 			value = object[name];
 			el = els[name];
 
-			if(!filter(el, name, value)) return;
+			if(!filter(el, name, value)) {
+				return;
+			}
 
 			if(el.length) {
 				setGroupValue(el, value);
@@ -111,6 +113,7 @@ define(function () {
 	 * @return {Object} populated object
 	 */
 	function formToObject (formOrEvent, filter) {
+		/*jshint maxcomplexity:15*/
 		var obj, form, els, seen, i, el, name, value;
 
 		form = formOrEvent.selectorTarget || formOrEvent.target || formOrEvent;
@@ -128,15 +131,21 @@ define(function () {
 		while ((el = els[i++])) {
 			name = el.name;
 			// skip over non-named elements and fieldsets (that have no value)
-			if (!name || !('value' in el) || !filter(el)) continue;
+			if (!name || !('value' in el) || !filter(el)) {
+				continue;
+			}
 
 			value = el.value;
 
 			if (el.type == 'radio') {
 				// only grab one radio value (to ensure that the property
 				// is always set, we set false if none are checked)
-				if (el.checked) obj[name] = value;
-				else if (!(name in seen)) obj[name] = false;
+				if (el.checked) {
+					obj[name] = value;
+				}
+				else if (!(name in seen)) {
+					obj[name] = false;
+				}
 			}
 			else if (el.type == 'checkbox') {
 				if (!(name in seen)) {
@@ -188,7 +197,9 @@ define(function () {
 		options = select.options;
 		i = 0;
 		while ((option = options[i++])) {
-			if (option.selected) values.push(option.value);
+			if (option.selected) {
+				values.push(option.value);
+			}
 		}
 		return values;
 	}

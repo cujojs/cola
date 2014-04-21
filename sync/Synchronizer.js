@@ -54,7 +54,7 @@ define(function(require) {
 				var self = this;
 				client.changed = function() {
 					self.syncNow(client);
-				}
+				};
 			}
 		},
 

@@ -42,9 +42,9 @@
     "jiff": "~0.1"
   },
   "devDependencies": {
-    "buster": "~0.6",
+    "buster": "~0.7",
     "jshint": "~2",
-    "gent": "~0.4",
+    "gent": "~0.6",
     "express": "~3",
     "ws": "~0.4"
   },
@@ -53,6 +53,6 @@
     "test": "test"
   },
   "scripts": {
-    "test": "jshint . && buster test -e node"
+    "test": "jshint . && buster-test -e node"
   }
 }

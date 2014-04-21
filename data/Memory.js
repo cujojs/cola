@@ -15,7 +15,7 @@ define(function(require) {
 
 	function MemoryStorage(data, identify) {
 		this.metadata = new JsonMetadata(identify);
-		this._shadow = this.metadata.snapshot(data);
+		this._shadow = this.metadata.clone(data);
 	}
 
 	MemoryStorage.prototype = {

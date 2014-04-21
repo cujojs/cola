@@ -13,14 +13,13 @@ define(function(require) {
 
 	var when = require('when');
 	var jiff = require('jiff');
-	var path = require('../lib/path');
 
 	function JsonPatchWS(url) {
 		this._url = url;
 	}
 
 	JsonPatchWS.prototype = {
-		get: function(path) {
+		get: function() {
 			if(!this._shadow) {
 				return this._listen();
 			}

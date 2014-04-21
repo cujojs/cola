@@ -11,7 +11,6 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var dom = require('../lib/dom');
 	var path = require('../lib/path');
 	var domPointer = require('../lib/domPointer');
 
