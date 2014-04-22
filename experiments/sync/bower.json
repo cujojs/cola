@@ -17,7 +17,7 @@
 	"dependencies": {
 		"rave": "~0",
 		"when": "report-unhandled-rejections",
-		"cola": "jiff",
+		"cola": "document-sync",
 		"wire": "git@github.com:briancavalier/wire-next.git"
 	}
 }
