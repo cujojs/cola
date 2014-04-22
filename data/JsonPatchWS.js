@@ -55,13 +55,13 @@ define(function(require) {
 					message = JSON.parse(message.data);
 
 					if(message.data) {
-						console.log('set data', self._shadow);
+//						console.log('set data', self._shadow);
 						self._shadow = message.data;
 						resolve(jiff.clone(self._shadow));
 
 					} else if(self._shadow && message.patch && message.patch.length > 0) {
 						self._patch(message.patch);
-						console.log('patch', message.patch, self._shadow);
+//						console.log('patch', message.patch, self._shadow);
 
 					}
 

@@ -20,7 +20,8 @@
     "most": "~0.3.0",
     "rest": "~1",
     "when": "when3",
-    "wire": "https://github.com/briancavalier/wire-next.git"
+    "wire": "https://github.com/briancavalier/wire-next.git",
+    "rave": "~0.0.10"
   },
   "resolutions": {
     "when": "when3"

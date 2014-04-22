@@ -1,0 +1,23 @@
+{
+	"name": "rave-todos-sync",
+	"version": "0.1.6",
+	"authors": [
+		"Brian Cavalier <brian@hovercraftstudios.com>"
+	],
+	"main": "main",
+	"moduleType": "node",
+	"license": "MIT",
+	"ignore": [
+		"**/.*",
+		"node_modules",
+		"bower_components",
+		"test",
+		"tests"
+	],
+	"dependencies": {
+		"rave": "~0",
+		"when": "report-unhandled-rejections",
+		"cola": "jiff",
+		"wire": "git@github.com:briancavalier/wire-next.git"
+	}
+}

@@ -11,10 +11,12 @@
 (function(define) { 'use strict';
 define(function(require) {
 
+	var paths = require('../lib/path');
 	var dom = require('../lib/dom');
 	var domPointer = require('../lib/domPointer');
 	var Registration = require('./Registration');
-	var DomDocument = require('./DomDocument');
+	var DomBuilder = require('./DomBuilder');
+	var diff = require('./diff');
 	var template = require('./template');
 	var requestAnimationFrame = require('./requestAnimationFrame');
 
@@ -26,8 +28,8 @@ define(function(require) {
 
 		var self = this;
 		this._registration = new Registration(this.node);
-		this._doc = new DomDocument(this._registration, function(parent, key) {
-			return self._generateNode(parent, key);
+		this._builder = new DomBuilder(this._registration, function(path) {
+			return self._generateNode(path);
 		});
 
 		this._events = normalizeEvents(events);
@@ -46,13 +48,9 @@ define(function(require) {
 			observe = this._observe = this._createObserver();
 			eachNodeEventPair(function(node, event) {
 				node.addEventListener(event, observe, false);
-			}, this._events, this._doc);
+			}, this._events, this._registration);
 
-			if(Array.isArray(data)) {
-				this._postProcess = this._updatePaths;
-			}
-
-			return this._doc.set('', data);
+			this._builder.build(data);
 		},
 
 		diff: function(shadow) {
@@ -60,60 +58,29 @@ define(function(require) {
 				return;
 			}
 			this._hasChanged = false;
-			return this._doc.diff(shadow);
+			return diff(this._registration, shadow);
 		},
 
 		patch: function(patch) {
-			var self = this;
+			var builder = this._builder;
 			requestAnimationFrame(function() {
-				self._patch(patch);
+				builder.patch(patch)
 			});
-		},
-
-		_patch: function(patch) {
-			if(this._doc.patch(patch)) {
-				this._postProcess();
-			}
-		},
-
-		_postProcess: function() {},
-
-		_updatePaths: function() {
-			var lists = this._lists;
-			Object.keys(lists).forEach(function(k) {
-				updatePath(lists[k].parent.children);
-			});
-
-			this._registration.rebuild();
-		},
-
-		findPath: function(node) {
-			return this._doc.findPath(node);
 		},
 
 		_createObserver: function() {
 			var self = this;
 			return function (e) {
 				self._hasChanged = true;
-				self._syncNodes(e.target, self._doc.findPath(e.target));
 				self.changed();
 			};
 		},
 
-		_syncNodes: function(sourceNode, path) {
-			var nodes = this._doc.findNodes(path);
-			nodes.forEach(function(n) {
-				if(n !== sourceNode) {
-					dom.setValue(n, dom.getValue(sourceNode));
-				}
-			});
-		},
-
-		_generateNode: function(parent, key) {
+		_generateNode: function(path) {
+			var key = paths.dirname(path);
 			var t = this._lists[key];
 			if(t) {
 				var node = t.template.cloneNode(true);
-				t.parent.appendChild(node);
 				return node;
 			}
 		},
@@ -122,14 +89,6 @@ define(function(require) {
 	};
 
 	return Dom;
-
-	function updatePath(listNodes) {
-		ap.forEach.call(listNodes, function(node, i) {
-			if(node.hasAttribute('data-path')) {
-				node.setAttribute('data-path', i);
-			}
-		});
-	}
 
 	function normalizeEvents(events) {
 		if (!events) {
@@ -146,10 +105,8 @@ define(function(require) {
 			var event = events[path];
 			event = event.split(/\s*,\s*/);
 			event.forEach(function(event) {
-				var nodes = reg.findNodes(path);
-				nodes.forEach(function(node) {
-					f(node, event);
-				});
+				var node = reg.findNode(path);
+				node && f(node, event);
 			});
 		});
 	}
@@ -158,7 +115,11 @@ define(function(require) {
 		var lists = ap.slice.call(root.querySelectorAll('[data-list]'));
 		return lists.reduce(function (lists, list) {
 			list.removeAttribute('data-list');
-			lists[domPointer(root, list)] = {
+			list.parentNode.setAttribute('data-list', '');
+
+			var path = domPointer(root, list);
+
+			lists[paths.dirname(path)] = {
 				template: list,
 				parent: list.parentNode
 			};

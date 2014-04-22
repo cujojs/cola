@@ -1,14 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-debug>
 <head>
     <meta charset="UTF-8">
     <title>Document</title>
     <link rel="stylesheet" href="base.css"/>
-    <script src="../run.js"></script>
-    <script src="../bower_components/curl/src/curl.js"></script>
-    <script>
-        curl(['wire/wire!app/main']);
-    </script>
+    <script src="../bower_components/rave/rave.js"></script>
 
 </head>
 <body data-bard>
@@ -35,6 +31,7 @@
                 <input type="checkbox" name="complete"/>
                 <input name="description"/>
                 <span data-on-click="todos@controller.remove">&times;</span>
+                <input type="hidden" name="id"/>
             </li>
         </ul>
     </section>

@@ -1,5 +1,8 @@
+var id = 0;
+
 module.exports = {
 	add: function(todos, todo) {
+		todo.id = ++id;
 		todos.push(todo);
 	},
 
@@ -32,8 +35,10 @@ module.exports = {
 function generateTodos(n) {
 	var todos = [];
 	for(var i=0; i<n; i++) {
+		++id;
 		todos.push({
-			description: 'todo ' + i,
+			id: id,
+			description: 'todo ' + id,
 			complete: false
 		});
 	}

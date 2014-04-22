@@ -2,7 +2,7 @@
 
 var WebSocketServer = require('ws').Server;
 var Memory = require('./data/Memory');
-var jsonPatch = require('./lib/jsonPatch');
+var jiff = require('jiff');
 
 // Simple express just to server static demo files
 var express = require('express');
@@ -41,7 +41,7 @@ server.on('connection', function(ws) {
 		patch = patch.patch;
 
 		process.nextTick(function() {
-			client._shadow = jsonPatch.patch(patch, client._shadow);
+			client._shadow = jiff.patch(patch, client._shadow);
 			todos.patch(patch);
 
 			var returnPatch = todos.diff(client._shadow);
@@ -51,11 +51,13 @@ server.on('connection', function(ws) {
 				Object.keys(clients).forEach(function(clientId) {
 					if(clientId != id) {
 						var c = clients[clientId];
-						var returnPatch = jsonPatch.diff(c._shadow, todos._shadow);
+						var returnPatch = jiff.diff(c._shadow, todos._shadow);
 						c.patch(returnPatch);
 					}
 				});
 			}
+
+			console.log('' + patch.length + ' patch ops applied');
 		});
 	});
 
@@ -72,12 +74,12 @@ function ClientProxy(client, id) {
 
 ClientProxy.prototype = {
 	set: function(data) {
-		this._shadow = jsonPatch.snapshot(data);
+		this._shadow = jiff.clone(data);
 		this.client.send(JSON.stringify({ data: data }));
 	},
 
 	diff: function(data) {
-		return jsonPatch.diff(data, this._shadow);
+		return jiff.diff(data, this._shadow);
 	},
 
 	patch: function(patch) {
@@ -86,7 +88,7 @@ ClientProxy.prototype = {
 		}
 
 		try {
-			this._shadow = jsonPatch.patch(patch, this._shadow);
+			this._shadow = jiff.patch(patch, this._shadow);
 			this.send(patch);
 		} catch(e) {
 			console.error(e.stack);

@@ -13,10 +13,9 @@ define(function(require) {
 
 	var jiff = require('jiff');
 	var jsonPointer = require('jiff/lib/jsonPointer');
-	var id = require('./id');
 
 	function JsonMetadata(identify) {
-		this.id = id(identify);
+		this.id = identify;
 	}
 
 	JsonMetadata.prototype = {

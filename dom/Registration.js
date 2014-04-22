@@ -11,7 +11,7 @@
 (function(define) { 'use strict';
 define(function(require) {
 
-	var path = require('../lib/path');
+	var paths = require('../lib/path');
 	var domPointer = require('../lib/domPointer');
 
 	function Registration(node) {
@@ -20,73 +20,120 @@ define(function(require) {
 	}
 
 	Registration.prototype = {
-		add: function(path, node) {
-			register(this._tree, path, node);
+		rebuild: function() {
+			this._tree = build(this._root);
 		},
 
-		rebuild: function() {
-			this._tree = register({}, '', this._root);
+		add: function(path, node) {
+			insert(this._tree, path, node);
+		},
+
+		replace: function(path, node) {
+			replace(this._tree, path, node);
 		},
 
 		remove: function(node) {
-			var p = domPointer(this._root, node);
-			var p2 = p + path.separator;
-			var l = p2.length;
-
-			// Prune "subtrees"
-			this._tree = Object.keys(this._tree).reduce(function(map, key) {
-				if(key === p
-					|| (key.length > l && key[l] === path.separator
-						&& key.slice(0, l) === p2)) {
-					delete map[key];
-				}
-
-				return map;
-			}, this._tree);
+			remove(this._tree, domPointer(this._root, node));
 		},
 
-		findNodes: function(path) {
-			return find(this._tree, path);
-		},
-
-		findPath: function(node) {
-			return domPointer(this._root, node);
+		findNode: function(path) {
+			return findNode(this._tree, path);
 		}
 	};
 
 	return Registration;
 
-	function normalizePath(path) {
-		return path && path[0] === '/' ? path.slice(1) : path;
-	}
-
-	function find(map, path) {
-		return map[normalizePath(path)];
-	}
-
-	function register(map, basePath, root) {
-		map[basePath] = [root];
-
-		var nodes = root.querySelectorAll('[data-path], [name]');
-		return Array.prototype.reduce.call(nodes, function(map, node) {
-			var list, p;
-
-			p = domPointer(root, node);
-
-			if(p) {
-				if(!path.isAbsolute(p)) {
-					p = path.join(basePath, p);
-				}
-
-				list = map[p];
-				if(!list) {
-					map[p] = [node];
-				} else {
-					list.push(node);
-				}
+	function remove(tree, path) {
+		var t = findParent(tree, path);
+		if(t) {
+			var key = paths.basename(path);
+			if(t.isList) {
+				t.list.splice(parseInt(key, 10), 1);
+			} else {
+				delete t.hash[key];
 			}
-			return map;
-		}, map);
+		}
+	}
+
+	function replace(tree, path, node) {
+		var t = findParent(tree, path);
+		if(t) {
+			var key = paths.basename(path);
+			if(t.isList) {
+				t.list[key] = build(node);
+			} else {
+				t.hash[key] = build(node);
+			}
+		}
+	}
+
+	function insert(tree, path, node) {
+		var t = findParent(tree, path);
+		if(t) {
+			var key = paths.basename(path);
+			if(t.isList) {
+				t.list.splice(parseInt(key, 10), 0, build(node));
+			} else {
+				t.hash[key] = build(node);
+			}
+		}
+	}
+
+	function findNode(tree, path) {
+		var t = findParent(tree, path);
+		var key = paths.basename(path);
+		if(key) {
+			t = t && getSubtree(t, key);
+		}
+		return t && t.node;
+	}
+
+	function findParent(tree, path) {
+		var parts = paths.split(paths.dirname(path));
+		return parts.reduce(function(tree, part) {
+			return (tree && part) ? getSubtree(tree, part) : tree;
+		}, tree);
+	}
+
+	function getSubtree(tree, key) {
+		return tree && tree.isList ? tree.list[key] : tree.hash[key]
+	}
+
+	function build(node) {
+		return appendChildren({ node: node, hash: {}, list: [], isList: false }, node);
+	}
+
+	function appendChildren(tree, node) {
+		if(domPointer.isListNode(node)) {
+			tree.isList = true;
+			return appendListChildren(tree, node.children);
+		}
+
+		return appendHashChildren(tree, node.children);
+	}
+
+	function appendListChildren(tree, children) {
+		var list = tree.list;
+		for(var i=0; i<children.length; ++i) {
+			list.push(build(children[i]));
+		}
+		return tree;
+	}
+
+	function appendHashChildren(tree, children) {
+		var hash = tree.hash;
+		var i, child;
+		for(i=0; i<children.length; ++i) {
+			child = children[i];
+			if(child.hasAttribute('data-path')) {
+				hash[child.getAttribute('data-path')] = build(child);
+			} else if(child.hasAttribute('name')) {
+				hash[child.getAttribute('name')] = build(child);
+			} else {
+				appendChildren(tree, child);
+			}
+		}
+		return tree;
 	}
 
 });
