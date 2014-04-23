@@ -14,12 +14,12 @@ define(function(require) {
 	var paths = require('../lib/path');
 	var domPointer = require('../lib/domPointer');
 
-	function Registration(node) {
+	function DomTreeMap(node) {
 		this._root = node;
 		this.rebuild();
 	}
 
-	Registration.prototype = {
+	DomTreeMap.prototype = {
 		rebuild: function() {
 			this._tree = build(this._root);
 		},
@@ -41,7 +41,7 @@ define(function(require) {
 		}
 	};
 
-	return Registration;
+	return DomTreeMap;
 
 	function remove(tree, path) {
 		var t = findParent(tree, path);

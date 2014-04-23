@@ -14,7 +14,7 @@ define(function(require) {
 	var paths = require('../lib/path');
 	var dom = require('../lib/dom');
 	var domPointer = require('../lib/domPointer');
-	var Registration = require('./Registration');
+	var DomTreeMap = require('./DomTreeMap');
 	var DomBuilder = require('./DomBuilder');
 	var diff = require('./diff');
 	var template = require('./template');
@@ -27,8 +27,8 @@ define(function(require) {
 		this._lists = findListTemplates(this.node);
 
 		var self = this;
-		this._registration = new Registration(this.node);
-		this._builder = new DomBuilder(this._registration, function(path) {
+		this._DomTreeMap = new DomTreeMap(this.node);
+		this._builder = new DomBuilder(this._DomTreeMap, function(path) {
 			return self._generateNode(path);
 		});
 
@@ -48,7 +48,7 @@ define(function(require) {
 			observe = this._observe = this._createObserver();
 			eachNodeEventPair(function(node, event) {
 				node.addEventListener(event, observe, false);
-			}, this._events, this._registration);
+			}, this._events, this._DomTreeMap);
 
 			this._builder.build(data);
 		},
@@ -58,7 +58,7 @@ define(function(require) {
 				return;
 			}
 			this._hasChanged = false;
-			return diff(this._registration, shadow);
+			return diff(this._DomTreeMap, shadow);
 		},
 
 		patch: function(patch) {
