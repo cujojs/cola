@@ -25,68 +25,52 @@ define(function(require) {
 		},
 
 		add: function(path, node) {
-			insert(this._tree, path, node);
+			var t = findParent(this._tree, path);
+			if (t) {
+				var key = paths.basename(path);
+				if (t.isList) {
+					t.list.splice(parseInt(key, 10), 0, build(node));
+				} else {
+					t.hash[key] = build(node);
+				}
+			}
 		},
 
 		replace: function(path, node) {
-			replace(this._tree, path, node);
+			var t = findParent(this._tree, path);
+			if (t) {
+				var key = paths.basename(path);
+				if (t.isList) {
+					t.list[key] = build(node);
+				} else {
+					t.hash[key] = build(node);
+				}
+			}
 		},
 
 		remove: function(node) {
-			remove(this._tree, domPointer(this._root, node));
+			var t = findParent(this._tree, domPointer(this._root, node));
+			if (t) {
+				var key = paths.basename(domPointer(this._root, node));
+				if (t.isList) {
+					t.list.splice(parseInt(key, 10), 1);
+				} else {
+					delete t.hash[key];
+				}
+			}
 		},
 
 		findNode: function(path) {
-			return findNode(this._tree, path);
+			var t = findParent(this._tree, path);
+			var key = paths.basename(path);
+			if(key) {
+				t = t && getSubtree(t, key);
+			}
+			return t && t.node;
 		}
 	};
 
 	return DomTreeMap;
-
-	function remove(tree, path) {
-		var t = findParent(tree, path);
-		if(t) {
-			var key = paths.basename(path);
-			if(t.isList) {
-				t.list.splice(parseInt(key, 10), 1);
-			} else {
-				delete t.hash[key];
-			}
-		}
-	}
-
-	function replace(tree, path, node) {
-		var t = findParent(tree, path);
-		if(t) {
-			var key = paths.basename(path);
-			if(t.isList) {
-				t.list[key] = build(node);
-			} else {
-				t.hash[key] = build(node);
-			}
-		}
-	}
-
-	function insert(tree, path, node) {
-		var t = findParent(tree, path);
-		if(t) {
-			var key = paths.basename(path);
-			if(t.isList) {
-				t.list.splice(parseInt(key, 10), 0, build(node));
-			} else {
-				t.hash[key] = build(node);
-			}
-		}
-	}
-
-	function findNode(tree, path) {
-		var t = findParent(tree, path);
-		var key = paths.basename(path);
-		if(key) {
-			t = t && getSubtree(t, key);
-		}
-		return t && t.node;
-	}
 
 	function findParent(tree, path) {
 		var parts = paths.split(paths.dirname(path));

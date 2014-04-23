@@ -26,15 +26,16 @@ var server = new WebSocketServer({port: 8080});
 
 server.on('connection', function(ws) {
 	var id = clientId++;
+	var messageCounter = 1;
 	var client = clients[id] = new ClientProxy(ws, id);
-	console.log('connected', id);
+	console.log('client ' + id + ': connected');
 
 	client.set(todos.get());
 
 	ws.on('message', function(message) {
 		var patch = JSON.parse(message);
 		if(!patch.patch) {
-			console.log('no patch info');
+			log(id, messageCounter++, ' empty patch');
 			return;
 		}
 
@@ -57,15 +58,19 @@ server.on('connection', function(ws) {
 				});
 			}
 
-			console.log('' + patch.length + ' patch ops applied');
+			log(id, messageCounter++, '' + patch.length + ' patch ops applied');
 		});
 	});
 
 	ws.on('close', function() {
-		console.log('disconnected', id);
+		console.log('client ' + id + ': disconnected');
 		delete clients[id];
 	});
 });
+
+function log(cid, mid, msg) {
+	console.log('client ' + cid + ' [' + mid + ']: ' + msg);
+}
 
 function ClientProxy(client, id) {
 	this.client = client;
