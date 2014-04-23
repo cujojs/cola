@@ -41,6 +41,10 @@ button {
     text-shadow: -1px -1px 1px blue;
     box-shadow: 1px 1px 1px #999;
 }
+button.candy-like {
+    background: #ff4422;
+    text-shadow: -1px -1px 1px red;
+}
 button:hover {
     opacity: 1;
 }
@@ -48,4 +52,9 @@ button:active {
     box-shadow: none;
     -webkit-transform: translateY(1px);
     transform: translateY(1px);
+}
+.dont {
+    font-size: .7em;
+    float: right;
+    max-width: 10em;
 }

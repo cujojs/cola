@@ -28,6 +28,26 @@ module.exports = {
 			n = parseInt(data.n, 10);
 		} catch(e) {}
 		return todos.concat(generateTodos(isNaN(n) ? 200 : n));
+	},
+
+	multiple: function(todos) {
+		return todos
+			.concat(generateTodos(todos.length).map(function(todo) {
+				todo.description += ' just added';
+				return todo;
+			}))
+			.reduce(function(todos, todo, i) {
+				if(i % 2 !== 0) {
+					todos.push(todo);
+				}
+				if(i % 3 === 0) {
+					todo.complete = true;
+				}
+				if(i % 5 === 0) {
+					todo.description += '!!!';
+				}
+				return todos;
+			}, []);
 	}
 };
 

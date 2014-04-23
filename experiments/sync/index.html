@@ -23,9 +23,15 @@
         <button type="submit">Generate</button>
     </form>
 
+    <section class="dont">
+        <p>Don't press this button ... no, really, don't</p>
+        <button class="candy-like" data-on-click="todos@controller.multiple">Shiny, candy-like button!</button>
+    </section>
+
     <section data-path="todos">
         <button data-on-click="todos@controller.completeAll">Complete All</button>
         <button data-on-click="todos@controller.removeCompleted">Remove Completed</button>
+
         <ul>
             <li data-list data-on-click>
                 <input type="checkbox" name="complete"/>
