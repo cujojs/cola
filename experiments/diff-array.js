@@ -1,18 +1,17 @@
 var a = [
-	{ value: 'a' },
-//	{ value: 'b' },
-	{ value: 'c' }
-];
+	{ name: 'a' },
+	{ name: 'b' },
+	{ name: 'c' },
+]
 
 var a1, a2, p;
 
 function setup() {
 	a1 = JSON.parse(JSON.stringify(a));
 	a2 = JSON.parse(JSON.stringify(a1));
-	a2.splice(0, 1);
-//	a2.splice(1, 1);
-	a2.push({value:'b'});
-//	a2.push({value:'c'});
+	a2[0].name = null;
+	a2.splice(1, 1);
+	a2.push({name:'d'});
 }
 
 console.log('--------------------------');
@@ -49,7 +48,8 @@ setup();
 try {
 	p = jdp.diff(a1, a2);
 	console.log('diff a1 a2\n', JSON.stringify(p));
-	console.log('patch a1\n', JSON.stringify(patch.apply(a1, p)));
+	patch.apply(a1, p);
+	console.log('patch a1\n', JSON.stringify(a1));
 } catch (e) {
 	console.error('FAILED');
 	console.error(e);

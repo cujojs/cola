@@ -32,7 +32,12 @@ define(function(require) {
 		},
 
 		getValue: function(data, path, defaultValue) {
-			return jsonPointer.getValue(data, path, defaultValue);
+			var p = jsonPointer.find(data, path);
+
+			return p !== void 0 && p.key in p.target
+				? p.target[p.key]
+				: defaultValue;
+
 		}
 	};
 
