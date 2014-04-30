@@ -24,19 +24,20 @@ define(function(require) {
 	JsonPatch.prototype = Object.create(Rest.prototype);
 
 	JsonPatch.prototype.patch = function(patch) {
+		if(!this._shadow) {
+			return;
+		}
+
 		var metadata = this.metadata;
 		var self = this;
-		this._shadow = when(this._shadow, function(data) {
-			return self._client({
-				method: 'PATCH',
-				entity: patch.map(normalizePath)
-			}).then(function(remotePatch) {
-				// TODO: Apply original patch before or after request?
-				return metadata.patch(metadata.patch(data, patch), remotePatch);
-			});
-		});
+		this._shadow = metadata.patch(this._shadow, patch);
 
-		return this._shadow.yield();
+		return self._client({
+			method: 'PATCH',
+			entity: patch.map(normalizePath)
+		}).then(function(remotePatch) {
+			self._shadow = metadata.patch(self._shadow, remotePatch);
+		});
 	};
 
 	JsonPatch.prototype._createDefaultClient = function(baseUrl, mimeType) {

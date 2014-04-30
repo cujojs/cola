@@ -39,79 +39,76 @@ define(function(require) {
 
 	Rest.prototype = {
 		get: function(path) {
-			this._shadow = this._client(path);
-			return this._shadow.then(this.metadata.clone);
-		},
-
-		diff: function(shadow) {
-			var metadata = this.metadata;
-			return when(this._shadow, function(data) {
-				return metadata.diff(shadow, data);
+			var self = this;
+			return this._client(path).then(function(data) {
+				self._shadow = data;
+				return self.metadata.clone(data);
 			});
 		},
 
+		diff: function(shadow) {
+			if(this._shadow) {
+				return this.metadata.diff(shadow, this._shadow);
+			}
+		},
+
 		patch: function(patch) {
+			if(!this._shadow) {
+				return;
+			}
 
 			var metadata = this.metadata;
+			this._shadow = metadata.patch(this._shadow, patch);
+
 			var identify = this.metadata.id;
 			var client = this._client;
 			var seen = {};
-			var self = this;
 
-			return when(this._shadow, send);
+			// Need a better strategy here for arrays.  Using ids
+			// would work out fine regardless.
+			return when.reduce(patch, function(previousRequest, change) {
+				/*jshint maxcomplexity:6*/
+				var entity, segments;
+				var p = change.path;
 
-			function send(data) {
-				self._shadow = data = self.metadata.patch(data, patch);
+				segments = p.split(change.path);
+				p = segments[0];
 
-				// Because adds and deletes affect array indices, ideally
-				// a patch for an array should be processed in descending index
-				// order, but for now just assume it was generated in ascending
-				// index order and reverse it.  Need a better strategy here for
-				// arrays.  Using ids would work out fine regardless.
-				return when.reduce(patch.reverse(), function(_, change) {
-					/*jshint maxcomplexity:7*/
-					var entity, segments;
-					var p = change.path;
+				if(seen[p]) {
+					return;
+				}
 
-					segments = p.split(change.path);
-					p = segments[0];
+				seen[p] = 1;
 
-					if(seen[p]) {
-						return;
-					}
-
-					seen[p] = 1;
-
-					if(segments.length === 1) {
-						if(change.op === 'add') {
-							entity = metadata.getValue(data, p);
-							return entity !== void 0 && client({
-								method: 'POST',
-								entity: entity
-							});
-						} else if(change.op === 'replace') {
-							entity = metadata.getValue(data, p);
-							return entity !== void 0 && client({
-								method: 'PUT',
-								path: identify(entity) || p,
-								entity: entity
-							});
-						} else if(change.op === 'remove') {
-							return client({
-								method: 'DELETE',
-								path: p
-							});
-						}
-					} else if(segments.length > 1) {
+				if(segments.length === 1) {
+					if(change.op === 'add') {
+						entity = metadata.getValue(data, p);
+						return entity !== void 0 && client({
+							method: 'POST',
+							entity: entity
+						});
+					} else if(change.op === 'replace') {
 						entity = metadata.getValue(data, p);
 						return entity !== void 0 && client({
 							method: 'PUT',
 							path: identify(entity) || p,
 							entity: entity
 						});
+					} else if(change.op === 'remove') {
+						return client({
+							method: 'DELETE',
+							path: p
+						});
 					}
-				}, void 0);
-			}
+				} else if(segments.length > 1) {
+					entity = metadata.getValue(data, p);
+					return entity !== void 0 && client({
+						method: 'PUT',
+						path: identify(entity) || p,
+						entity: entity
+					});
+				}
+			}, void 0);
 		},
 
 		_createDefaultClient: function(baseUrl, mimeType) {
