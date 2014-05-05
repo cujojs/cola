@@ -211,7 +211,7 @@ define(function (require) {
 	}
 
 	ArrayAdapter.canHandle = function(it) {
-		return it && (when.isPromise(it) || Object.prototype.toString.call(it) == '[object Array]');
+		return it && (when.isPromiseLike(it) || Object.prototype.toString.call(it) == '[object Array]');
 	};
 
 	function defaultIdentifier(item) {

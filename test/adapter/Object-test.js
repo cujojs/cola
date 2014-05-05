@@ -1,4 +1,4 @@
-(function(buster, when, delay, ObjectAdapter) {
+(function(buster, when, ObjectAdapter) {
 "use strict";
 
 var assert, refute, fail;
@@ -8,7 +8,7 @@ refute = buster.refute;
 fail = buster.assertions.fail;
 
 function promiseFor(it) {
-	return delay(it, 0);
+	return when.resolve(it);
 }
 
 buster.testCase('adapter/Object', {
@@ -95,6 +95,5 @@ buster.testCase('adapter/Object', {
 })(
 	require('buster'),
 	require('when'),
-	require('when/delay'),
 	require('../../adapter/Object')
 );

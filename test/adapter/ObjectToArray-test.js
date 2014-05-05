@@ -1,4 +1,4 @@
-(function(buster, when, delay, WidenAdapter) {
+(function(buster, when, WidenAdapter) {
 
 var assert, refute;
 
@@ -35,6 +35,5 @@ buster.testCase('adapter/ObjectToArray', {
 })(
 	require('buster'),
 	require('when'),
-	require('when/delay'),
 	require('../../adapter/ObjectToArray')
 );

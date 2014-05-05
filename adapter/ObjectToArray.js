@@ -53,7 +53,7 @@ define(function (require) {
 	 * @return {Boolean}
 	 */
 	WidenAdapter.canHandle = function(it) {
-		return when.isPromise(it) || ObjectAdapter.canHandle(it);
+		return when.isPromiseLike(it) || ObjectAdapter.canHandle(it);
 	};
 
 	return WidenAdapter;

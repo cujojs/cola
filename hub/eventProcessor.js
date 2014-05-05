@@ -46,7 +46,7 @@ define(function(require) {
 		processEvent: function(source, data, type) {
 			var self = this;
 
-			this.inflight = when(this.inflight).always(function() {
+			this.inflight = when(this.inflight).ensure(function() {
 				return self.eventProcessor(source, data, type);
 			});
 
@@ -72,7 +72,7 @@ define(function(require) {
 
 			// Only continue processing the queue if it's not empty
 			if(remaining) {
-				deferred.promise.always(function() {
+				deferred.promise.ensure(function() {
 					self._dispatchNextEvent();
 				});
 			}

@@ -5,10 +5,9 @@ define(function (require) {
 
 	"use strict";
 
-	var when, defaultIdentifier, undef;
+	var defaultIdentifier, undef;
 
 	defaultIdentifier = require('./../identifier/default');
-	when = require('when');
 
 	function LocalStorageAdapter(namespace, options) {
 		if (!namespace) throw new Error('cola/LocalStorageAdapter: must provide a storage namespace');

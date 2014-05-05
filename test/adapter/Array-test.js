@@ -1,4 +1,4 @@
-(function(buster, when, delay, ArrayAdapter) {
+(function(buster, when, ArrayAdapter) {
 
 var assert, refute, undef;
 
@@ -6,7 +6,7 @@ assert = buster.assert;
 refute = buster.refute;
 
 function promiseFor(array) {
-	return delay(array, 0);
+	return when.resolve(array);
 }
 
 buster.testCase('adapter/Array', {
@@ -343,6 +343,5 @@ buster.testCase('adapter/Array', {
 })(
 	require('buster'),
 	require('when'),
-	require('when/delay'),
 	require('../../adapter/Array')
 );

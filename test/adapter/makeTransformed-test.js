@@ -1,4 +1,4 @@
-(function(buster, when, delay, makeTransformed) {
+(function(buster, when, makeTransformed) {
 "use strict";
 
 var assert, refute, fail;
@@ -24,7 +24,7 @@ function createFakeAdapter(data) {
 }
 
 function resolved(val) {
-	return delay(val, 0);
+	return when.resolve(val);
 }
 
 function makePromised(f) {
@@ -243,6 +243,5 @@ buster.testCase('adapter/makeTransformed', {
 })(
 	require('buster'),
 	require('when'),
-	require('when/delay'),
 	require('../../adapter/makeTransformed')
 );

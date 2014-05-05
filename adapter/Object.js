@@ -79,7 +79,7 @@ define(function (require) {
 		// this is a bad thing even if it is unusual.
 		// IMPORTANT: since promises *are* objects, the check for isPromise
 		// must come first in the OR
-		return obj && (when.isPromise(obj) || Object.prototype.toString.call(obj) == '[object Object]');
+		return obj && (when.isPromiseLike(obj) || Object.prototype.toString.call(obj) == '[object Object]');
 	};
 
 	return ObjectAdapter;
