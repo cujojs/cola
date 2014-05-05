@@ -33,7 +33,7 @@
 		}
 	],
     "dependencies": {
-        "when": "~2"
+        "when": ">=2.6 <4"
     },
 	"devDependencies": {
 		"buster": "~0.6"
