@@ -113,12 +113,12 @@ define(function(require) {
 
 		_createDefaultClient: function(baseUrl, mimeType) {
 			var client = typeof baseUrl === 'string'
-				? rest.chain(pathPrefix, { prefix: baseUrl }) : rest;
+				? rest.wrap(pathPrefix, { prefix: baseUrl }) : rest;
 
 			return client
-				.chain(mime, { mime: mimeType || 'application/json' })
-				.chain(location)
-				.chain(entity);
+				.wrap(mime, { mime: mimeType || 'application/json' })
+				.wrap(location)
+				.wrap(entity);
 		}
 	};
 

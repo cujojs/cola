@@ -38,8 +38,8 @@
   ],
   "dependencies": {
     "when": "~3",
-    "rest": "~1",
-    "jiff": "~0.4"
+    "rest": "~1.1",
+    "jiff": "0.5.1"
   },
   "devDependencies": {
     "buster": "~0.7",
