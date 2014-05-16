@@ -11,18 +11,19 @@ exports.main = function() {
 	var count = 0;
 	var client = new Client('ws://localhost:8080');
 
-	initClient(client).done(function(data) {
+	initClient(client).done(function(client) {
 
 		var list = document.querySelector('ul');
+		var online = document.querySelector('[name="online"]');
 
 		ready(id);
-		updateList(list, data);
+		updateList(list, client.data);
 		client.onRemoteChange = function(client) {
-			updateList(list, data);
+			updateList(list, client.data);
 			persistSyncStatus(client);
 		};
 
-		document.querySelector('[name="online"]').addEventListener('change', function(e) {
+		online.addEventListener('change', function(e) {
 			if(e.target.checked) {
 				client.sendChanges();
 			}
@@ -31,11 +32,11 @@ exports.main = function() {
 		document.querySelector('form').addEventListener('submit', function(e) {
 			e.preventDefault();
 
-			data[id + '-' + client._localVersion + '-' + count++] = e.target.elements[0].value;
-			updateList(list, data);
+			client.data[id + '-' + client._localVersion + '-' + count++] = e.target.elements[0].value;
+			updateList(list, client.data);
 			e.target.reset();
 
-			if(e.target.elements.online.checked) {
+			if(online.checked) {
 				client.sendChanges();
 			}
 		});

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var WebSocketServer = require('ws').Server;
-var jsonPatch = require('../../lib/jsonPatch');
+var jiff = require('jiff');
 var fs = require('fs');
 
 // Simple express just to server static demo files
@@ -45,7 +45,7 @@ server.on('connection', function(ws) {
 		id: id,
 		ws: ws,
 		version: localVersion,
-		shadow: jsonPatch.snapshot(data)
+		shadow: jiff.clone(data)
 	};
 
 	ws.on('message', function(message) {
@@ -78,10 +78,10 @@ server.on('connection', function(ws) {
 					return;
 				}
 
-				client.shadow = jsonPatch.patch(change.patch, client.shadow);
+				client.shadow = jiff.patch(change.patch, client.shadow);
 				client.version = change.localVersion;
 
-				data = jsonPatch.patch(change.patch, data);
+				data = jiff.patch(change.patch, data);
 			});
 
 			localVersion += 1;
@@ -101,7 +101,7 @@ server.on('connection', function(ws) {
 });
 
 function respondWithPatch(client, data, version) {
-	var returnPatch = jsonPatch.diff(client.shadow, data);
+	var returnPatch = jiff.diff(client.shadow, data);
 	send(client.ws, { patches: [{
 		patch: returnPatch,
 		localVersion: version,

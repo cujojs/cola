@@ -16,7 +16,7 @@
   ],
   "dependencies": {
     "rave": "*",
-    "when": "~2",
-	"cola": "document-sync"
+    "when": "~3",
+	"jiff": "~0.5"
   }
 }

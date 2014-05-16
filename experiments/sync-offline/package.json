@@ -1,0 +1,14 @@
+{
+	"name": "sync-offline",
+	"version": "0.1.6",
+	"authors": [
+		"Brian Cavalier <brian@hovercraftstudios.com>"
+	],
+	"main": "server",
+	"license": "MIT",
+	"dependencies": {
+		"jiff": "~0.5",
+		"ws": "~0.4",
+		"express": "~3"
+	}
+}

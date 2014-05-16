@@ -1,4 +1,4 @@
-var jsonPatch = require('cola/lib/jsonPatch');
+var jiff = require('jiff');
 var when = require('when');
 
 module.exports = Client;
@@ -15,14 +15,14 @@ function Client(url) {
 }
 
 Client.prototype.initFromRemote = function() {
-	return this._connect().then(this._requestData.bind(this));
+	return this._connect().then(this._requestData.bind(this)).yield(this);
 };
 
 Client.prototype.init = function(data, status) {
 	var buffer = status.changes ? status.changes.slice() : [];
 	this._init(data, status.localVersion, status.remoteVersion, buffer);
 
-	return this.reconnect().yield(data);
+	return this.reconnect().yield(this);
 };
 
 Client.prototype.reconnect = function() {
@@ -90,10 +90,10 @@ Client.prototype._sendChanges = function() {
 	if(this._buffer.length > 0) {
 		return this._send({ patches: this._buffer });
 	}
-}
+};
 
 Client.prototype._changes = function() {
-	var patch = jsonPatch.diff(this._shadow, this.data);
+	var patch = jiff.diff(this._shadow, this.data);
 	if(!patch || patch.length === 0) {
 		return;
 	}
@@ -104,7 +104,7 @@ Client.prototype._changes = function() {
 		remoteVersion: this._remoteVersion
 	};
 
-	this._shadow = jsonPatch.patch(jsonPatch.snapshot(changes.patch), this._shadow);
+	this._shadow = jiff.patch(jiff.clone(changes.patch), this._shadow);
 
 	return changes;
 };
@@ -125,7 +125,7 @@ Client.prototype._init = function(data, localVersion, remoteVersion, buffer) {
 	this._localVersion = localVersion;
 	this._remoteVersion = remoteVersion;
 	this._buffer = buffer;
-	this._shadow = jsonPatch.snapshot(data);
+	this._shadow = jiff.clone(data);
 	this.data = data;
 };
 
@@ -137,7 +137,7 @@ Client.prototype._pruneChanges = function() {
 	this._buffer = this._buffer.filter(function (change) {
 		return change.remoteVersion > remoteVersion;
 	});
-}
+};
 
 Client.prototype._patchFromRemote = function(remote) {
 	remote.patches.forEach(function(change) {
@@ -147,10 +147,10 @@ Client.prototype._patchFromRemote = function(remote) {
 			return;
 		}
 
-		this._shadow = jsonPatch.patch(change.patch, this._shadow);
+		this._shadow = jiff.patch(change.patch, this._shadow);
 		this._remoteVersion = change.localVersion;
 
-		this.data = jsonPatch.patch(change.patch, this.data);
+		this.data = jiff.patch(change.patch, this.data);
 	}, this);
 
 	this._pruneChanges();
