@@ -16,7 +16,7 @@ define(function(require) {
 	var Rest = require('./Rest');
 
 	var jiff = require('jiff');
-	var commute = require('jiff/lib/commute');
+	var rebase = require('jiff/lib/rebase');
 
 	var defaultMimeType = 'application/json-patch+json';
 
@@ -44,7 +44,7 @@ define(function(require) {
 			method: 'PATCH',
 			entity: patch.map(normalizePath)
 		}).then(function(remotePatch) {
-			remotePatch = rebase(self._buffer, index+1, remotePatch);
+			remotePatch = rebase(self._buffer.slice(index+1), remotePatch);
 
 			if (--self._inflight === 0) {
 				self._buffer = [];
@@ -57,23 +57,6 @@ define(function(require) {
 	JsonPatch.prototype._createDefaultClient = function(baseUrl, mimeType) {
 		return Rest.prototype._createDefaultClient.call(this, baseUrl, mimeType || defaultMimeType);
 	};
-
-	/**
-	 * Rebase a patch onto a new starting context at a particular base spot
-	 * in the patch history.
-	 * @param {array<array>} history patch history, an array of JSON Patches (which are themselves arrays)
-	 * @param {number} start starting index in history
-	 * @param {array} patch a single JSON Patch array to rebase
-	 * @returns {array} rebased patch that can be applied after the last item in history
-	 */
-	function rebase(history, start, patch) {
-		var commuted = patch;
-		for(var i = start; i<history.length; ++i) {
-			commuted = commute(jiff.inverse(history[i]), commuted).left;
-		}
-
-		return commuted;
-	}
 
 	function normalizePath(change) {
 		change.path = path.rooted(change.path);
