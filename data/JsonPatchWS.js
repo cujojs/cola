@@ -13,10 +13,12 @@ define(function(require) {
 
 	var when = require('when');
 	var JsonMetadata = require('./metadata/JsonMetadata');
+	var rebase = require('jiff/lib/rebase');
 
 	function JsonPatchWS(url, id) {
 		this._url = url;
 		this.metadata = new JsonMetadata(id);
+		this._buffer = [];
 	}
 
 	JsonPatchWS.prototype = {
@@ -45,6 +47,7 @@ define(function(require) {
 
 		_patch: function(patch) {
 			this._shadow = this.metadata.patch(this._shadow, patch);
+			this._buffer.push(patch);
 		},
 
 		_listen: function() {
@@ -59,9 +62,9 @@ define(function(require) {
 						self._shadow = message.data;
 						resolve(self.metadata.clone(self._shadow));
 
-					} else if(self._shadow && message.patch && message.patch.length > 0) {
-						self._patch(message.patch);
-
+					} else if(self._shadow && message.patch) {
+						self._buffer.shift();
+						self._patch(rebase(self._buffer, message.patch));
 					}
 
 				});
