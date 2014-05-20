@@ -35,7 +35,7 @@ define(function(require) {
 				return;
 			}
 			this._hasChanged = false;
-			return this.metadata.diff(shadow, this.data, this.id);
+			return this.metadata.diff(shadow, this.data);
 		},
 
 		patch: function(patch) {

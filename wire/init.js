@@ -98,39 +98,50 @@ define(function(require) {
 						return createEventDispatcher(view, context, proxies);
 					});
 				}).then(function() {
-					return context.resolve(['sync@startup'], function () {
-					});
+					return context.resolve(['sync@startup'], noop);
 				});
 			})
 			.add('sync@startup', function (context) {
 				var models = context.findComponents('@model');
 				return models.reduce(function (registrations, model) {
-					return registrations.concat(processModel(model));
+					return registrations.concat(
+						processModel(context, proxies, scheduler, model));
 				}, []);
-
-				function processModel(model) {
-					var path = model.metadata.roles.model;
-					return context.resolve([path + '@model', path + '@view', path + '@controller'], function(models, views, controllers) {
-						var clients = models.concat(views.map(function(node) {
-								return new Dom(node);
-							})).concat(controllers.reduce(function(controllers, c) {
-								var proxy = proxies.get(c);
-								return proxy ? controllers.concat(proxy) : controllers;
-							}, []));
-
-						return sync(models[0], clients);
-					});
-				}
-
-				function sync(source, clients) {
-					var s = new Synchronizer(clients);
-					var period = Math.floor(100 / clients.length);
-					return s.fromSource(source).then(function () {
-						scheduler.periodic(s.sync.bind(s), period);
-					});
-				}
 			});
+	}
 
+	function processModel(context, proxies, scheduler, model) {
+		var path = model.metadata.roles.model;
+		return context.resolve([path + '@model', path + '@view', path + '@controller'], function(models, views, controllers) {
+			if(!models.length) {
+				return;
+			}
+
+			var metadata = models[0].metadata;
+
+			var clients = models.concat(views.map(function(node) {
+				return new Dom(node);
+			})).concat(controllers.reduce(function(controllers, c) {
+				var proxy = proxies.get(c);
+
+				if(proxy) {
+					proxy.metadata = metadata;
+					return controllers.concat(proxy);
+				}
+
+				return controllers;
+			}, []));
+
+			return sync(scheduler, models[0], clients);
+		});
+	}
+
+	function sync(scheduler, source, clients) {
+		var s = new Synchronizer(clients);
+		var period = Math.floor(100 / clients.length);
+		return s.fromSource(source).then(function () {
+			scheduler.periodic(s.sync.bind(s), period);
+		});
 	}
 
 	function enableObjectConfig(context) {
@@ -237,6 +248,8 @@ define(function(require) {
 
 		return new Memory(x);
 	}
+
+	function noop() {}
 
 });
 }(typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(require); }));

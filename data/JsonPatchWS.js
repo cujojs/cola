@@ -12,10 +12,11 @@
 define(function(require) {
 
 	var when = require('when');
-	var jiff = require('jiff');
+	var JsonMetadata = require('./metadata/JsonMetadata');
 
-	function JsonPatchWS(url) {
+	function JsonPatchWS(url, id) {
 		this._url = url;
+		this.metadata = new JsonMetadata(id);
 	}
 
 	JsonPatchWS.prototype = {
@@ -24,7 +25,7 @@ define(function(require) {
 				return this._listen();
 			}
 
-			return jiff.clone(this._shadow);
+			return this.metadata.clone(this._shadow);
 		},
 
 		diff: function(shadow) {
@@ -32,7 +33,7 @@ define(function(require) {
 				return;
 			}
 
-			return jiff.diff(shadow, this._shadow);
+			return this.metadata.diff(shadow, this._shadow);
 		},
 
 		patch: function(patch) {
@@ -43,7 +44,7 @@ define(function(require) {
 		},
 
 		_patch: function(patch) {
-			this._shadow = jiff.patch(jiff.clone(patch), this._shadow);
+			this._shadow = this.metadata.patch(this._shadow, patch);
 		},
 
 		_listen: function() {
@@ -55,13 +56,11 @@ define(function(require) {
 					message = JSON.parse(message.data);
 
 					if(message.data) {
-//						console.log('set data', self._shadow);
 						self._shadow = message.data;
-						resolve(jiff.clone(self._shadow));
+						resolve(self.metadata.clone(self._shadow));
 
 					} else if(self._shadow && message.patch && message.patch.length > 0) {
 						self._patch(message.patch);
-//						console.log('patch', message.patch, self._shadow);
 
 					}
 
